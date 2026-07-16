@@ -129,6 +129,7 @@ input, select { font: inherit; color: inherit; }
 
 .value-text { font: var(--text-label-md); }
 .value-text:hover { color: var(--content-accent); }
+.value-muted { font: var(--text-body-md); color: var(--content-secondary); }
 .value-missing { display: flex; align-items: center; gap: var(--space-12); }
 .value-missing-text { font: var(--text-body-md); color: var(--content-tertiary); }
 .value-edit { display: flex; align-items: center; gap: var(--space-4); }
@@ -256,10 +257,48 @@ input, select { font: inherit; color: inherit; }
 
 .form { display: flex; flex-direction: column; gap: var(--space-20); }
 
+/* Quiet toggle rows (ownership / mortgage questions) */
+.qrow {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-16);
+}
+.qrow-label { font: var(--text-body-md); }
+.qrow-note { font: var(--text-body-sm); color: var(--content-tertiary); }
+.switch {
+  flex: none;
+  width: 32px; height: 18px;
+  padding: var(--space-2);
+  background: var(--color-black-a16);
+  border-radius: var(--radius-full);
+  transition: background-color var(--duration-fast) var(--ease);
+}
+.switch:hover { background: var(--color-black-a24); }
+.switch-on, .switch-on:hover { background: var(--bg-primary); }
+.switch-knob {
+  display: block;
+  width: 14px; height: 14px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-full);
+  transition: transform var(--duration-fast) var(--ease);
+}
+.switch-on .switch-knob { transform: translateX(14px); }
+
+/* "Or add manually" separator */
+.or-row {
+  display: flex; align-items: center; gap: var(--space-12);
+  font: var(--text-body-sm); color: var(--content-secondary);
+  white-space: nowrap;
+}
+.or-row::before, .or-row::after {
+  content: ''; flex: 1; height: var(--border-w);
+  background: var(--border-default);
+}
+
+.tile-selected, .tile-selected:hover { border-color: var(--border-selected); }
+
 /* Upload / extraction */
 .dropzone {
   display: flex; flex-direction: column; align-items: center; gap: var(--space-8);
-  padding: var(--space-64) var(--space-24);
+  padding: var(--space-32) var(--space-24);
   border: var(--border-w) dashed var(--border-hovered);
   border-radius: var(--radius-12);
   cursor: pointer;

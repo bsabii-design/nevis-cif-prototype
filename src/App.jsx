@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { TopBar, AssetGroups, SummaryPanel, EmptyState } from './components.jsx'
-import { AddAssetDrawer, UploadDrawer } from './drawers.jsx'
-import { seedAssets, seedLiabilities, blankLiabilities } from './data.js'
+import { AddAssetsDrawer } from './drawers.jsx'
+import { seedAssets, seedLiabilities, blankLiabilities, uid } from './data.js'
 import { useSavedFlash } from './hooks.js'
 
 export default function App() {
   const [assets, setAssets] = useState(seedAssets)
-  const [liabilities, setLiabilities] = useState(seedLiabilities)
-  const [drawer, setDrawer] = useState(null) // 'add' | 'upload' | null
+  const [liabilities, setLiabilities] = useState(() => seedLiabilities())
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const [tick, setTick] = useState(0)
   const [highlightId, setHighlightId] = useState(null)
   const saved = useSavedFlash(tick)
@@ -17,11 +17,30 @@ export default function App() {
     setAssets((list) => list.map((a) => (a.id === id ? { ...a, value } : a)))
     touch()
   }
-  const addAssets = (items) => {
-    setAssets((list) => [...list, ...items])
-    setDrawer(null)
+
+  const saveAsset = (asset, { mortgage } = {}) => {
+    setAssets((list) => [...list, asset])
+    if (mortgage) {
+      // Draft mortgage linked to the property; completed on the Liabilities screen.
+      setLiabilities((l) => ({
+        ...l,
+        items: [...l.items, {
+          id: uid(), type: 'Mortgage', lender: '',
+          balance: null, interestRate: null,
+          linkedAssetId: asset.id, draft: true,
+        }],
+      }))
+    }
+    setDrawerOpen(false)
     touch()
   }
+
+  const addAccounts = (items) => {
+    setAssets((list) => [...list, ...items])
+    setDrawerOpen(false)
+    touch()
+  }
+
   const showMissing = () => {
     const first = assets.find((a) => a.value == null)
     if (!first) return
@@ -30,7 +49,12 @@ export default function App() {
     setTimeout(() => setHighlightId(null), 1800)
   }
 
-  const resetDemo = () => { setAssets(seedAssets()); setLiabilities(seedLiabilities()); touch() }
+  const resetDemo = () => {
+    const a = seedAssets()
+    setAssets(a)
+    setLiabilities(seedLiabilities(a))
+    touch()
+  }
   const blankStart = () => { setAssets([]); setLiabilities(blankLiabilities()); touch() }
 
   return (
@@ -41,18 +65,13 @@ export default function App() {
           <div className="main-head">
             <h1 className="page-title">Your assets</h1>
             {assets.length > 0 && (
-              <div className="main-actions">
-                <button className="btn btn-secondary" onClick={() => setDrawer('upload')}>
-                  Upload statement
-                </button>
-                <button className="btn btn-primary" onClick={() => setDrawer('add')}>
-                  Add asset
-                </button>
-              </div>
+              <button className="btn btn-primary" onClick={() => setDrawerOpen(true)}>
+                Add assets
+              </button>
             )}
           </div>
           {assets.length === 0 ? (
-            <EmptyState onAdd={() => setDrawer('add')} onUpload={() => setDrawer('upload')} />
+            <EmptyState onAdd={() => setDrawerOpen(true)} />
           ) : (
             <AssetGroups assets={assets} onChangeValue={changeValue} highlightId={highlightId} />
           )}
@@ -64,8 +83,13 @@ export default function App() {
         <span className="footer-sep">·</span>
         <button className="footer-link" onClick={blankStart}>Blank start</button>
       </footer>
-      {drawer === 'add' && <AddAssetDrawer onSave={(a) => addAssets([a])} onClose={() => setDrawer(null)} />}
-      {drawer === 'upload' && <UploadDrawer onAdd={addAssets} onClose={() => setDrawer(null)} />}
+      {drawerOpen && (
+        <AddAssetsDrawer
+          onSaveAsset={saveAsset}
+          onAddAccounts={addAccounts}
+          onClose={() => setDrawerOpen(false)}
+        />
+      )}
     </>
   )
 }

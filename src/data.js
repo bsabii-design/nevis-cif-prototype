@@ -10,18 +10,46 @@ export const CATEGORIES = [
 ]
 
 export const ACCOUNT_TYPES = ['Brokerage account', 'IRA', '401(k)', 'Pension', 'Other']
+export const PROPERTY_TYPES = ['House', 'Condo', 'Townhouse', 'Land', 'Commercial', 'Other']
+export const COLLECTIBLE_CATEGORIES = ['Art', 'Watches', 'Wine', 'Jewelry', 'Cars', 'Other']
+export const LIABILITY_TYPES = ['Mortgage', 'Loan', 'Credit line', 'Other']
 
-export const seedAssets = () => [
-  { id: uid(), category: 'investment', title: 'Fidelity', subtitle: 'Brokerage account', value: 6400000 },
-  { id: uid(), category: 'investment', title: 'Schwab', subtitle: 'IRA', value: 2100000 },
-  { id: uid(), category: 'investment', title: 'Pension', subtitle: 'Employer pension', value: null },
-  { id: uid(), category: 'realestate', title: 'Austin house', subtitle: 'Primary residence · 100% ownership', value: 4800000 },
-  { id: uid(), category: 'collectibles', title: 'Art collection', subtitle: 'Paintings and prints', value: null },
-  { id: uid(), category: 'crypto', title: 'Coinbase', subtitle: 'Digital assets', value: 900000 },
-]
+/* Real estate owned in part counts at the client's share; everything else at face value. */
+export const effectiveValue = (a) => {
+  if (a.value == null) return null
+  if (a.category === 'realestate' && a.ownershipShare != null && a.ownershipShare < 100)
+    return Math.round(a.value * (a.ownershipShare / 100))
+  return a.value
+}
 
-export const seedLiabilities = () => ({ answered: true, total: 800000 })
-export const blankLiabilities = () => ({ answered: false, total: 0 })
+export const liabilitiesTotal = (liabilities) =>
+  liabilities.items.reduce((s, l) => s + (l.balance ?? 0), 0)
+
+export const seedAssets = () => {
+  const austin = {
+    id: uid(), category: 'realestate',
+    title: 'Austin house', subtitle: 'House',
+    propertyType: 'House', ownershipShare: 100, value: 4800000,
+  }
+  return [
+    { id: uid(), category: 'investment', title: 'Fidelity', subtitle: 'Brokerage account', institution: 'Fidelity', accountType: 'Brokerage account', value: 6400000 },
+    { id: uid(), category: 'investment', title: 'Schwab', subtitle: 'IRA', institution: 'Schwab', accountType: 'IRA', value: 2100000 },
+    { id: uid(), category: 'investment', title: 'Pension', subtitle: 'Employer pension', institution: 'Pension', accountType: 'Pension', value: null },
+    austin,
+    { id: uid(), category: 'collectibles', title: 'Art collection', subtitle: 'Art', collectibleCategory: 'Art', value: null },
+    { id: uid(), category: 'crypto', title: 'Coinbase', whereHeld: 'Coinbase', value: 900000 },
+  ]
+}
+
+export const seedLiabilities = (assets) => ({
+  answered: true,
+  items: [{
+    id: uid(), type: 'Mortgage', lender: 'First Republic',
+    balance: 800000, interestRate: 5.1,
+    linkedAssetId: assets?.find((a) => a.category === 'realestate')?.id ?? null,
+  }],
+})
+export const blankLiabilities = () => ({ answered: false, items: [] })
 
 export const FOUND_ACCOUNTS = () => [
   { id: uid(), institution: 'Fidelity', accountType: 'Brokerage account', value: 1850000 },

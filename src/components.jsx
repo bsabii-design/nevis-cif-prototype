@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CATEGORIES, fmtUSD, parseUSD } from './data.js'
+import { CATEGORIES, effectiveValue, fmtUSD, liabilitiesTotal, parseUSD } from './data.js'
 import { useCountUp } from './hooks.js'
 
 /* ---------------- Top bar ---------------- */
@@ -37,9 +37,9 @@ export function TopBar({ saved, clientName }) {
 /* ---------------- Net worth block (signature component) ----------------
    Anatomy: label → figure → at most ONE line below. Never two. */
 
-export function NetWorthBlock({ assets, liabilities, onShowMissing, hero = false }) {
+export function NetWorthBlock({ assets, liabilities, onShowMissing }) {
   const valued = assets.filter((a) => a.value != null)
-  const totalAssets = valued.reduce((s, a) => s + a.value, 0)
+  const totalAssets = valued.reduce((s, a) => s + effectiveValue(a), 0)
   const missing = assets.length - valued.length
 
   let label, figure, line
@@ -57,7 +57,7 @@ export function NetWorthBlock({ assets, liabilities, onShowMissing, hero = false
     )
   } else {
     label = 'Estimated net worth'
-    figure = totalAssets - liabilities.total
+    figure = totalAssets - liabilitiesTotal(liabilities)
     line =
       missing > 0 ? (
         <button className="nw-line nw-line-link" onClick={onShowMissing}>
@@ -69,7 +69,7 @@ export function NetWorthBlock({ assets, liabilities, onShowMissing, hero = false
   const shown = useCountUp(figure)
 
   return (
-    <div className={'nw-block' + (hero ? ' nw-hero' : '')}>
+    <div className="nw-block">
       <div className="nw-label">{label}</div>
       <div className={'nw-figure' + (figure == null ? ' nw-figure-empty' : '')}>
         {figure == null ? '—' : fmtUSD(shown)}
@@ -81,7 +81,7 @@ export function NetWorthBlock({ assets, liabilities, onShowMissing, hero = false
 
 export function SummaryPanel({ assets, liabilities, onShowMissing }) {
   const valued = assets.filter((a) => a.value != null)
-  const totalAssets = valued.reduce((s, a) => s + a.value, 0)
+  const totalAssets = valued.reduce((s, a) => s + effectiveValue(a), 0)
   const showBreakdown = assets.length > 0 && liabilities.answered
 
   return (
@@ -97,7 +97,7 @@ export function SummaryPanel({ assets, liabilities, onShowMissing }) {
             </div>
             <div className="breakdown-row">
               <span>Liabilities</span>
-              <span className="breakdown-val">−{fmtUSD(liabilities.total)}</span>
+              <span className="breakdown-val">−{fmtUSD(liabilitiesTotal(liabilities))}</span>
             </div>
           </div>
         </>
@@ -153,9 +153,17 @@ function ValueCell({ asset, onChange }) {
       </div>
     )
   }
+  const shared = effectiveValue(asset) !== asset.value
   return (
     <button className="value-text" onClick={start} title="Edit value">
-      {fmtUSD(asset.value)}
+      {shared ? (
+        <>
+          <span className="value-muted">Value {fmtUSD(asset.value)} · </span>
+          Your share {fmtUSD(effectiveValue(asset))}
+        </>
+      ) : (
+        fmtUSD(asset.value)
+      )}
     </button>
   )
 }
@@ -179,7 +187,7 @@ export function AssetGroups({ assets, onChangeValue, highlightId }) {
         const items = assets.filter((a) => a.category === cat.key)
         if (items.length === 0) return null
         const valued = items.filter((a) => a.value != null)
-        const subtotal = valued.reduce((s, a) => s + a.value, 0)
+        const subtotal = valued.reduce((s, a) => s + effectiveValue(a), 0)
         return (
           <section className="group" key={cat.key}>
             <div className="group-head">
@@ -201,7 +209,7 @@ export function AssetGroups({ assets, onChangeValue, highlightId }) {
   )
 }
 
-export function EmptyState({ onAdd, onUpload }) {
+export function EmptyState({ onAdd }) {
   return (
     <div className="empty">
       <h2 className="empty-title">Add what you own</h2>
@@ -210,8 +218,7 @@ export function EmptyState({ onAdd, onUpload }) {
         A rough estimate is fine.
       </p>
       <div className="empty-actions">
-        <button className="btn btn-secondary" onClick={onUpload}>Upload statement</button>
-        <button className="btn btn-primary" onClick={onAdd}>Add asset</button>
+        <button className="btn btn-primary" onClick={onAdd}>Add assets</button>
       </div>
     </div>
   )
