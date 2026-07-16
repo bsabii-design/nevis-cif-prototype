@@ -150,7 +150,18 @@ input, select { font: inherit; color: inherit; }
 }
 .card-clickable:hover .card-hint { opacity: 1; }
 .card-highlight { border-color: var(--border-selected); box-shadow: var(--shadow-sm); }
+.card-left { display: flex; align-items: center; gap: var(--space-12); min-width: 0; }
 .card-info { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+
+/* Letter avatars (institution logos) */
+.avatar {
+  flex: none;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-full);
+  font: var(--text-label-sm); color: var(--content-inverse);
+}
+.avatar-sm { width: 20px; height: 20px; font: 500 9px/1 var(--font-sans); }
 .card-title { font: var(--text-label-md); }
 .card-subtitle { font: var(--text-body-sm); color: var(--content-secondary); }
 
@@ -229,6 +240,27 @@ input, select { font: inherit; color: inherit; }
 /* Currency select + amount */
 .money { display: grid; grid-template-columns: 76px 1fr; gap: var(--space-8); }
 .money-cur { padding-right: var(--space-24); }
+
+/* Institution autocomplete */
+.combo { position: relative; }
+.combo-list {
+  position: absolute; top: calc(100% + var(--space-4)); left: 0; right: 0;
+  z-index: 20;
+  list-style: none;
+  padding: var(--space-4);
+  background: var(--bg-surface);
+  border: var(--border-w) solid var(--border-default);
+  border-radius: var(--radius-8);
+  box-shadow: var(--shadow-md);
+}
+.combo-item {
+  display: flex; align-items: center; gap: var(--space-8);
+  padding: var(--space-8) var(--space-8);
+  font: var(--text-body-md);
+  border-radius: var(--radius-4);
+  cursor: pointer;
+}
+.combo-item:hover, .combo-item-active { background: var(--bg-secondary); }
 
 /* Quiet toggle rows (ownership / mortgage questions) */
 .qrow {

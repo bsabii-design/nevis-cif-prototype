@@ -1,6 +1,6 @@
 import {
-  CATEGORIES, effectiveUSD, fmtMoney, fmtUSD,
-  hasForeignValues, liabilitiesAnswered, liabilitiesTotalUSD, shareValue, usdOf,
+  CATEGORIES, effectiveUSD, fmtMoney, fmtUSD, hasForeignValues,
+  institutionAvatar, liabilitiesAnswered, liabilitiesTotalUSD, shareValue, usdOf,
 } from './data.js'
 import { useCountUp } from './hooks.js'
 
@@ -141,6 +141,7 @@ export function AssetCard({ asset, onOpen, highlight }) {
   const primaryText = shared
     ? <><span className="value-muted">Value {fmtMoney(asset.value, cur)} · </span>Your share {fmtMoney(shareValue(asset), cur)}</>
     : fmtMoney(asset.value, cur)
+  const avatar = institutionAvatar(asset.institution || asset.whereHeld)
 
   return (
     <div
@@ -152,9 +153,16 @@ export function AssetCard({ asset, onOpen, highlight }) {
       onKeyDown={(e) => e.key === 'Enter' && onOpen()}
     >
       <span className="card-hint">Edit</span>
-      <div className="card-info">
-        <div className="card-title">{asset.title}</div>
-        {asset.subtitle && <div className="card-subtitle">{asset.subtitle}</div>}
+      <div className="card-left">
+        {avatar && (
+          <span className="avatar" style={{ background: avatar.color }} aria-hidden="true">
+            {avatar.letter}
+          </span>
+        )}
+        <div className="card-info">
+          <div className="card-title">{asset.title}</div>
+          {asset.subtitle && <div className="card-subtitle">{asset.subtitle}</div>}
+        </div>
       </div>
       <MoneyDisplay
         amount={asset.value} currency={cur}

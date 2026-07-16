@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
-  ACCOUNT_TYPES, COLLECTIBLE_CATEGORIES, CATEGORIES, CURRENCIES,
-  LIABILITY_TYPES, PROPERTY_TYPES, parseAmount, uid,
+  ACCOUNT_TYPES, COLLECTIBLE_CATEGORIES, CATEGORIES, CURRENCIES, INSTITUTIONS,
+  LIABILITY_TYPES, PROPERTY_TYPES, institutionAvatar, parseAmount, uid,
 } from './data.js'
 
 /* ---------------- Field primitives ---------------- */
@@ -84,6 +84,65 @@ export function Toggle({ label, checked, onChange }) {
 }
 
 const VALUE_HELPER = "Don't know it offhand? Leave it for later."
+const INSTITUTION_HELPER = "Not sure where it's held? You can add this later."
+
+/* Autocomplete over the mock institution list; free text always allowed. */
+export function InstitutionCombobox({ value, onChange, placeholder, autoFocus }) {
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(-1)
+  const matches = INSTITUTIONS
+    .filter((n) => n.toLowerCase().includes((value || '').trim().toLowerCase()))
+    .slice(0, 6)
+
+  const pick = (name) => {
+    onChange(name)
+    setOpen(false)
+    setActive(-1)
+  }
+
+  return (
+    <div className="combo">
+      <input
+        className="input"
+        role="combobox"
+        aria-expanded={open && matches.length > 0}
+        value={value || ''}
+        placeholder={placeholder}
+        autoFocus={autoFocus}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); setActive(-1) }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => { setOpen(false); setActive(-1) }}
+        onKeyDown={(e) => {
+          if (!open || matches.length === 0) return
+          if (e.key === 'ArrowDown') { e.preventDefault(); setActive((i) => (i + 1) % matches.length) }
+          if (e.key === 'ArrowUp') { e.preventDefault(); setActive((i) => (i - 1 + matches.length) % matches.length) }
+          if (e.key === 'Enter' && active >= 0) { e.preventDefault(); pick(matches[active]) }
+          if (e.key === 'Escape') { setOpen(false); setActive(-1) }
+        }}
+      />
+      {open && matches.length > 0 && (
+        <ul className="combo-list" role="listbox">
+          {matches.map((name, i) => {
+            const av = institutionAvatar(name)
+            return (
+              <li
+                key={name}
+                role="option"
+                aria-selected={i === active}
+                className={'combo-item' + (i === active ? ' combo-item-active' : '')}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => pick(name)}
+              >
+                <span className="avatar avatar-sm" style={{ background: av.color }}>{av.letter}</span>
+                {name}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 /* Commit the edit when the user clicks anywhere outside the editor. */
 function useOutsideCommit(ref, commit) {
@@ -117,26 +176,53 @@ const initAssetForm = (asset) => {
   return { description: asset.title, value: asset.value, currency: asset.currency }
 }
 
+/* Only Type is required: empty name/institution → the card is titled by its type. */
 const buildAsset = (category, form, id = uid()) => {
   const base = { id, category, value: form.value ?? null, currency: form.currency || 'USD' }
-  if (category === 'investment')
-    return { ...base, title: form.institution, subtitle: form.accountType || 'Brokerage account', institution: form.institution, accountType: form.accountType || 'Brokerage account' }
+  if (category === 'investment') {
+    const accountType = form.accountType || 'Brokerage account'
+    return {
+      ...base,
+      title: form.institution || accountType,
+      subtitle: form.institution ? accountType : undefined,
+      institution: form.institution, accountType,
+    }
+  }
   if (category === 'realestate') {
     const share = form.shared ? Math.min(100, Number(form.share) || 100) : 100
-    return { ...base, title: form.name, subtitle: form.propertyType || 'House', propertyType: form.propertyType || 'House', ownershipShare: share }
+    const propertyType = form.propertyType || 'House'
+    return {
+      ...base,
+      title: form.name || propertyType,
+      subtitle: form.name ? propertyType : undefined,
+      propertyType, ownershipShare: share,
+    }
   }
-  if (category === 'collectibles')
-    return { ...base, title: form.description, subtitle: form.collectibleCategory || 'Art', collectibleCategory: form.collectibleCategory || 'Art' }
+  if (category === 'collectibles') {
+    const collectibleCategory = form.collectibleCategory || 'Art'
+    return {
+      ...base,
+      title: form.description || collectibleCategory,
+      subtitle: form.description ? collectibleCategory : undefined,
+      collectibleCategory,
+    }
+  }
   if (category === 'crypto')
-    return { ...base, title: form.whereHeld, whereHeld: form.whereHeld }
-  return { ...base, title: form.description }
+    return { ...base, title: form.whereHeld || 'Crypto', whereHeld: form.whereHeld }
+  return { ...base, title: form.description || 'Other' }
 }
 
-const canSaveAsset = (category, form) =>
-  category === 'investment' ? !!form.institution :
-  category === 'realestate' ? !!form.name :
-  category === 'crypto' ? !!form.whereHeld :
-  !!form.description
+/* New card: Done enables once anything beyond the default Type is set.
+   Existing card: always committable. */
+const hasAnyEntry = (category, form) => !!(
+  form.institution || form.name || form.description || form.whereHeld ||
+  form.value != null || form.shared || form.mortgage ||
+  (form.accountType && form.accountType !== 'Brokerage account') ||
+  (form.propertyType && form.propertyType !== 'House') ||
+  (form.collectibleCategory && form.collectibleCategory !== 'Art')
+)
+const canSaveAsset = (category, form, isNew) =>
+  !isNew || category !== 'investment' || hasAnyEntry(category, form)
 
 export function AssetEditor({ asset, onCommit, onDiscard, onRemove }) {
   const [category, setCategory] = useState(asset?.category ?? 'investment')
@@ -145,7 +231,7 @@ export function AssetEditor({ asset, onCommit, onDiscard, onRemove }) {
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
   const attemptCommit = () => {
-    if (canSaveAsset(category, form))
+    if (canSaveAsset(category, form, !asset))
       onCommit(buildAsset(category, form, asset?.id), { mortgage: category === 'realestate' && !!form.mortgage })
     else onDiscard()
   }
@@ -175,9 +261,13 @@ export function AssetEditor({ asset, onCommit, onDiscard, onRemove }) {
 
         {category === 'investment' && (
           <>
-            <Field label="Institution">
-              <input className="input" placeholder="Fidelity, Vanguard, Schwab…" autoFocus={!asset}
-                value={form.institution || ''} onChange={(e) => set('institution', e.target.value)} />
+            <Field label="Institution" helper={!form.institution ? INSTITUTION_HELPER : undefined}>
+              <InstitutionCombobox
+                value={form.institution}
+                onChange={(v) => set('institution', v)}
+                placeholder="Fidelity, Vanguard, Schwab…"
+                autoFocus={!asset}
+              />
             </Field>
             <Field label="Account type">
               <select className="input select" value={form.accountType || 'Brokerage account'}
@@ -240,9 +330,13 @@ export function AssetEditor({ asset, onCommit, onDiscard, onRemove }) {
 
         {category === 'crypto' && (
           <>
-            <Field label="Where it's held">
-              <input className="input" placeholder="Coinbase, Ledger cold wallet…" autoFocus={!asset}
-                value={form.whereHeld || ''} onChange={(e) => set('whereHeld', e.target.value)} />
+            <Field label="Where it's held" helper={!form.whereHeld ? INSTITUTION_HELPER : undefined}>
+              <InstitutionCombobox
+                value={form.whereHeld}
+                onChange={(v) => set('whereHeld', v)}
+                placeholder="Coinbase, Ledger cold wallet…"
+                autoFocus={!asset}
+              />
             </Field>
             {money}
           </>
@@ -263,7 +357,7 @@ export function AssetEditor({ asset, onCommit, onDiscard, onRemove }) {
         {asset && <button className="btn btn-ghost btn-remove" onClick={onRemove}>Remove</button>}
         <span className="editor-actions-spacer" />
         {!asset && <button className="btn btn-ghost" onClick={onDiscard}>Cancel</button>}
-        <button className="btn btn-primary" disabled={!canSaveAsset(category, form)} onClick={attemptCommit}>
+        <button className="btn btn-primary" disabled={!canSaveAsset(category, form, !asset)} onClick={attemptCommit}>
           Done
         </button>
       </div>

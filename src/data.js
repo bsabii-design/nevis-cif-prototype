@@ -10,6 +10,26 @@ export const CATEGORIES = [
 ]
 
 export const ACCOUNT_TYPES = ['Brokerage account', 'IRA', '401(k)', 'Pension', 'Other']
+
+/* Mock list of major US institutions for the autocomplete. Free text is always allowed. */
+export const INSTITUTIONS = [
+  'Fidelity', 'Vanguard', 'Charles Schwab', 'Chase', 'Morgan Stanley',
+  'Goldman Sachs', 'Merrill Lynch', 'Wells Fargo', 'Bank of America', 'Citi',
+  'J.P. Morgan', 'UBS', 'Edward Jones', 'T. Rowe Price', 'Betterment',
+  'Robinhood', 'E*TRADE', 'Coinbase', 'Kraken', 'Gemini',
+]
+
+/* Letter-avatar colors: Nevis swatch strongs (readable with white text). */
+const AVATAR_COLORS = ['#455285', '#68457A', '#346C83', '#596625', '#AD5507', '#8F2F28']
+
+export const institutionAvatar = (name) => {
+  if (!name) return null
+  const match = INSTITUTIONS.find((n) => n.toLowerCase() === name.trim().toLowerCase())
+  if (!match) return null
+  let h = 0
+  for (const c of match) h = (h * 31 + c.charCodeAt(0)) % 997
+  return { letter: match[0].toUpperCase(), color: AVATAR_COLORS[h % AVATAR_COLORS.length] }
+}
 export const PROPERTY_TYPES = ['House', 'Apartment', 'Condo', 'Townhouse', 'Land', 'Commercial', 'Other']
 export const COLLECTIBLE_CATEGORIES = ['Art', 'Watches', 'Wine', 'Jewelry', 'Cars', 'Other']
 export const LIABILITY_TYPES = ['Mortgage', 'Loan', 'Credit line', 'Other']
