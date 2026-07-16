@@ -243,6 +243,12 @@ input, select { font: inherit; color: inherit; }
 
 /* Institution autocomplete */
 .combo { position: relative; }
+.combo-avatar {
+  position: absolute; left: var(--space-8); top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.combo-input-avatar { padding-left: var(--space-36); }
 .combo-list {
   position: absolute; top: calc(100% + var(--space-4)); left: 0; right: 0;
   z-index: 20;

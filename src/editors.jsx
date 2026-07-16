@@ -100,10 +100,17 @@ export function InstitutionCombobox({ value, onChange, placeholder, autoFocus })
     setActive(-1)
   }
 
+  const avatar = institutionAvatar(value)
+
   return (
     <div className="combo">
+      {avatar && (
+        <span className="avatar avatar-sm combo-avatar" style={{ background: avatar.color }} aria-hidden="true">
+          {avatar.letter}
+        </span>
+      )}
       <input
-        className="input"
+        className={'input' + (avatar ? ' combo-input-avatar' : '')}
         role="combobox"
         aria-expanded={open && matches.length > 0}
         value={value || ''}
