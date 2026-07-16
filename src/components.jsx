@@ -232,17 +232,3 @@ export function AssetGroups({ assets, editingId, onOpen, renderEditor, highlight
   )
 }
 
-export function EmptyAssets({ onAdd }) {
-  return (
-    <div className="empty">
-      <h3 className="empty-title">Add what you own</h3>
-      <p className="empty-copy">
-        Accounts, property, collectibles — anything that makes up your financial picture.
-        A rough estimate is fine.
-      </p>
-      <div className="empty-actions">
-        <button className="btn btn-primary" onClick={onAdd}>Add an asset</button>
-      </div>
-    </div>
-  )
-}

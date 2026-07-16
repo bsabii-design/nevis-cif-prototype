@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { TopBar, AssetGroups, SummaryPanel, EmptyAssets, LiabilityCard } from './components.jsx'
+import { TopBar, AssetGroups, SummaryPanel, LiabilityCard } from './components.jsx'
 import { AssetEditor, LiabilityEditor, ImportResult } from './editors.jsx'
 import { FOUND_ACCOUNTS, blankLiabilities, seedProfile, uid } from './data.js'
 import { useSavedFlash } from './hooks.js'
@@ -184,9 +184,14 @@ export default function App() {
           <section className="block">
             <div className="block-head">
               <h2 className="block-title">What you own</h2>
-              <button className="btn btn-secondary" onClick={() => fileRef.current?.click()}>
-                Import statement
-              </button>
+              <div className="block-actions">
+                <button className="btn btn-secondary" onClick={() => fileRef.current?.click()}>
+                  Import statement
+                </button>
+                <button className="btn btn-primary" onClick={() => setEditing({ kind: 'asset', id: null })}>
+                  + Add an asset
+                </button>
+              </div>
               <input ref={fileRef} type="file" accept=".pdf" hidden onChange={startImport} />
             </div>
             <p className="block-helper">
@@ -206,8 +211,20 @@ export default function App() {
               />
             )}
 
-            {assets.length === 0 && editingAsset === undefined ? (
-              <EmptyAssets onAdd={() => setEditing({ kind: 'asset', id: null })} />
+            {editingAsset === null && assetEditorFor(null)}
+
+            {assets.length === 0 && editingAsset === undefined && !importStage ? (
+              <div
+                className="drop-empty"
+                role="button"
+                tabIndex={0}
+                onClick={() => setEditing({ kind: 'asset', id: null })}
+                onKeyDown={(e) => e.key === 'Enter' && setEditing({ kind: 'asset', id: null })}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); startImport() }}
+              >
+                Add your first asset — or drop a statement here
+              </div>
             ) : (
               <AssetGroups
                 assets={assets}
@@ -217,23 +234,24 @@ export default function App() {
                 highlightId={highlightId}
               />
             )}
-
-            {editingAsset === null ? (
-              assetEditorFor(null)
-            ) : (
-              assets.length > 0 && (
-                <button className="add-row" onClick={() => setEditing({ kind: 'asset', id: null })}>
-                  + Add an asset
-                </button>
-              )
-            )}
           </section>
 
           {/* ---------- What you owe ---------- */}
           <section className="block" ref={oweRef}>
             <div className="block-head">
               <h2 className="block-title">What you owe</h2>
+              <button className="btn btn-primary" onClick={() => setEditing({ kind: 'liability', id: null })}>
+                + Add a liability
+              </button>
             </div>
+
+            {editingLiability === null && (
+              <LiabilityEditor
+                properties={properties}
+                onCommit={commitLiability}
+                onDiscard={() => setEditing(null)}
+              />
+            )}
 
             {liabilities.items.length > 0 && (
               <div className="group">
@@ -264,25 +282,10 @@ export default function App() {
               </p>
             )}
 
-            {editingLiability === null ? (
-              <LiabilityEditor
-                properties={properties}
-                onCommit={commitLiability}
-                onDiscard={() => setEditing(null)}
-              />
-            ) : (
-              !liabilities.explicitNone && (
-                <div className="owe-actions">
-                  <button className="add-row" onClick={() => setEditing({ kind: 'liability', id: null })}>
-                    + Add a liability
-                  </button>
-                  {liabilities.items.length === 0 && (
-                    <button className="btn btn-secondary" onClick={answerNone}>
-                      I don't have any liabilities
-                    </button>
-                  )}
-                </div>
-              )
+            {liabilities.items.length === 0 && !liabilities.explicitNone && editingLiability === undefined && (
+              <button className="btn btn-secondary owe-none-btn" onClick={answerNone}>
+                I don't have any liabilities
+              </button>
             )}
           </section>
         </div>
