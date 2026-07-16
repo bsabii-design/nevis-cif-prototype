@@ -151,18 +151,21 @@ export function InstitutionCombobox({ value, onChange, placeholder, autoFocus })
   )
 }
 
-/* Commit the edit when the user clicks anywhere outside the editor. */
-function useOutsideCommit(ref, commit) {
+/* Commit the edit when the user clicks anywhere outside the editor.
+   Disabled for draft cards — they wait for Done / Add all / Discard. */
+function useOutsideCommit(ref, commit, enabled = true) {
   const commitRef = useRef(commit)
   commitRef.current = commit
   useEffect(() => {
+    if (!enabled) return
     const onDown = (e) => {
       if (ref.current && !ref.current.contains(e.target)) commitRef.current()
     }
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
-  }, [ref])
+  }, [ref, enabled])
 }
+
 
 /* ---------------- Asset editor (create and edit) ---------------- */
 
@@ -184,7 +187,7 @@ const initAssetForm = (asset) => {
 }
 
 /* Only Type is required: empty name/institution → the card is titled by its type. */
-const buildAsset = (category, form, id = uid()) => {
+export const buildAsset = (category, form, id = uid()) => {
   const base = { id, category, value: form.value ?? null, currency: form.currency || 'USD' }
   if (category === 'investment') {
     const accountType = form.accountType || 'Brokerage account'
@@ -231,18 +234,24 @@ const hasAnyEntry = (category, form) => !!(
 const canSaveAsset = (category, form, isNew) =>
   !isNew || category !== 'investment' || hasAnyEntry(category, form)
 
-export function AssetEditor({ asset, onCommit, onDiscard, onRemove }) {
+export function AssetEditor({ asset, onCommit, onDiscard, onRemove, draft = false, onFormChange }) {
   const [category, setCategory] = useState(asset?.category ?? 'investment')
   const [form, setForm] = useState(() => initAssetForm(asset))
   const ref = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+
+  const syncRef = useRef(onFormChange)
+  syncRef.current = onFormChange
+  useEffect(() => {
+    if (syncRef.current && asset) syncRef.current(buildAsset(category, form, asset.id))
+  }, [category, form]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const attemptCommit = () => {
     if (canSaveAsset(category, form, !asset))
       onCommit(buildAsset(category, form, asset?.id), { mortgage: category === 'realestate' && !!form.mortgage })
     else onDiscard()
   }
-  useOutsideCommit(ref, attemptCommit)
+  useOutsideCommit(ref, attemptCommit, !draft)
 
   const money = (
     <Field label={category === 'realestate' ? 'Estimated value' : 'Current value'} helper={VALUE_HELPER}>
@@ -379,22 +388,29 @@ const initLiabilityForm = (l) => l ? {
   interestRate: l.interestRate || '', linkedAssetId: l.linkedAssetId ? String(l.linkedAssetId) : '',
 } : { type: 'Mortgage' }
 
-export function LiabilityEditor({ liability, properties, onCommit, onDiscard, onRemove }) {
+export const buildLiability = (form, id = uid()) => ({
+  id, type: form.type || 'Loan', lender: form.lender || '',
+  balance: form.balance ?? null, currency: form.currency || 'USD',
+  interestRate: form.interestRate || null,
+  linkedAssetId: form.linkedAssetId ? Number(form.linkedAssetId) : null,
+})
+
+export function LiabilityEditor({ liability, properties, onCommit, onDiscard, onRemove, draft = false, onFormChange }) {
   const [form, setForm] = useState(() => initLiabilityForm(liability))
   const ref = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
+  const syncRef = useRef(onFormChange)
+  syncRef.current = onFormChange
+  useEffect(() => {
+    if (syncRef.current && liability) syncRef.current(buildLiability(form, liability.id))
+  }, [form]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const attemptCommit = () => {
-    if (form.lender)
-      onCommit({
-        id: liability?.id ?? uid(), type: form.type, lender: form.lender,
-        balance: form.balance ?? null, currency: form.currency || 'USD',
-        interestRate: form.interestRate || null,
-        linkedAssetId: form.linkedAssetId ? Number(form.linkedAssetId) : null,
-      })
+    if (form.lender || draft) onCommit(buildLiability(form, liability?.id))
     else onDiscard()
   }
-  useOutsideCommit(ref, attemptCommit)
+  useOutsideCommit(ref, attemptCommit, !draft)
 
   return (
     <div className="card editor" ref={ref}>
@@ -436,44 +452,7 @@ export function LiabilityEditor({ liability, properties, onCommit, onDiscard, on
         {liability && <button className="btn btn-ghost btn-remove" onClick={onRemove}>Remove</button>}
         <span className="editor-actions-spacer" />
         {!liability && <button className="btn btn-ghost" onClick={onDiscard}>Cancel</button>}
-        <button className="btn btn-primary" disabled={!form.lender} onClick={attemptCommit}>Done</button>
-      </div>
-    </div>
-  )
-}
-
-/* ---------------- Statement import (inline strip) ---------------- */
-
-export function ImportResult({ accounts, setAccount, onAdd, onDiscard }) {
-  return (
-    <div className="import-strip">
-      <p className="drawer-sub">
-        We found {accounts.length} accounts in your Fidelity statement.
-        Check the numbers — you can edit anything.
-      </p>
-      {accounts.map((a) => (
-        <div className="found" key={a.id}>
-          <Field label="Institution">
-            <input className="input" value={a.institution}
-              onChange={(e) => setAccount(a.id, 'institution', e.target.value)} />
-          </Field>
-          <Field label="Account type">
-            <select className="input select" value={a.accountType}
-              onChange={(e) => setAccount(a.id, 'accountType', e.target.value)}>
-              {ACCOUNT_TYPES.map((t) => <option key={t}>{t}</option>)}
-            </select>
-          </Field>
-          <Field label="Value" helper={VALUE_HELPER}>
-            <MoneyInput amount={a.value} currency={a.currency}
-              onAmount={(v) => setAccount(a.id, 'value', v)}
-              onCurrency={(c) => setAccount(a.id, 'currency', c)} />
-          </Field>
-        </div>
-      ))}
-      <div className="editor-actions">
-        <span className="editor-actions-spacer" />
-        <button className="btn btn-ghost" onClick={onDiscard}>Discard</button>
-        <button className="btn btn-primary" onClick={onAdd}>Add {accounts.length} accounts</button>
+        <button className="btn btn-primary" disabled={!form.lender && !draft} onClick={attemptCommit}>Done</button>
       </div>
     </div>
   )

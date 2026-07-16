@@ -1,23 +1,30 @@
 import { useRef, useState } from 'react'
 import { TopBar, AssetGroups, SummaryPanel, LiabilityCard } from './components.jsx'
-import { AssetEditor, LiabilityEditor, ImportResult } from './editors.jsx'
-import { FOUND_ACCOUNTS, blankLiabilities, seedProfile, uid } from './data.js'
+import { AssetEditor, LiabilityEditor } from './editors.jsx'
+import { CaptureBar, BatchPanel } from './capture.jsx'
+import { parseCapture } from './parse.js'
+import { blankLiabilities, seedProfile, uid } from './data.js'
 import { useSavedFlash } from './hooks.js'
 
 const initial = seedProfile()
+
+const focusFirstDraft = () =>
+  setTimeout(() => {
+    document.querySelector('.draft-zone .editor input, .draft-zone .editor select')?.focus()
+  }, 80)
 
 export default function App() {
   const [assets, setAssets] = useState(initial.assets)
   const [liabilities, setLiabilities] = useState(initial.liabilities)
   /* editing: null | {kind:'asset'|'liability', id: number|null} — id null means a new card */
   const [editing, setEditing] = useState(null)
-  const [importStage, setImportStage] = useState(null) // null | 'processing' | 'result'
-  const [foundAccounts, setFoundAccounts] = useState([])
+  const [draftAssets, setDraftAssets] = useState([])
+  const [draftLiabilities, setDraftLiabilities] = useState([])
+  const [batchFiles, setBatchFiles] = useState(null)
   const [toast, setToast] = useState(null) // {msg, undo}
   const [tick, setTick] = useState(0)
   const [highlightId, setHighlightId] = useState(null)
   const saved = useSavedFlash(tick)
-  const fileRef = useRef(null)
   const oweRef = useRef(null)
   const toastTimer = useRef(null)
   const touch = () => setTick((t) => t + 1)
@@ -34,6 +41,80 @@ export default function App() {
     touch()
   }
 
+  /* ---- capture bar ---- */
+
+  const handleCapture = (text) => {
+    const parsed = parseCapture(text)
+    if (parsed.assets.length) setDraftAssets((d) => [...d, ...parsed.assets])
+    if (parsed.liabilities.length) setDraftLiabilities((d) => [...d, ...parsed.liabilities])
+    focusFirstDraft()
+  }
+
+  const handleFiles = (names) => setBatchFiles(names.slice(0, 8))
+
+  const applyBatch = (items) => {
+    setAssets((list) => {
+      let next = [...list]
+      for (const item of items) {
+        if (item.updateAssetId) {
+          next = next.map((a) => (a.id === item.updateAssetId ? { ...a, value: item.value, currency: item.currency } : a))
+        } else {
+          next.push({
+            id: item.id, category: 'investment',
+            title: item.institution || 'Investment account', subtitle: item.accountType,
+            institution: item.institution, accountType: item.accountType,
+            value: item.value ?? null, currency: item.currency || 'USD',
+          })
+        }
+      }
+      return next
+    })
+    setBatchFiles(null)
+    touch()
+  }
+
+  /* ---- drafts ---- */
+
+  const updateDraftAsset = (built) =>
+    setDraftAssets((list) => list.map((d) => (d.id === built.id ? built : d)))
+  const updateDraftLiability = (built) =>
+    setDraftLiabilities((list) => list.map((d) => (d.id === built.id ? built : d)))
+
+  const maybeAddMortgageDraft = (asset, mortgage) => {
+    if (mortgage && !liabilities.items.some((l) => l.linkedAssetId === asset.id)) {
+      setLiabilities((l) => ({
+        ...l, explicitNone: false,
+        items: [...l.items, {
+          id: uid(), type: 'Mortgage', lender: '', balance: null, currency: 'USD',
+          interestRate: null, linkedAssetId: asset.id, draft: true,
+        }],
+      }))
+    }
+  }
+
+  const commitDraftAsset = (built, { mortgage } = {}) => {
+    setDraftAssets((list) => list.filter((d) => d.id !== built.id))
+    setAssets((list) => [...list, built])
+    maybeAddMortgageDraft(built, mortgage)
+    touch()
+  }
+  const commitDraftLiability = (built) => {
+    setDraftLiabilities((list) => list.filter((d) => d.id !== built.id))
+    setLiabilities((l) => ({ ...l, explicitNone: false, items: [...l.items, built] }))
+    touch()
+  }
+
+  const addAllAssets = () => {
+    setAssets((list) => [...list, ...draftAssets])
+    setDraftAssets([])
+    touch()
+  }
+  const addAllLiabilities = () => {
+    setLiabilities((l) => ({ ...l, explicitNone: false, items: [...l.items, ...draftLiabilities] }))
+    setDraftLiabilities([])
+    touch()
+  }
+
   /* ---- assets ---- */
 
   const commitAsset = (built, { mortgage } = {}) => {
@@ -42,18 +123,7 @@ export default function App() {
         ? list.map((a) => (a.id === built.id ? { ...a, ...built } : a))
         : [...list, built]
     )
-    if (mortgage && !liabilities.items.some((l) => l.linkedAssetId === built.id)) {
-      // Draft mortgage linked to the property; completed under What you owe.
-      setLiabilities((l) => ({
-        ...l,
-        explicitNone: false,
-        items: [...l.items, {
-          id: uid(), type: 'Mortgage', lender: '',
-          balance: null, currency: 'USD', interestRate: null,
-          linkedAssetId: built.id, draft: true,
-        }],
-      }))
-    }
+    maybeAddMortgageDraft(built, mortgage)
     setEditing(null)
     touch()
   }
@@ -107,33 +177,6 @@ export default function App() {
     touch()
   }
 
-  /* ---- statement import ---- */
-
-  const startImport = () => {
-    setImportStage('processing')
-    setTimeout(() => {
-      setFoundAccounts(FOUND_ACCOUNTS())
-      setImportStage('result')
-    }, 1600)
-  }
-
-  const setAccount = (id, k, v) =>
-    setFoundAccounts((list) => list.map((a) => (a.id === id ? { ...a, [k]: v } : a)))
-
-  const addFoundAccounts = () => {
-    setAssets((list) => [
-      ...list,
-      ...foundAccounts.map((a) => ({
-        id: a.id, category: 'investment',
-        title: a.institution || 'Investment account', subtitle: a.accountType,
-        institution: a.institution, accountType: a.accountType,
-        value: a.value ?? null, currency: a.currency || 'USD',
-      })),
-    ])
-    setImportStage(null)
-    touch()
-  }
-
   /* ---- misc ---- */
 
   const showMissing = () => {
@@ -147,22 +190,27 @@ export default function App() {
   const goToLiabilities = () =>
     oweRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
+  const clearTransient = () => {
+    setEditing(null); setBatchFiles(null); setToast(null)
+    setDraftAssets([]); setDraftLiabilities([])
+  }
   const resetDemo = () => {
     const fresh = seedProfile()
     setAssets(fresh.assets)
     setLiabilities(fresh.liabilities)
-    setEditing(null); setImportStage(null); setToast(null)
+    clearTransient()
     touch()
   }
   const blankStart = () => {
     setAssets([]); setLiabilities(blankLiabilities())
-    setEditing(null); setImportStage(null); setToast(null)
+    clearTransient()
     touch()
   }
 
   const properties = assets.filter((a) => a.category === 'realestate')
   const editingAsset = editing?.kind === 'asset' ? editing.id : undefined
   const editingLiability = editing?.kind === 'liability' ? editing.id : undefined
+  const showChips = assets.length + liabilities.items.length < 3
 
   const assetEditorFor = (asset) => (
     <AssetEditor
@@ -176,7 +224,15 @@ export default function App() {
   return (
     <>
       <TopBar saved={saved} clientName="Jonathan Reeves" />
-      <main className="content">
+      <main
+        className="content"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault()
+          const names = [...(e.dataTransfer?.files || [])].map((f) => f.name)
+          if (names.length) handleFiles(names)
+        }}
+      >
         <div className="main-col">
           <h1 className="page-title">Your net worth</h1>
 
@@ -184,47 +240,34 @@ export default function App() {
           <section className="block">
             <div className="block-head">
               <h2 className="block-title">What you own</h2>
-              <div className="block-actions">
-                <button className="btn btn-secondary" onClick={() => fileRef.current?.click()}>
-                  Import statement
-                </button>
-                <button className="btn btn-primary" onClick={() => setEditing({ kind: 'asset', id: null })}>
-                  + Add an asset
-                </button>
-              </div>
-              <input ref={fileRef} type="file" accept=".pdf" hidden onChange={startImport} />
             </div>
-            <p className="block-helper">
-              Statements save typing — we'll read account names and balances for you.
-            </p>
-
-            {importStage === 'processing' && (
-              <div className="processing">
-                <span className="spinner" aria-hidden="true" />
-                <span className="processing-text">Reading your statement…</span>
-              </div>
-            )}
-            {importStage === 'result' && (
-              <ImportResult
-                accounts={foundAccounts} setAccount={setAccount}
-                onAdd={addFoundAccounts} onDiscard={() => setImportStage(null)}
-              />
-            )}
 
             {editingAsset === null && assetEditorFor(null)}
 
-            {assets.length === 0 && editingAsset === undefined && !importStage ? (
-              <div
-                className="drop-empty"
-                role="button"
-                tabIndex={0}
-                onClick={() => setEditing({ kind: 'asset', id: null })}
-                onKeyDown={(e) => e.key === 'Enter' && setEditing({ kind: 'asset', id: null })}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => { e.preventDefault(); startImport() }}
-              >
-                Add your first asset — or drop a statement here
+            {draftAssets.length > 0 && (
+              <div className="draft-zone">
+                {draftAssets.length >= 2 && (
+                  <div className="draft-actions">
+                    <span className="draft-count">{draftAssets.length} ready to add</span>
+                    <span className="editor-actions-spacer" />
+                    <button className="btn btn-ghost" onClick={() => setDraftAssets([])}>Discard</button>
+                    <button className="btn btn-secondary" onClick={addAllAssets}>Add all</button>
+                  </div>
+                )}
+                {draftAssets.map((d) => (
+                  <AssetEditor
+                    key={d.id} asset={d} draft
+                    onFormChange={updateDraftAsset}
+                    onCommit={commitDraftAsset}
+                    onDiscard={() => setDraftAssets((l) => l.filter((x) => x.id !== d.id))}
+                    onRemove={() => setDraftAssets((l) => l.filter((x) => x.id !== d.id))}
+                  />
+                ))}
               </div>
+            )}
+
+            {assets.length === 0 && draftAssets.length === 0 && editingAsset === undefined ? (
+              <p className="block-empty">What you own — nothing here yet. Use the bar below to get started.</p>
             ) : (
               <AssetGroups
                 assets={assets}
@@ -240,9 +283,6 @@ export default function App() {
           <section className="block" ref={oweRef}>
             <div className="block-head">
               <h2 className="block-title">What you owe</h2>
-              <button className="btn btn-primary" onClick={() => setEditing({ kind: 'liability', id: null })}>
-                + Add a liability
-              </button>
             </div>
 
             {editingLiability === null && (
@@ -251,6 +291,28 @@ export default function App() {
                 onCommit={commitLiability}
                 onDiscard={() => setEditing(null)}
               />
+            )}
+
+            {draftLiabilities.length > 0 && (
+              <div className="draft-zone">
+                {draftLiabilities.length >= 2 && (
+                  <div className="draft-actions">
+                    <span className="draft-count">{draftLiabilities.length} ready to add</span>
+                    <span className="editor-actions-spacer" />
+                    <button className="btn btn-ghost" onClick={() => setDraftLiabilities([])}>Discard</button>
+                    <button className="btn btn-secondary" onClick={addAllLiabilities}>Add all</button>
+                  </div>
+                )}
+                {draftLiabilities.map((d) => (
+                  <LiabilityEditor
+                    key={d.id} liability={d} draft properties={properties}
+                    onFormChange={updateDraftLiability}
+                    onCommit={commitDraftLiability}
+                    onDiscard={() => setDraftLiabilities((l) => l.filter((x) => x.id !== d.id))}
+                    onRemove={() => setDraftLiabilities((l) => l.filter((x) => x.id !== d.id))}
+                  />
+                ))}
+              </div>
             )}
 
             {liabilities.items.length > 0 && (
@@ -282,12 +344,33 @@ export default function App() {
               </p>
             )}
 
-            {liabilities.items.length === 0 && !liabilities.explicitNone && editingLiability === undefined && (
-              <button className="btn btn-secondary owe-none-btn" onClick={answerNone}>
-                I don't have any liabilities
-              </button>
+            {liabilities.items.length === 0 && !liabilities.explicitNone &&
+              draftLiabilities.length === 0 && editingLiability === undefined && (
+              <>
+                <p className="block-empty">What you owe — nothing here yet. Use the bar below to get started.</p>
+                <button className="btn btn-secondary owe-none-btn" onClick={answerNone}>
+                  I don't have any liabilities
+                </button>
+              </>
             )}
           </section>
+
+          {batchFiles && (
+            <BatchPanel
+              key={batchFiles.join('|')}
+              fileNames={batchFiles}
+              assets={assets}
+              onApply={applyBatch}
+              onDiscard={() => setBatchFiles(null)}
+            />
+          )}
+
+          <CaptureBar
+            showChips={showChips}
+            onSubmit={handleCapture}
+            onFiles={handleFiles}
+            onAddManually={() => setEditing({ kind: 'asset', id: null })}
+          />
         </div>
 
         <SummaryPanel
