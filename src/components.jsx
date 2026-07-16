@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
 import {
-  CATEGORIES, CURRENCY_SYMBOLS, effectiveUSD, fmtMoney, fmtUSD,
-  hasForeignValues, liabilitiesAnswered, liabilitiesTotalUSD, parseAmount, shareValue, usdOf,
+  CATEGORIES, effectiveUSD, fmtMoney, fmtUSD,
+  hasForeignValues, liabilitiesAnswered, liabilitiesTotalUSD, shareValue, usdOf,
 } from './data.js'
 import { useCountUp } from './hooks.js'
 
@@ -115,64 +114,28 @@ export function SummaryPanel({ assets, liabilities, onShowMissing, onGoToLiabili
   )
 }
 
-/* ---------------- Money cell (assets and liabilities) ---------------- */
+/* ---------------- Display money (read-only cell) ---------------- */
 
-function MoneyCell({ amount, currency = 'USD', primaryText, usdApprox, missingLabel, addLabel, onCommit }) {
-  const [editing, setEditing] = useState(false)
-  const [text, setText] = useState('')
-  const inputRef = useRef(null)
-
-  useEffect(() => {
-    if (editing) inputRef.current?.select()
-  }, [editing])
-
-  const start = () => {
-    setText(amount == null ? '' : String(amount.toLocaleString('en-US')))
-    setEditing(true)
-  }
-  const commit = () => {
-    onCommit(parseAmount(text))
-    setEditing(false)
-  }
-
-  if (editing) {
-    return (
-      <div className="value-edit">
-        <span className="value-edit-prefix">{CURRENCY_SYMBOLS[currency]}</span>
-        <input
-          ref={inputRef}
-          className="input value-edit-input"
-          value={text}
-          inputMode="numeric"
-          onChange={(e) => setText(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') commit()
-            if (e.key === 'Escape') setEditing(false)
-          }}
-        />
-      </div>
-    )
-  }
+function MoneyDisplay({ amount, currency = 'USD', primaryText, usdApprox, missingLabel, addLabel }) {
   if (amount == null) {
     return (
       <div className="value-missing">
         <span className="value-missing-text">{missingLabel}</span>
-        <button className="link" onClick={start}>{addLabel}</button>
+        <span className="link">{addLabel}</span>
       </div>
     )
   }
   return (
-    <button className="value-wrap" onClick={start} title="Edit value">
+    <div className="value-wrap">
       <span className="value-text">{primaryText}</span>
       {usdApprox != null && <span className="value-approx">≈ {fmtUSD(usdApprox)}</span>}
-    </button>
+    </div>
   )
 }
 
-/* ---------------- Asset cards ---------------- */
+/* ---------------- Cards (display mode) ---------------- */
 
-export function AssetCard({ asset, onChange, highlight }) {
+export function AssetCard({ asset, onOpen, highlight }) {
   const cur = asset.currency ?? 'USD'
   const shared = asset.value != null && shareValue(asset) !== asset.value
   const primaryText = shared
@@ -180,23 +143,61 @@ export function AssetCard({ asset, onChange, highlight }) {
     : fmtMoney(asset.value, cur)
 
   return (
-    <div className={'card' + (highlight ? ' card-highlight' : '')} id={'asset-' + asset.id}>
+    <div
+      className={'card card-clickable' + (highlight ? ' card-highlight' : '')}
+      id={'asset-' + asset.id}
+      onClick={onOpen}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onOpen()}
+    >
+      <span className="card-hint">Edit</span>
       <div className="card-info">
         <div className="card-title">{asset.title}</div>
         {asset.subtitle && <div className="card-subtitle">{asset.subtitle}</div>}
       </div>
-      <MoneyCell
+      <MoneyDisplay
         amount={asset.value} currency={cur}
         primaryText={primaryText}
         usdApprox={cur !== 'USD' ? effectiveUSD(asset) : null}
         missingLabel="Value not added" addLabel="Add value"
-        onCommit={onChange}
       />
     </div>
   )
 }
 
-export function AssetGroups({ assets, onChangeValue, highlightId }) {
+export function LiabilityCard({ liability, assets, onOpen }) {
+  const cur = liability.currency ?? 'USD'
+  const linked = assets.find((a) => a.id === liability.linkedAssetId)
+  const subtitle = [liability.lender, liability.interestRate && `${liability.interestRate}%`, linked?.title]
+    .filter(Boolean).join(' · ')
+
+  return (
+    <div
+      className="card card-clickable"
+      onClick={onOpen}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onOpen()}
+    >
+      <span className="card-hint">Edit</span>
+      <div className="card-info">
+        <div className="card-title">{liability.type}</div>
+        {subtitle && <div className="card-subtitle">{subtitle}</div>}
+      </div>
+      <MoneyDisplay
+        amount={liability.balance} currency={cur}
+        primaryText={fmtMoney(liability.balance, cur)}
+        usdApprox={cur !== 'USD' ? usdOf(liability.balance, cur) : null}
+        missingLabel="Balance not added" addLabel="Add balance"
+      />
+    </div>
+  )
+}
+
+/* ---------------- Groups ---------------- */
+
+export function AssetGroups({ assets, editingId, onOpen, renderEditor, highlightId }) {
   return (
     <div className="groups">
       {CATEGORIES.map((cat) => {
@@ -208,44 +209,25 @@ export function AssetGroups({ assets, onChangeValue, highlightId }) {
           <section className="group" key={cat.key}>
             <div className="group-head">
               <h3 className="group-name">{cat.plural}</h3>
-              <span className="group-subtotal">{valued.length ? fmtUSD(subtotal) : '—'}</span>
+              {items.length >= 2 && (
+                <span className="group-subtotal">{valued.length ? fmtUSD(subtotal) : '—'}</span>
+              )}
             </div>
-            {items.map((a) => (
-              <AssetCard
-                key={a.id}
-                asset={a}
-                highlight={a.id === highlightId}
-                onChange={(v) => onChangeValue(a.id, v)}
-              />
-            ))}
+            {items.map((a) =>
+              a.id === editingId ? (
+                <div key={a.id}>{renderEditor(a)}</div>
+              ) : (
+                <AssetCard
+                  key={a.id}
+                  asset={a}
+                  highlight={a.id === highlightId}
+                  onOpen={() => onOpen(a.id)}
+                />
+              )
+            )}
           </section>
         )
       })}
-    </div>
-  )
-}
-
-/* ---------------- Liability cards ---------------- */
-
-export function LiabilityCard({ liability, assets, onChangeBalance }) {
-  const cur = liability.currency ?? 'USD'
-  const linked = assets.find((a) => a.id === liability.linkedAssetId)
-  const subtitle = [liability.lender, liability.interestRate && `${liability.interestRate}%`, linked?.title]
-    .filter(Boolean).join(' · ')
-
-  return (
-    <div className="card">
-      <div className="card-info">
-        <div className="card-title">{liability.type}</div>
-        {subtitle && <div className="card-subtitle">{subtitle}</div>}
-      </div>
-      <MoneyCell
-        amount={liability.balance} currency={cur}
-        primaryText={fmtMoney(liability.balance, cur)}
-        usdApprox={cur !== 'USD' ? usdOf(liability.balance, cur) : null}
-        missingLabel="Balance not added" addLabel="Add balance"
-        onCommit={onChangeBalance}
-      />
     </div>
   )
 }

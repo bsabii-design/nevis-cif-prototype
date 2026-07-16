@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ACCOUNT_TYPES, COLLECTIBLE_CATEGORIES, CATEGORIES, CURRENCIES,
   LIABILITY_TYPES, PROPERTY_TYPES, parseAmount, uid,
@@ -66,10 +66,40 @@ export function Toggle({ label, checked, onChange }) {
 
 const VALUE_HELPER = "Don't know it offhand? Leave it for later."
 
-/* ---------------- Inline asset editor ---------------- */
+/* Commit the edit when the user clicks anywhere outside the editor. */
+function useOutsideCommit(ref, commit) {
+  const commitRef = useRef(commit)
+  commitRef.current = commit
+  useEffect(() => {
+    const onDown = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) commitRef.current()
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [ref])
+}
 
-const buildAsset = (category, form) => {
-  const base = { id: uid(), category, value: form.value ?? null, currency: form.currency || 'USD' }
+/* ---------------- Asset editor (create and edit) ---------------- */
+
+const initAssetForm = (asset) => {
+  if (!asset) return {}
+  if (asset.category === 'investment')
+    return { institution: asset.institution, accountType: asset.accountType, value: asset.value, currency: asset.currency }
+  if (asset.category === 'realestate')
+    return {
+      name: asset.title, propertyType: asset.propertyType, value: asset.value, currency: asset.currency,
+      shared: asset.ownershipShare != null && asset.ownershipShare < 100,
+      share: asset.ownershipShare != null && asset.ownershipShare < 100 ? String(asset.ownershipShare) : '',
+    }
+  if (asset.category === 'collectibles')
+    return { collectibleCategory: asset.collectibleCategory, description: asset.title, value: asset.value, currency: asset.currency }
+  if (asset.category === 'crypto')
+    return { whereHeld: asset.whereHeld, value: asset.value, currency: asset.currency }
+  return { description: asset.title, value: asset.value, currency: asset.currency }
+}
+
+const buildAsset = (category, form, id = uid()) => {
+  const base = { id, category, value: form.value ?? null, currency: form.currency || 'USD' }
   if (category === 'investment')
     return { ...base, title: form.institution, subtitle: form.accountType || 'Brokerage account', institution: form.institution, accountType: form.accountType || 'Brokerage account' }
   if (category === 'realestate') {
@@ -89,10 +119,19 @@ const canSaveAsset = (category, form) =>
   category === 'crypto' ? !!form.whereHeld :
   !!form.description
 
-export function InlineAssetEditor({ onSave, onCancel }) {
-  const [category, setCategory] = useState('investment')
-  const [form, setForm] = useState({})
+export function AssetEditor({ asset, onCommit, onDiscard, onRemove }) {
+  const [category, setCategory] = useState(asset?.category ?? 'investment')
+  const [form, setForm] = useState(() => initAssetForm(asset))
+  const ref = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+
+  const attemptCommit = () => {
+    if (canSaveAsset(category, form))
+      onCommit(buildAsset(category, form, asset?.id), { mortgage: category === 'realestate' && !!form.mortgage })
+    else onDiscard()
+  }
+  useOutsideCommit(ref, attemptCommit)
+
   const money = (
     <Field label={category === 'realestate' ? 'Estimated value' : 'Current value'} helper={VALUE_HELPER}>
       <MoneyInput
@@ -103,7 +142,7 @@ export function InlineAssetEditor({ onSave, onCancel }) {
   )
 
   return (
-    <div className="card editor">
+    <div className="card editor" ref={ref}>
       <div className="editor-grid">
         <Field label="Type">
           <select
@@ -118,7 +157,7 @@ export function InlineAssetEditor({ onSave, onCancel }) {
         {category === 'investment' && (
           <>
             <Field label="Institution">
-              <input className="input" placeholder="Fidelity, Vanguard, Schwab…" autoFocus
+              <input className="input" placeholder="Fidelity, Vanguard, Schwab…" autoFocus={!asset}
                 value={form.institution || ''} onChange={(e) => set('institution', e.target.value)} />
             </Field>
             <Field label="Account type">
@@ -134,7 +173,7 @@ export function InlineAssetEditor({ onSave, onCancel }) {
         {category === 'realestate' && (
           <>
             <Field label="Name or address">
-              <input className="input" placeholder="Austin house, 12 Lake Rd…" autoFocus
+              <input className="input" placeholder="Austin house, 12 Lake Rd…" autoFocus={!asset}
                 value={form.name || ''} onChange={(e) => set('name', e.target.value)} />
             </Field>
             <Field label="Property type">
@@ -173,7 +212,7 @@ export function InlineAssetEditor({ onSave, onCancel }) {
               </select>
             </Field>
             <Field label="Description">
-              <input className="input" placeholder="Paintings and prints, watch collection…" autoFocus
+              <input className="input" placeholder="Paintings and prints, watch collection…" autoFocus={!asset}
                 value={form.description || ''} onChange={(e) => set('description', e.target.value)} />
             </Field>
             {money}
@@ -183,7 +222,7 @@ export function InlineAssetEditor({ onSave, onCancel }) {
         {category === 'crypto' && (
           <>
             <Field label="Where it's held">
-              <input className="input" placeholder="Coinbase, Ledger cold wallet…" autoFocus
+              <input className="input" placeholder="Coinbase, Ledger cold wallet…" autoFocus={!asset}
                 value={form.whereHeld || ''} onChange={(e) => set('whereHeld', e.target.value)} />
             </Field>
             {money}
@@ -193,7 +232,7 @@ export function InlineAssetEditor({ onSave, onCancel }) {
         {category === 'other' && (
           <>
             <Field label="Description">
-              <input className="input" placeholder="Describe the asset" autoFocus
+              <input className="input" placeholder="Describe the asset" autoFocus={!asset}
                 value={form.description || ''} onChange={(e) => set('description', e.target.value)} />
             </Field>
             {money}
@@ -202,27 +241,43 @@ export function InlineAssetEditor({ onSave, onCancel }) {
       </div>
 
       <div className="editor-actions">
-        <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
-        <button
-          className="btn btn-primary"
-          disabled={!canSaveAsset(category, form)}
-          onClick={() => onSave(buildAsset(category, form), { mortgage: category === 'realestate' && !!form.mortgage })}
-        >
-          Save asset
+        {asset && <button className="btn btn-ghost btn-remove" onClick={onRemove}>Remove</button>}
+        <span className="editor-actions-spacer" />
+        {!asset && <button className="btn btn-ghost" onClick={onDiscard}>Cancel</button>}
+        <button className="btn btn-primary" disabled={!canSaveAsset(category, form)} onClick={attemptCommit}>
+          Done
         </button>
       </div>
     </div>
   )
 }
 
-/* ---------------- Inline liability editor ---------------- */
+/* ---------------- Liability editor (create and edit) ---------------- */
 
-export function InlineLiabilityEditor({ properties, onSave, onCancel }) {
-  const [form, setForm] = useState({ type: 'Mortgage' })
+const initLiabilityForm = (l) => l ? {
+  type: l.type, lender: l.lender, balance: l.balance, currency: l.currency,
+  interestRate: l.interestRate || '', linkedAssetId: l.linkedAssetId ? String(l.linkedAssetId) : '',
+} : { type: 'Mortgage' }
+
+export function LiabilityEditor({ liability, properties, onCommit, onDiscard, onRemove }) {
+  const [form, setForm] = useState(() => initLiabilityForm(liability))
+  const ref = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
+  const attemptCommit = () => {
+    if (form.lender)
+      onCommit({
+        id: liability?.id ?? uid(), type: form.type, lender: form.lender,
+        balance: form.balance ?? null, currency: form.currency || 'USD',
+        interestRate: form.interestRate || null,
+        linkedAssetId: form.linkedAssetId ? Number(form.linkedAssetId) : null,
+      })
+    else onDiscard()
+  }
+  useOutsideCommit(ref, attemptCommit)
+
   return (
-    <div className="card editor">
+    <div className="card editor" ref={ref}>
       <div className="editor-grid">
         <Field label="Type">
           <select className="input select" value={form.type} onChange={(e) => set('type', e.target.value)}>
@@ -230,7 +285,7 @@ export function InlineLiabilityEditor({ properties, onSave, onCancel }) {
           </select>
         </Field>
         <Field label="Lender">
-          <input className="input" placeholder="First Republic, Chase…" autoFocus
+          <input className="input" placeholder="First Republic, Chase…" autoFocus={!liability}
             value={form.lender || ''} onChange={(e) => set('lender', e.target.value)} />
         </Field>
         <Field label="Outstanding balance" helper={VALUE_HELPER}>
@@ -258,19 +313,10 @@ export function InlineLiabilityEditor({ properties, onSave, onCancel }) {
         )}
       </div>
       <div className="editor-actions">
-        <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
-        <button
-          className="btn btn-primary"
-          disabled={!form.lender}
-          onClick={() => onSave({
-            id: uid(), type: form.type, lender: form.lender,
-            balance: form.balance ?? null, currency: form.currency || 'USD',
-            interestRate: form.interestRate || null,
-            linkedAssetId: form.linkedAssetId ? Number(form.linkedAssetId) : null,
-          })}
-        >
-          Save liability
-        </button>
+        {liability && <button className="btn btn-ghost btn-remove" onClick={onRemove}>Remove</button>}
+        <span className="editor-actions-spacer" />
+        {!liability && <button className="btn btn-ghost" onClick={onDiscard}>Cancel</button>}
+        <button className="btn btn-primary" disabled={!form.lender} onClick={attemptCommit}>Done</button>
       </div>
     </div>
   )
@@ -305,6 +351,7 @@ export function ImportResult({ accounts, setAccount, onAdd, onDiscard }) {
         </div>
       ))}
       <div className="editor-actions">
+        <span className="editor-actions-spacer" />
         <button className="btn btn-ghost" onClick={onDiscard}>Discard</button>
         <button className="btn btn-primary" onClick={onAdd}>Add {accounts.length} accounts</button>
       </div>

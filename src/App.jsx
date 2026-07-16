@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { TopBar, AssetGroups, SummaryPanel, EmptyAssets, LiabilityCard } from './components.jsx'
-import { InlineAssetEditor, InlineLiabilityEditor, ImportResult } from './editors.jsx'
+import { AssetEditor, LiabilityEditor, ImportResult } from './editors.jsx'
 import { FOUND_ACCOUNTS, blankLiabilities, seedProfile, uid } from './data.js'
 import { useSavedFlash } from './hooks.js'
 
@@ -9,27 +9,40 @@ const initial = seedProfile()
 export default function App() {
   const [assets, setAssets] = useState(initial.assets)
   const [liabilities, setLiabilities] = useState(initial.liabilities)
-  const [addingAsset, setAddingAsset] = useState(false)
-  const [addingLiability, setAddingLiability] = useState(false)
+  /* editing: null | {kind:'asset'|'liability', id: number|null} — id null means a new card */
+  const [editing, setEditing] = useState(null)
   const [importStage, setImportStage] = useState(null) // null | 'processing' | 'result'
   const [foundAccounts, setFoundAccounts] = useState([])
+  const [toast, setToast] = useState(null) // {msg, undo}
   const [tick, setTick] = useState(0)
   const [highlightId, setHighlightId] = useState(null)
   const saved = useSavedFlash(tick)
   const fileRef = useRef(null)
   const oweRef = useRef(null)
+  const toastTimer = useRef(null)
   const touch = () => setTick((t) => t + 1)
 
-  /* ---- assets ---- */
-
-  const changeValue = (id, value) => {
-    setAssets((list) => list.map((a) => (a.id === id ? { ...a, value } : a)))
+  const showToast = (msg, undo) => {
+    clearTimeout(toastTimer.current)
+    setToast({ msg, undo })
+    toastTimer.current = setTimeout(() => setToast(null), 5000)
+  }
+  const handleUndo = () => {
+    toast?.undo()
+    clearTimeout(toastTimer.current)
+    setToast(null)
     touch()
   }
 
-  const saveAsset = (asset, { mortgage } = {}) => {
-    setAssets((list) => [...list, asset])
-    if (mortgage) {
+  /* ---- assets ---- */
+
+  const commitAsset = (built, { mortgage } = {}) => {
+    setAssets((list) =>
+      list.some((a) => a.id === built.id)
+        ? list.map((a) => (a.id === built.id ? { ...a, ...built } : a))
+        : [...list, built]
+    )
+    if (mortgage && !liabilities.items.some((l) => l.linkedAssetId === built.id)) {
       // Draft mortgage linked to the property; completed under What you owe.
       setLiabilities((l) => ({
         ...l,
@@ -37,27 +50,55 @@ export default function App() {
         items: [...l.items, {
           id: uid(), type: 'Mortgage', lender: '',
           balance: null, currency: 'USD', interestRate: null,
-          linkedAssetId: asset.id, draft: true,
+          linkedAssetId: built.id, draft: true,
         }],
       }))
     }
-    setAddingAsset(false)
+    setEditing(null)
+    touch()
+  }
+
+  const removeAsset = (id) => {
+    const index = assets.findIndex((a) => a.id === id)
+    const item = assets[index]
+    setAssets((list) => list.filter((a) => a.id !== id))
+    setEditing(null)
+    showToast(`${item.title} removed`, () =>
+      setAssets((list) => {
+        const next = [...list]
+        next.splice(Math.min(index, next.length), 0, item)
+        return next
+      })
+    )
     touch()
   }
 
   /* ---- liabilities ---- */
 
-  const changeBalance = (id, balance) => {
+  const commitLiability = (built) => {
     setLiabilities((l) => ({
       ...l,
-      items: l.items.map((it) => (it.id === id ? { ...it, balance } : it)),
+      explicitNone: false,
+      items: l.items.some((it) => it.id === built.id)
+        ? l.items.map((it) => (it.id === built.id ? { ...it, ...built, draft: false } : it))
+        : [...l.items, built],
     }))
+    setEditing(null)
     touch()
   }
 
-  const saveLiability = (item) => {
-    setLiabilities((l) => ({ ...l, explicitNone: false, items: [...l.items, item] }))
-    setAddingLiability(false)
+  const removeLiability = (id) => {
+    const index = liabilities.items.findIndex((it) => it.id === id)
+    const item = liabilities.items[index]
+    setLiabilities((l) => ({ ...l, items: l.items.filter((it) => it.id !== id) }))
+    setEditing(null)
+    showToast(`${item.type} removed`, () =>
+      setLiabilities((l) => {
+        const next = [...l.items]
+        next.splice(Math.min(index, next.length), 0, item)
+        return { ...l, items: next }
+      })
+    )
     touch()
   }
 
@@ -110,16 +151,27 @@ export default function App() {
     const fresh = seedProfile()
     setAssets(fresh.assets)
     setLiabilities(fresh.liabilities)
-    setAddingAsset(false); setAddingLiability(false); setImportStage(null)
+    setEditing(null); setImportStage(null); setToast(null)
     touch()
   }
   const blankStart = () => {
     setAssets([]); setLiabilities(blankLiabilities())
-    setAddingAsset(false); setAddingLiability(false); setImportStage(null)
+    setEditing(null); setImportStage(null); setToast(null)
     touch()
   }
 
   const properties = assets.filter((a) => a.category === 'realestate')
+  const editingAsset = editing?.kind === 'asset' ? editing.id : undefined
+  const editingLiability = editing?.kind === 'liability' ? editing.id : undefined
+
+  const assetEditorFor = (asset) => (
+    <AssetEditor
+      asset={asset}
+      onCommit={commitAsset}
+      onDiscard={() => setEditing(null)}
+      onRemove={asset ? () => removeAsset(asset.id) : undefined}
+    />
+  )
 
   return (
     <>
@@ -154,17 +206,25 @@ export default function App() {
               />
             )}
 
-            {assets.length === 0 && !addingAsset ? (
-              <EmptyAssets onAdd={() => setAddingAsset(true)} />
+            {assets.length === 0 && editingAsset === undefined ? (
+              <EmptyAssets onAdd={() => setEditing({ kind: 'asset', id: null })} />
             ) : (
-              <AssetGroups assets={assets} onChangeValue={changeValue} highlightId={highlightId} />
+              <AssetGroups
+                assets={assets}
+                editingId={editingAsset}
+                onOpen={(id) => setEditing({ kind: 'asset', id })}
+                renderEditor={assetEditorFor}
+                highlightId={highlightId}
+              />
             )}
 
-            {addingAsset ? (
-              <InlineAssetEditor onSave={saveAsset} onCancel={() => setAddingAsset(false)} />
+            {editingAsset === null ? (
+              assetEditorFor(null)
             ) : (
               assets.length > 0 && (
-                <button className="add-row" onClick={() => setAddingAsset(true)}>+ Add an asset</button>
+                <button className="add-row" onClick={() => setEditing({ kind: 'asset', id: null })}>
+                  + Add an asset
+                </button>
               )
             )}
           </section>
@@ -176,36 +236,46 @@ export default function App() {
             </div>
 
             {liabilities.items.length > 0 && (
-              <div className="groups">
-                <div className="group">
-                  {liabilities.items.map((l) => (
+              <div className="group">
+                {liabilities.items.map((l) =>
+                  l.id === editingLiability ? (
+                    <LiabilityEditor
+                      key={l.id} liability={l} properties={properties}
+                      onCommit={commitLiability}
+                      onDiscard={() => setEditing(null)}
+                      onRemove={() => removeLiability(l.id)}
+                    />
+                  ) : (
                     <LiabilityCard
                       key={l.id} liability={l} assets={assets}
-                      onChangeBalance={(v) => changeBalance(l.id, v)}
+                      onOpen={() => setEditing({ kind: 'liability', id: l.id })}
                     />
-                  ))}
-                </div>
+                  )
+                )}
               </div>
             )}
 
             {liabilities.explicitNone && (
               <p className="owe-none">
                 No liabilities — this counts as $0 in your net worth.{' '}
-                <button className="link" onClick={() => setAddingLiability(true)}>
+                <button className="link" onClick={() => setEditing({ kind: 'liability', id: null })}>
                   Actually, add a liability
                 </button>
               </p>
             )}
 
-            {addingLiability ? (
-              <InlineLiabilityEditor
+            {editingLiability === null ? (
+              <LiabilityEditor
                 properties={properties}
-                onSave={saveLiability} onCancel={() => setAddingLiability(false)}
+                onCommit={commitLiability}
+                onDiscard={() => setEditing(null)}
               />
             ) : (
               !liabilities.explicitNone && (
                 <div className="owe-actions">
-                  <button className="add-row" onClick={() => setAddingLiability(true)}>+ Add a liability</button>
+                  <button className="add-row" onClick={() => setEditing({ kind: 'liability', id: null })}>
+                    + Add a liability
+                  </button>
                   {liabilities.items.length === 0 && (
                     <button className="btn btn-secondary" onClick={answerNone}>
                       I don't have any liabilities
@@ -227,6 +297,12 @@ export default function App() {
         <span className="footer-sep">·</span>
         <button className="footer-link" onClick={blankStart}>Blank start</button>
       </footer>
+      {toast && (
+        <div className="toast" role="status">
+          <span>{toast.msg} ·</span>
+          <button className="link" onClick={handleUndo}>Undo</button>
+        </div>
+      )}
     </>
   )
 }
