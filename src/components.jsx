@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { CATEGORIES, effectiveValue, fmtUSD, liabilitiesTotal, parseUSD } from './data.js'
+import {
+  CATEGORIES, CURRENCY_SYMBOLS, effectiveUSD, fmtMoney, fmtUSD,
+  hasForeignValues, liabilitiesAnswered, liabilitiesTotalUSD, parseAmount, shareValue, usdOf,
+} from './data.js'
 import { useCountUp } from './hooks.js'
 
 /* ---------------- Top bar ---------------- */
 
-const TABS = ['Personal', 'Occupation & income', 'Goals', 'Assets', 'Liabilities']
+const TABS = ['Personal', 'Occupation & income', 'Goals', 'Net worth']
 
 export function TopBar({ saved, clientName }) {
   return (
@@ -15,8 +18,8 @@ export function TopBar({ saved, clientName }) {
           {TABS.map((t) => (
             <button
               key={t}
-              className={'tab' + (t === 'Assets' ? ' tab-active' : '')}
-              title={t === 'Assets' ? undefined : 'Not part of this prototype'}
+              className={'tab' + (t === 'Net worth' ? ' tab-active' : '')}
+              title={t === 'Net worth' ? undefined : 'Not part of this prototype'}
             >
               {t}
             </button>
@@ -37,27 +40,28 @@ export function TopBar({ saved, clientName }) {
 /* ---------------- Net worth block (signature component) ----------------
    Anatomy: label → figure → at most ONE line below. Never two. */
 
-export function NetWorthBlock({ assets, liabilities, onShowMissing }) {
+export function NetWorthBlock({ assets, liabilities, onShowMissing, onGoToLiabilities }) {
   const valued = assets.filter((a) => a.value != null)
-  const totalAssets = valued.reduce((s, a) => s + effectiveValue(a), 0)
+  const totalAssets = valued.reduce((s, a) => s + effectiveUSD(a), 0)
   const missing = assets.length - valued.length
+  const answered = liabilitiesAnswered(liabilities)
 
   let label, figure, line
   if (assets.length === 0) {
     label = 'Net worth'
     figure = null
     line = <span className="nw-line nw-line-muted">Appears as you add what you own</span>
-  } else if (!liabilities.answered) {
+  } else if (!answered) {
     label = 'Total assets'
     figure = totalAssets
     line = (
-      <button className="nw-line nw-line-link" title="Not part of this prototype">
+      <button className="nw-line nw-line-link" onClick={onGoToLiabilities}>
         Add liabilities to complete your financial picture
       </button>
     )
   } else {
     label = 'Estimated net worth'
-    figure = totalAssets - liabilitiesTotal(liabilities)
+    figure = totalAssets - liabilitiesTotalUSD(liabilities)
     line =
       missing > 0 ? (
         <button className="nw-line nw-line-link" onClick={onShowMissing}>
@@ -79,36 +83,41 @@ export function NetWorthBlock({ assets, liabilities, onShowMissing }) {
   )
 }
 
-export function SummaryPanel({ assets, liabilities, onShowMissing }) {
+export function SummaryPanel({ assets, liabilities, onShowMissing, onGoToLiabilities }) {
   const valued = assets.filter((a) => a.value != null)
-  const totalAssets = valued.reduce((s, a) => s + effectiveValue(a), 0)
-  const showBreakdown = assets.length > 0 && liabilities.answered
+  const totalAssets = valued.reduce((s, a) => s + effectiveUSD(a), 0)
+  const showBreakdown = assets.length > 0 && liabilitiesAnswered(liabilities)
+  const foreign = hasForeignValues(assets, liabilities)
 
   return (
     <aside className="panel">
-      <NetWorthBlock assets={assets} liabilities={liabilities} onShowMissing={onShowMissing} />
+      <NetWorthBlock
+        assets={assets} liabilities={liabilities}
+        onShowMissing={onShowMissing} onGoToLiabilities={onGoToLiabilities}
+      />
       {showBreakdown && (
         <>
           <div className="divider" />
           <div className="breakdown">
             <div className="breakdown-row">
-              <span>Total assets</span>
+              <span>What you own</span>
               <span className="breakdown-val">{fmtUSD(totalAssets)}</span>
             </div>
             <div className="breakdown-row">
-              <span>Liabilities</span>
-              <span className="breakdown-val">−{fmtUSD(liabilitiesTotal(liabilities))}</span>
+              <span>What you owe</span>
+              <span className="breakdown-val">−{fmtUSD(liabilitiesTotalUSD(liabilities))}</span>
             </div>
           </div>
         </>
       )}
+      {foreign && <p className="panel-note">Includes values converted to USD.</p>}
     </aside>
   )
 }
 
-/* ---------------- Asset cards ---------------- */
+/* ---------------- Money cell (assets and liabilities) ---------------- */
 
-function ValueCell({ asset, onChange }) {
+function MoneyCell({ amount, currency = 'USD', primaryText, usdApprox, missingLabel, addLabel, onCommit }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState('')
   const inputRef = useRef(null)
@@ -118,18 +127,18 @@ function ValueCell({ asset, onChange }) {
   }, [editing])
 
   const start = () => {
-    setText(asset.value == null ? '' : String(asset.value.toLocaleString('en-US')))
+    setText(amount == null ? '' : String(amount.toLocaleString('en-US')))
     setEditing(true)
   }
   const commit = () => {
-    onChange(parseUSD(text))
+    onCommit(parseAmount(text))
     setEditing(false)
   }
 
   if (editing) {
     return (
       <div className="value-edit">
-        <span className="value-edit-prefix">$</span>
+        <span className="value-edit-prefix">{CURRENCY_SYMBOLS[currency]}</span>
         <input
           ref={inputRef}
           className="input value-edit-input"
@@ -145,37 +154,44 @@ function ValueCell({ asset, onChange }) {
       </div>
     )
   }
-  if (asset.value == null) {
+  if (amount == null) {
     return (
       <div className="value-missing">
-        <span className="value-missing-text">Value not added</span>
-        <button className="link" onClick={start}>Add value</button>
+        <span className="value-missing-text">{missingLabel}</span>
+        <button className="link" onClick={start}>{addLabel}</button>
       </div>
     )
   }
-  const shared = effectiveValue(asset) !== asset.value
   return (
-    <button className="value-text" onClick={start} title="Edit value">
-      {shared ? (
-        <>
-          <span className="value-muted">Value {fmtUSD(asset.value)} · </span>
-          Your share {fmtUSD(effectiveValue(asset))}
-        </>
-      ) : (
-        fmtUSD(asset.value)
-      )}
+    <button className="value-wrap" onClick={start} title="Edit value">
+      <span className="value-text">{primaryText}</span>
+      {usdApprox != null && <span className="value-approx">≈ {fmtUSD(usdApprox)}</span>}
     </button>
   )
 }
 
+/* ---------------- Asset cards ---------------- */
+
 export function AssetCard({ asset, onChange, highlight }) {
+  const cur = asset.currency ?? 'USD'
+  const shared = asset.value != null && shareValue(asset) !== asset.value
+  const primaryText = shared
+    ? <><span className="value-muted">Value {fmtMoney(asset.value, cur)} · </span>Your share {fmtMoney(shareValue(asset), cur)}</>
+    : fmtMoney(asset.value, cur)
+
   return (
     <div className={'card' + (highlight ? ' card-highlight' : '')} id={'asset-' + asset.id}>
       <div className="card-info">
         <div className="card-title">{asset.title}</div>
         {asset.subtitle && <div className="card-subtitle">{asset.subtitle}</div>}
       </div>
-      <ValueCell asset={asset} onChange={onChange} />
+      <MoneyCell
+        amount={asset.value} currency={cur}
+        primaryText={primaryText}
+        usdApprox={cur !== 'USD' ? effectiveUSD(asset) : null}
+        missingLabel="Value not added" addLabel="Add value"
+        onCommit={onChange}
+      />
     </div>
   )
 }
@@ -187,11 +203,11 @@ export function AssetGroups({ assets, onChangeValue, highlightId }) {
         const items = assets.filter((a) => a.category === cat.key)
         if (items.length === 0) return null
         const valued = items.filter((a) => a.value != null)
-        const subtotal = valued.reduce((s, a) => s + effectiveValue(a), 0)
+        const subtotal = valued.reduce((s, a) => s + effectiveUSD(a), 0)
         return (
           <section className="group" key={cat.key}>
             <div className="group-head">
-              <h2 className="group-name">{cat.plural}</h2>
+              <h3 className="group-name">{cat.plural}</h3>
               <span className="group-subtotal">{valued.length ? fmtUSD(subtotal) : '—'}</span>
             </div>
             {items.map((a) => (
@@ -209,16 +225,41 @@ export function AssetGroups({ assets, onChangeValue, highlightId }) {
   )
 }
 
-export function EmptyState({ onAdd }) {
+/* ---------------- Liability cards ---------------- */
+
+export function LiabilityCard({ liability, assets, onChangeBalance }) {
+  const cur = liability.currency ?? 'USD'
+  const linked = assets.find((a) => a.id === liability.linkedAssetId)
+  const subtitle = [liability.lender, liability.interestRate && `${liability.interestRate}%`, linked?.title]
+    .filter(Boolean).join(' · ')
+
+  return (
+    <div className="card">
+      <div className="card-info">
+        <div className="card-title">{liability.type}</div>
+        {subtitle && <div className="card-subtitle">{subtitle}</div>}
+      </div>
+      <MoneyCell
+        amount={liability.balance} currency={cur}
+        primaryText={fmtMoney(liability.balance, cur)}
+        usdApprox={cur !== 'USD' ? usdOf(liability.balance, cur) : null}
+        missingLabel="Balance not added" addLabel="Add balance"
+        onCommit={onChangeBalance}
+      />
+    </div>
+  )
+}
+
+export function EmptyAssets({ onAdd }) {
   return (
     <div className="empty">
-      <h2 className="empty-title">Add what you own</h2>
+      <h3 className="empty-title">Add what you own</h3>
       <p className="empty-copy">
         Accounts, property, collectibles — anything that makes up your financial picture.
         A rough estimate is fine.
       </p>
       <div className="empty-actions">
-        <button className="btn btn-primary" onClick={onAdd}>Add assets</button>
+        <button className="btn btn-primary" onClick={onAdd}>Add an asset</button>
       </div>
     </div>
   )
