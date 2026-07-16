@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   ACCOUNT_TYPES, COLLECTIBLE_CATEGORIES, CATEGORIES, CURRENCIES,
   LIABILITY_TYPES, PROPERTY_TYPES, parseAmount, uid,
@@ -16,9 +16,34 @@ export function Field({ label, helper, children }) {
   )
 }
 
-/* Compact currency select (default USD) + amount. */
+/* Compact currency select (default USD) + amount.
+   The amount formats with thousands separators as you type. */
 export function MoneyInput({ amount, currency = 'USD', onAmount, onCurrency }) {
   const [text, setText] = useState(amount == null ? '' : amount.toLocaleString('en-US'))
+  const inputRef = useRef(null)
+  const caretDigits = useRef(null)
+
+  /* After reformatting, put the caret back after the same digit it followed. */
+  useLayoutEffect(() => {
+    const el = inputRef.current
+    if (caretDigits.current == null || !el) return
+    let pos = 0, seen = 0
+    while (pos < el.value.length && seen < caretDigits.current) {
+      if (/\d/.test(el.value[pos])) seen++
+      pos++
+    }
+    el.setSelectionRange(pos, pos)
+    caretDigits.current = null
+  }, [text])
+
+  const handleChange = (e) => {
+    const el = e.target
+    caretDigits.current = el.value.slice(0, el.selectionStart ?? el.value.length).replace(/\D/g, '').length
+    const n = parseAmount(el.value)
+    setText(n == null ? '' : n.toLocaleString('en-US'))
+    onAmount(n)
+  }
+
   return (
     <div className="money">
       <select
@@ -30,17 +55,11 @@ export function MoneyInput({ amount, currency = 'USD', onAmount, onCurrency }) {
         {CURRENCIES.map((c) => <option key={c}>{c}</option>)}
       </select>
       <input
+        ref={inputRef}
         className="input"
         value={text}
         inputMode="numeric"
-        onChange={(e) => {
-          setText(e.target.value)
-          onAmount(parseAmount(e.target.value))
-        }}
-        onBlur={() => {
-          const n = parseAmount(text)
-          setText(n == null ? '' : n.toLocaleString('en-US'))
-        }}
+        onChange={handleChange}
       />
     </div>
   )
