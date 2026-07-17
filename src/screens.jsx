@@ -389,7 +389,7 @@ function CategoryBubbles({ categories, selected, locked, onToggle }) {
 
 export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   onAddAsset, onAddLiability, onEditAsset, onRemoveAsset, onEditLiability, onRemoveLiability,
-  onAnswerNone }) {
+  onAnswerNone, panelOpen }) {
   const { assets, liabilities, liabilitiesExplicitlyNone: none } = profile
 
   const liabsWithRecords = new Set(liabilities.map((l) => l.category))
@@ -428,7 +428,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
             <>
               <div className="assets-head">
                 <h2 className="assets-title">Your assets</h2>
-                <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
+                <button className="btn btn-primary" disabled={panelOpen} onClick={() => onAddAsset(null)}>Add assets</button>
               </div>
 
               {assetGroups.map((cat) => {

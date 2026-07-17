@@ -237,6 +237,7 @@ export default function App() {
                 onEditLiability={(l) => setObjectModal({ kind: 'liability', category: l.category, id: l.id })}
                 onRemoveLiability={(l) => setRemoveDialog({ kind: 'liability', item: l })}
                 onAnswerNone={answerNoLiabilities}
+                panelOpen={!!assetPanel}
               />
             )}
             {FOOTER_NAV[r.name] && (

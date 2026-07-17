@@ -4,7 +4,6 @@ import {
   fmtMoney, fmtUSD, hasForeignValues, institutionAvatar, liabilitySubtitle, liabilityTitle, usdOf,
 } from './model.js'
 import { useEffect, useRef, useState } from 'react'
-import { OverflowMenu } from './ui.jsx'
 import { useCountUp } from './hooks.js'
 
 /* ---------------- Top bar + sidebar (layout per Figma mock) ---------------- */
@@ -110,6 +109,16 @@ export function FinancialSummary({ profile }) {
 
 /* ---------------- Cards ---------------- */
 
+const TrashIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" aria-hidden="true">
+    <path d="M2.5 4h11" />
+    <path d="M5.5 4V2.8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V4" />
+    <path d="M3.8 4l.6 9a1.2 1.2 0 0 0 1.2 1.1h4.8a1.2 1.2 0 0 0 1.2-1.1l.6-9" />
+    <line x1="6.4" y1="7" x2="6.4" y2="11.5" />
+    <line x1="9.6" y1="7" x2="9.6" y2="11.5" />
+  </svg>
+)
+
 export function AssetCard({ asset, onEdit, onRemove }) {
   const avatar = institutionAvatar(asset.institutionOrProvider)
   const cur = asset.currency ?? 'USD'
@@ -132,10 +141,10 @@ export function AssetCard({ asset, onEdit, onRemove }) {
             {cur !== 'USD' && <span className="value-approx">≈ {fmtUSD(usdOf(asset.value, cur))}</span>}
           </div>
         )}
-        <OverflowMenu items={[
-          { label: 'Edit', onSelect: onEdit },
-          { label: 'Remove asset', danger: true, onSelect: onRemove },
-        ]} />
+        <button className="card-remove" aria-label="Remove asset"
+          onClick={(e) => { e.stopPropagation(); onRemove() }}>
+          <TrashIcon />
+        </button>
       </div>
     </div>
   )
@@ -161,10 +170,10 @@ export function LiabilityCard({ liability, onEdit, onRemove }) {
             {cur !== 'USD' && <span className="value-approx">≈ {fmtUSD(usdOf(liability.outstandingBalance, cur))}</span>}
           </div>
         )}
-        <OverflowMenu items={[
-          { label: 'Edit', onSelect: onEdit },
-          { label: 'Remove liability', danger: true, onSelect: onRemove },
-        ]} />
+        <button className="card-remove" aria-label="Remove liability"
+          onClick={(e) => { e.stopPropagation(); onRemove() }}>
+          <TrashIcon />
+        </button>
       </div>
     </div>
   )

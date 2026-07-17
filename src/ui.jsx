@@ -163,41 +163,6 @@ export function Dialog({ title, body, cancelLabel, confirmLabel, danger, onCance
   )
 }
 
-/* Overflow menu (Edit / Remove) on cards. */
-export function OverflowMenu({ items, label = 'More actions' }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-  useEffect(() => {
-    if (!open) return
-    const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
-    const onKey = (e) => e.key === 'Escape' && setOpen(false)
-    document.addEventListener('mousedown', onDown)
-    window.addEventListener('keydown', onKey)
-    return () => { document.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey) }
-  }, [open])
-  return (
-    <div className="menu" ref={ref}>
-      <button className="menu-trigger" aria-label={label} aria-expanded={open}
-        onClick={(e) => { e.stopPropagation(); setOpen(!open) }}>
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
-          <circle cx="2.2" cy="7" r="1.3" /><circle cx="7" cy="7" r="1.3" /><circle cx="11.8" cy="7" r="1.3" />
-        </svg>
-      </button>
-      {open && (
-        <div className="menu-list" role="menu">
-          {items.map((it) => (
-            <button key={it.label} role="menuitem"
-              className={'menu-item' + (it.danger ? ' menu-item-danger' : '')}
-              onClick={(e) => { e.stopPropagation(); setOpen(false); it.onSelect() }}>
-              {it.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 /* Date input with light MM/DD/YYYY masking. */
 export function DateInput({ value, onChange, className = '', onBlur }) {
   const format = (raw) => {
