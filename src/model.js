@@ -26,17 +26,22 @@ export const parseAmount = (s) => {
 
 /* ---------------- Categories ---------------- */
 
+/* Ordered by how likely a client is to hold the asset type, descending. */
 export const ASSET_CATEGORIES = [
+  { key: 'cash', label: 'Cash & bank accounts', single: 'Cash & bank account', add: 'bank account', cta: 'Add account', formTitle: 'Add cash & bank account' },
   { key: 'investment', label: 'Investment accounts', single: 'Investment account', add: 'investment account', cta: 'Add account', formTitle: 'Add investment account' },
   { key: 'retirement', label: 'Retirement accounts', single: 'Retirement account', add: 'retirement account', cta: 'Add account', formTitle: 'Add retirement account' },
   { key: 'realestate', label: 'Real estate', single: 'Real estate', add: 'property', cta: 'Add asset', formTitle: 'Add real estate' },
   { key: 'business', label: 'Business interests', single: 'Business interest', add: 'business interest', cta: 'Add asset', formTitle: 'Add business interest' },
-  { key: 'crypto', label: 'Crypto', single: 'Crypto', add: 'crypto', cta: 'Add asset', formTitle: 'Add crypto' },
-  { key: 'collectibles', label: 'Art and collectibles', single: 'Collectibles', add: 'item', cta: 'Add asset', formTitle: 'Add art or collectible' },
+  { key: 'insurance', label: 'Insurance & annuities', single: 'Insurance or annuity', add: 'policy', cta: 'Add asset', formTitle: 'Add insurance or annuity' },
+  { key: 'crypto', label: 'Crypto', single: 'Crypto or digital asset', add: 'crypto', cta: 'Add asset', formTitle: 'Add crypto or digital asset' },
+  { key: 'collectibles', label: 'Art and collectibles', single: 'Art or collectible', add: 'item', cta: 'Add asset', formTitle: 'Add art or collectible' },
   { key: 'other', label: 'Other assets', single: 'Other asset', add: 'asset', cta: 'Add asset', formTitle: 'Add other asset' },
 ]
 export const assetCategory = (key) => ASSET_CATEGORIES.find((c) => c.key === key)
 
+export const CASH_TYPES = ['Checking', 'Savings', 'Money market', 'CD']
+export const INSURANCE_TYPES = ['Whole life insurance', 'Universal life insurance', 'Annuity', 'Other']
 export const INVESTMENT_TYPES = ['Brokerage account', 'Managed account', 'Trust account', 'Other']
 export const RETIREMENT_TYPES = ['401(k)', 'Traditional IRA', 'Roth IRA', 'Pension', 'Other retirement account']
 export const PROPERTY_TYPES = ['House', 'Apartment', 'Commercial property', 'Land', 'Other']

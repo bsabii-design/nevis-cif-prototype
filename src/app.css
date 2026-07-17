@@ -312,6 +312,27 @@ input, select, textarea { font: inherit; color: inherit; }
   border-radius: var(--radius-12);
 }
 .panel-static { position: static; }
+
+/* Non-modal side panel: add/edit asset next to the list.
+   Stacks above the financial summary in a sticky, independently
+   scrolling right column. */
+.right-col {
+  position: sticky; top: calc(var(--space-64) + var(--space-24));
+  display: flex; flex-direction: column; gap: var(--space-16);
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+.right-col .panel { position: static; }
+.side-panel-head { display: flex; align-items: center; justify-content: space-between; }
+.panel-types { display: flex; flex-direction: column; gap: var(--space-2); }
+.panel-type {
+  text-align: left;
+  padding: var(--space-8) var(--space-12);
+  font: var(--text-label-md);
+  border-radius: var(--radius-8);
+  transition: background-color var(--duration-fast) var(--ease);
+}
+.panel-type:hover { background: var(--bg-secondary); }
 .nw-block { display: flex; flex-direction: column; gap: var(--space-8); align-items: flex-start; }
 .nw-label { font: var(--text-label-md); color: var(--content-secondary); }
 .nw-figure { font: var(--text-display-sm); font-variant-numeric: tabular-nums; }

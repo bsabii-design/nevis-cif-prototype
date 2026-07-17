@@ -1,8 +1,8 @@
 /* Modal add/edit forms for financial objects; upload statement flow. */
 import { useEffect, useRef, useState } from 'react'
 import {
-  COLLECTIBLE_TYPES, INVESTMENT_TYPES, PROPERTY_TYPES, RETIREMENT_TYPES,
-  assetCategory, liabilityCategory, uid,
+  ASSET_CATEGORIES, CASH_TYPES, COLLECTIBLE_TYPES, INSURANCE_TYPES, INVESTMENT_TYPES,
+  PROPERTY_TYPES, RETIREMENT_TYPES, assetCategory, liabilityCategory, uid,
 } from './model.js'
 import { extractedAccounts, MOCK_STATEMENT_NAME } from './parse.js'
 import { Dialog, Field, InstitutionCombobox, MoneyInput, Select, TextInput } from './ui.jsx'
@@ -45,7 +45,7 @@ function ModalShell({ title, onRequestClose, children }) {
   )
 }
 
-/* ---------------- Asset modal ---------------- */
+/* ---------------- Asset fields (shared by the side panel) ---------------- */
 
 const assetToForm = (asset) => ({
   name: asset?.name || '',
@@ -57,23 +57,137 @@ const assetToForm = (asset) => ({
 })
 
 const defaultSubtype = (category) =>
+  category === 'cash' ? 'Checking' :
   category === 'investment' ? 'Brokerage account' :
   category === 'retirement' ? '401(k)' :
   category === 'realestate' ? 'House' :
+  category === 'insurance' ? 'Whole life insurance' :
   category === 'collectibles' ? 'Art' : ''
 
 const canAddAsset = (category, f) =>
-  category === 'investment' ? !!(f.institutionOrProvider || f.name) :
+  ['cash', 'investment', 'insurance', 'crypto'].includes(category) ? !!(f.institutionOrProvider || f.name) :
   category === 'retirement' ? true :
-  category === 'crypto' ? !!(f.institutionOrProvider || f.name) :
   !!f.name
 
-export function AssetModal({ category, asset, onCommit, onClose }) {
-  const catKey = asset?.category || category
-  const cat = assetCategory(catKey)
+function AssetFields({ category, form, set, isNew }) {
+  const money = (
+    <MoneyField label="Current value" amount={form.value} currency={form.currency}
+      onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
+  )
+  if (category === 'cash') return (
+    <>
+      <Field label="Institution">
+        <InstitutionCombobox value={form.institutionOrProvider}
+          onChange={(v) => set('institutionOrProvider', v)} placeholder="Chase, Bank of America…" autoFocus={isNew} />
+      </Field>
+      <Field label="Account name" helper="Optional">
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Everyday checking" />
+      </Field>
+      <Field label="Account type">
+        <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={CASH_TYPES} />
+      </Field>
+      {money}
+    </>
+  )
+  if (category === 'investment') return (
+    <>
+      <Field label="Institution">
+        <InstitutionCombobox value={form.institutionOrProvider}
+          onChange={(v) => set('institutionOrProvider', v)} placeholder="Fidelity, Vanguard, Schwab…" autoFocus={isNew} />
+      </Field>
+      <Field label="Account name">
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Fidelity Brokerage Account" />
+      </Field>
+      <Field label="Account type">
+        <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={INVESTMENT_TYPES} />
+      </Field>
+      {money}
+    </>
+  )
+  if (category === 'retirement') return (
+    <>
+      <Field label="Account type">
+        <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={RETIREMENT_TYPES} />
+      </Field>
+      <Field label="Provider">
+        <InstitutionCombobox value={form.institutionOrProvider}
+          onChange={(v) => set('institutionOrProvider', v)} placeholder="Fidelity, Vanguard…" autoFocus={isNew} />
+      </Field>
+      <Field label="Account name" helper="Optional">
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Traditional IRA" />
+      </Field>
+      {money}
+    </>
+  )
+  if (category === 'realestate') return (
+    <>
+      <Field label="Property name">
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Austin house" autoFocus={isNew} />
+      </Field>
+      <Field label="Address">
+        <TextInput value={form.address} onChange={(v) => set('address', v)} placeholder="Street, city, state" />
+      </Field>
+      <Field label="Property type">
+        <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={PROPERTY_TYPES} />
+      </Field>
+      {money}
+    </>
+  )
+  if (category === 'insurance') return (
+    <>
+      <Field label="Provider">
+        <InstitutionCombobox value={form.institutionOrProvider}
+          onChange={(v) => set('institutionOrProvider', v)} placeholder="Provider name" autoFocus={isNew} />
+      </Field>
+      <Field label="Name" helper="Optional">
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Whole life policy" />
+      </Field>
+      <Field label="Type">
+        <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={INSURANCE_TYPES} />
+      </Field>
+      {money}
+    </>
+  )
+  if (category === 'crypto') return (
+    <>
+      <Field label="Where it's held">
+        <InstitutionCombobox value={form.institutionOrProvider}
+          onChange={(v) => set('institutionOrProvider', v)} placeholder="Coinbase, cold wallet…" autoFocus={isNew} />
+      </Field>
+      <Field label="Name" helper="Optional">
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Crypto holdings" />
+      </Field>
+      {money}
+    </>
+  )
+  if (category === 'collectibles') return (
+    <>
+      <Field label="Name">
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Art collection" autoFocus={isNew} />
+      </Field>
+      <Field label="Type">
+        <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={COLLECTIBLE_TYPES} />
+      </Field>
+      {money}
+    </>
+  )
+  return (
+    <>
+      <Field label="Name">
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Describe the asset" autoFocus={isNew} />
+      </Field>
+      {money}
+    </>
+  )
+}
+
+/* ---------------- Non-modal side panel: add / edit asset (spec §3–8) ---------------- */
+
+export function AssetPanel({ category: initialCategory, asset, onCommit, onClose, setGuard }) {
+  const [category, setCategory] = useState(asset?.category || initialCategory || null)
   const [form, setForm] = useState(() => {
     const f = assetToForm(asset)
-    if (!asset) f.subtype = defaultSubtype(catKey)
+    if (!asset && initialCategory) f.subtype = defaultSubtype(initialCategory)
     return f
   })
   const initialRef = useRef(JSON.stringify(assetToForm(asset)))
@@ -84,12 +198,24 @@ export function AssetModal({ category, asset, onCommit, onClose }) {
     ? JSON.stringify(form) !== initialRef.current
     : !!(form.name || form.institutionOrProvider || form.address || form.value != null)
 
+  /* Register with the app-level guard so navigation asks before discarding. */
+  useEffect(() => {
+    setGuard(dirty ? { kind: asset ? 'asset-edit' : 'asset' } : null)
+    return () => setGuard(null)
+  }, [dirty, asset, setGuard])
+
   const requestClose = () => (dirty ? setConfirmLeave(true) : onClose())
+  const pickCategory = (key) => {
+    setCategory(key)
+    setForm((f) => ({ ...f, subtype: defaultSubtype(key) }))
+  }
+
+  const cat = category ? assetCategory(category) : null
 
   const commit = () => {
     onCommit({
       id: asset?.id ?? uid(),
-      category: catKey,
+      category,
       subtype: form.subtype,
       name: form.name.trim(),
       institutionOrProvider: form.institutionOrProvider.trim(),
@@ -100,116 +226,40 @@ export function AssetModal({ category, asset, onCommit, onClose }) {
   }
 
   return (
-    <ModalShell title={asset ? `Edit ${cat.single.toLowerCase()}` : cat.formTitle} onRequestClose={requestClose}>
-      <div className="focus-form">
-        {catKey === 'realestate' && (
-          <>
-            <Field label="Property name">
-              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Austin house" autoFocus={!asset} />
-            </Field>
-            <Field label="Address">
-              <TextInput value={form.address} onChange={(v) => set('address', v)} placeholder="Street, city, state" />
-            </Field>
-            <Field label="Property type">
-              <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={PROPERTY_TYPES} />
-            </Field>
-            <MoneyField label="Current value" amount={form.value} currency={form.currency}
-              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-          </>
-        )}
-
-        {catKey === 'retirement' && (
-          <>
-            <Field label="Account type">
-              <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={RETIREMENT_TYPES} />
-            </Field>
-            <Field label="Provider">
-              <InstitutionCombobox value={form.institutionOrProvider}
-                onChange={(v) => set('institutionOrProvider', v)} placeholder="Fidelity, Vanguard…" autoFocus={!asset} />
-            </Field>
-            <Field label="Account name" helper="Optional">
-              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Traditional IRA" />
-            </Field>
-            <MoneyField label="Current value" amount={form.value} currency={form.currency}
-              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-          </>
-        )}
-
-        {catKey === 'investment' && (
-          <>
-            <Field label="Institution">
-              <InstitutionCombobox value={form.institutionOrProvider}
-                onChange={(v) => set('institutionOrProvider', v)} placeholder="Fidelity, Vanguard, Schwab…" autoFocus={!asset} />
-            </Field>
-            <Field label="Account name">
-              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Fidelity Brokerage Account" />
-            </Field>
-            <Field label="Account type">
-              <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={INVESTMENT_TYPES} />
-            </Field>
-            <MoneyField label="Current value" amount={form.value} currency={form.currency}
-              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-          </>
-        )}
-
-        {catKey === 'business' && (
-          <>
-            <Field label="Name">
-              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Reeves Consulting Group" autoFocus={!asset} />
-            </Field>
-            <MoneyField label="Current value" amount={form.value} currency={form.currency}
-              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-          </>
-        )}
-
-        {catKey === 'crypto' && (
-          <>
-            <Field label="Where it's held">
-              <InstitutionCombobox value={form.institutionOrProvider}
-                onChange={(v) => set('institutionOrProvider', v)} placeholder="Coinbase, cold wallet…" autoFocus={!asset} />
-            </Field>
-            <Field label="Name" helper="Optional">
-              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Crypto holdings" />
-            </Field>
-            <MoneyField label="Current value" amount={form.value} currency={form.currency}
-              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-          </>
-        )}
-
-        {catKey === 'collectibles' && (
-          <>
-            <Field label="Name">
-              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Art collection" autoFocus={!asset} />
-            </Field>
-            <Field label="Type">
-              <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={COLLECTIBLE_TYPES} />
-            </Field>
-            <MoneyField label="Current value" amount={form.value} currency={form.currency}
-              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-          </>
-        )}
-
-        {catKey === 'other' && (
-          <>
-            <Field label="Name">
-              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Describe the asset" autoFocus={!asset} />
-            </Field>
-            <MoneyField label="Current value" amount={form.value} currency={form.currency}
-              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-          </>
-        )}
-      </div>
-
-      <div className="dialog-actions">
-        <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
-        <button className="btn btn-primary" disabled={!canAddAsset(catKey, form)} onClick={commit}>
-          {asset ? 'Save changes' : cat.cta}
-        </button>
-      </div>
+    <aside className="panel side-panel">
+      {!category ? (
+        <>
+          <div className="side-panel-head">
+            <h2 className="dialog-title">Add an asset</h2>
+            <button className="menu-trigger" aria-label="Close" onClick={requestClose}>✕</button>
+          </div>
+          <p className="page-copy">What type of asset would you like to add?</p>
+          <div className="panel-types">
+            {ASSET_CATEGORIES.map((c) => (
+              <button key={c.key} className="panel-type" onClick={() => pickCategory(c.key)}>
+                {c.single}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <h2 className="dialog-title">{asset ? `Edit ${cat.single.toLowerCase()}` : cat.formTitle}</h2>
+          <div className="focus-form">
+            <AssetFields category={category} form={form} set={set} isNew={!asset} />
+          </div>
+          <div className="dialog-actions">
+            <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
+            <button className="btn btn-primary" disabled={!canAddAsset(category, form)} onClick={commit}>
+              {asset ? 'Save changes' : cat.cta}
+            </button>
+          </div>
+        </>
+      )}
 
       {confirmLeave && (
         <Dialog
-          title={asset ? 'Leave without saving your changes?' : 'Leave without adding this asset?'}
+          title={asset ? 'Leave without saving changes?' : 'Leave without adding this asset?'}
           body={asset ? 'Your changes will be lost.' : 'Your entries will be lost.'}
           cancelLabel="Keep editing"
           confirmLabel="Leave"
@@ -218,7 +268,7 @@ export function AssetModal({ category, asset, onCommit, onClose }) {
           onConfirm={onClose}
         />
       )}
-    </ModalShell>
+    </aside>
   )
 }
 

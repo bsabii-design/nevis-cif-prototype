@@ -407,16 +407,15 @@ function CategoryBubbles({ categories, selected, locked, onToggle }) {
 }
 
 export function NetWorth({ profile, tab, onTab, onNav, selectedCats, onToggleCat,
-  onAdd, onEditAsset, onRemoveAsset, onEditLiability, onRemoveLiability,
-  onUpload, onAnswerNone }) {
+  onAddAsset, onAddLiability, onEditAsset, onRemoveAsset, onEditLiability, onRemoveLiability,
+  onUpload, onAnswerNone, sidePanel }) {
   const { assets, liabilities, liabilitiesExplicitlyNone: none } = profile
 
-  const assetsWithRecords = new Set(assets.map((a) => a.category))
   const liabsWithRecords = new Set(liabilities.map((l) => l.category))
-  const effAssets = new Set([...selectedCats.assets, ...assetsWithRecords])
   const effLiabs = new Set([...selectedCats.liabilities, ...liabsWithRecords])
 
-  const assetGroups = ASSET_CATEGORIES.filter((c) => effAssets.has(c.key))
+  /* Only categories that contain saved assets appear on the page. */
+  const assetGroups = ASSET_CATEGORIES.filter((c) => assets.some((a) => a.category === c.key))
   const liabGroups = LIABILITY_CATEGORIES.filter((c) => effLiabs.has(c.key))
 
   return (
@@ -447,15 +446,8 @@ export function NetWorth({ profile, tab, onTab, onNav, selectedCats, onToggleCat
         <div className="nw-main">
           {tab === 'assets' && (
             <>
-              <div className="cat-select">
-                <h2 className="nw-empty-title">What do you own?</h2>
-                <p className="select-hint">Select all that apply</p>
-                <CategoryBubbles
-                  categories={ASSET_CATEGORIES}
-                  selected={effAssets}
-                  locked={assetsWithRecords}
-                  onToggle={(k) => onToggleCat('assets', k)}
-                />
+              <div className="list-actions">
+                <button className="btn btn-secondary" onClick={() => onAddAsset(null)}>Add asset</button>
               </div>
 
               {assetGroups.map((cat) => {
@@ -474,7 +466,7 @@ export function NetWorth({ profile, tab, onTab, onNav, selectedCats, onToggleCat
                       <AssetCard key={a.id} asset={a}
                         onEdit={() => onEditAsset(a)} onRemove={() => onRemoveAsset(a)} />
                     ))}
-                    <button className="link-add" onClick={() => onAdd('asset', cat.key)}>
+                    <button className="link-add" onClick={() => onAddAsset(cat.key)}>
                       + Add {items.length > 0 ? 'another ' : ''}{cat.add}
                     </button>
                   </section>
@@ -514,7 +506,7 @@ export function NetWorth({ profile, tab, onTab, onNav, selectedCats, onToggleCat
                       <LiabilityCard key={l.id} liability={l}
                         onEdit={() => onEditLiability(l)} onRemove={() => onRemoveLiability(l)} />
                     ))}
-                    <button className="link-add" onClick={() => onAdd('liability', cat.key)}>
+                    <button className="link-add" onClick={() => onAddLiability(cat.key)}>
                       + Add {items.length > 0 ? 'another ' : ''}{cat.add}
                     </button>
                   </section>
@@ -529,7 +521,14 @@ export function NetWorth({ profile, tab, onTab, onNav, selectedCats, onToggleCat
             </>
           )}
         </div>
-        <FinancialSummary profile={profile} />
+        {sidePanel ? (
+          <div className="right-col">
+            {sidePanel}
+            <FinancialSummary profile={profile} sticky={false} />
+          </div>
+        ) : (
+          <FinancialSummary profile={profile} />
+        )}
       </div>
 
       <div className="sticky-footer">

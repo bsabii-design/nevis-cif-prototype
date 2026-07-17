@@ -2,11 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { assetTitle, blankProfile, loadState, requiredComplete, saveState, seedProfile } from './model.js'
 import { Dialog } from './ui.jsx'
 import { TopBar } from './components.jsx'
-import { AssetModal, LiabilityModal, UploadFlow } from './forms.jsx'
+import { AssetPanel, LiabilityModal, UploadFlow } from './forms.jsx'
 import { Goals, NetWorth, Personal, Welcome, Work } from './screens.jsx'
 import { useSavedFlash } from './hooks.js'
 
 const LEAVE_COPY = {
+  asset: { title: 'Leave without adding this asset?', body: 'Your entries will be lost.' },
+  'asset-edit': { title: 'Leave without saving changes?', body: 'Your changes will be lost.' },
   extract: { title: 'Leave without adding these accounts?', body: 'Your changes will be lost.', stay: 'Keep reviewing' },
 }
 
@@ -30,7 +32,8 @@ export default function App() {
   })
   const [tick, setTick] = useState(0)
   const [leaveDialog, setLeaveDialog] = useState(null)   // {kind, to}
-  const [objectModal, setObjectModal] = useState(null)   // {kind:'asset'|'liability', category, id|null}
+  const [objectModal, setObjectModal] = useState(null)   // liabilities: {category, id|null}
+  const [assetPanel, setAssetPanel] = useState(null)     // side panel: {category|null, id|null}
   const [selectedCats, setSelectedCats] = useState(() => state?.selectedCats ?? { assets: [], liabilities: [] })
   const [removeDialog, setRemoveDialog] = useState(null) // {kind, item}
   const [shareDialog, setShareDialog] = useState(false)
@@ -55,12 +58,14 @@ export default function App() {
       setLeaveDialog({ kind: guardRef.current.kind, to })
       return
     }
+    setAssetPanel(null)
     setRoute(to)
     window.scrollTo(0, 0)
   }
   const forceNavigate = (to) => {
     guardRef.current = null
     setLeaveDialog(null)
+    setAssetPanel(null)
     setRoute(to)
     window.scrollTo(0, 0)
   }
@@ -88,6 +93,15 @@ export default function App() {
     toastTimer.current = setTimeout(() => setToast(null), 5000)
   }
 
+  /* Opening a different asset while the panel holds unsaved data asks first. */
+  const openAssetPanel = (next) => {
+    if (assetPanel && guardRef.current) {
+      setLeaveDialog({ kind: guardRef.current.kind, panelTo: next })
+      return
+    }
+    setAssetPanel(next)
+  }
+
   /* ---- financial objects: explicit commits ---- */
 
   const commitAsset = (asset) => {
@@ -98,7 +112,8 @@ export default function App() {
         : [...p.assets, asset],
     }))
     touch()
-    setObjectModal(null)
+    guardRef.current = null
+    setAssetPanel(null)
   }
 
   const commitLiability = (liability) => {
@@ -166,7 +181,7 @@ export default function App() {
     setSeenWelcome(!welcome)
     setLeaveDialog(null); setRemoveDialog(null); setShareDialog(false)
     setShareAttempted(false); setToast(null)
-    setObjectModal(null); setSelectedCats({ assets: [], liabilities: [] })
+    setObjectModal(null); setAssetPanel(null); setSelectedCats({ assets: [], liabilities: [] })
     forceNavigate(to)
     touch()
   }
@@ -206,13 +221,24 @@ export default function App() {
             onNav={goSection}
             selectedCats={selectedCats}
             onToggleCat={toggleCat}
-            onAdd={(kind, category) => setObjectModal({ kind, category, id: null })}
-            onEditAsset={(a) => setObjectModal({ kind: 'asset', category: a.category, id: a.id })}
+            onAddAsset={(category) => openAssetPanel({ category, id: null })}
+            onAddLiability={(category) => setObjectModal({ kind: 'liability', category, id: null })}
+            onEditAsset={(a) => openAssetPanel({ category: a.category, id: a.id })}
             onRemoveAsset={(a) => setRemoveDialog({ kind: 'asset', item: a })}
             onEditLiability={(l) => setObjectModal({ kind: 'liability', category: l.category, id: l.id })}
             onRemoveLiability={(l) => setRemoveDialog({ kind: 'liability', item: l })}
             onUpload={() => navigate({ name: 'upload' })}
             onAnswerNone={answerNoLiabilities}
+            sidePanel={assetPanel && (
+              <AssetPanel
+                key={assetPanel.id ?? assetPanel.category ?? 'new'}
+                category={assetPanel.category}
+                asset={assetPanel.id ? profile.assets.find((a) => a.id === assetPanel.id) : null}
+                onCommit={commitAsset}
+                onClose={() => { guardRef.current = null; setAssetPanel(null) }}
+                setGuard={setGuard}
+              />
+            )}
           />
         )}
         {r.name === 'upload' && (
@@ -226,14 +252,6 @@ export default function App() {
         <button className="footer-link" onClick={blankStart}>Blank start</button>
       </footer>
 
-      {objectModal?.kind === 'asset' && (
-        <AssetModal
-          category={objectModal.category}
-          asset={objectModal.id ? profile.assets.find((a) => a.id === objectModal.id) : null}
-          onCommit={commitAsset}
-          onClose={() => setObjectModal(null)}
-        />
-      )}
       {objectModal?.kind === 'liability' && (
         <LiabilityModal
           category={objectModal.category}
@@ -262,7 +280,15 @@ export default function App() {
           confirmLabel="Leave"
           danger
           onCancel={() => setLeaveDialog(null)}
-          onConfirm={() => forceNavigate(leaveDialog.to)}
+          onConfirm={() => {
+            if (leaveDialog.panelTo !== undefined) {
+              guardRef.current = null
+              setLeaveDialog(null)
+              setAssetPanel(leaveDialog.panelTo)
+            } else {
+              forceNavigate(leaveDialog.to)
+            }
+          }}
         />
       )}
 
