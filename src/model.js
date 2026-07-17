@@ -157,21 +157,40 @@ export const hasForeignValues = (profile) =>
 
 /* ---------------- Required-before-share logic (spec §5) ---------------- */
 
-export const missingPersonalFields = (p) => ({
-  firstName: !p.personal.legalFirstName?.trim(),
-  lastName: !p.personal.legalLastName?.trim(),
-  dateOfBirth: !p.personal.dateOfBirth?.trim(),
-  country: !p.personal.primaryResidence.country?.trim(),
-  city: !p.personal.primaryResidence.city?.trim(),
-  citizenship: !p.personal.citizenships.some((c) => c.trim()),
-})
+/* MM/DD/YYYY, must be a real calendar date. */
+export const isValidDate = (s) => {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s || '')
+  if (!m) return false
+  const [, mm, dd, yyyy] = m.map(Number)
+  if (yyyy < 1900 || yyyy > new Date().getFullYear()) return false
+  const d = new Date(yyyy, mm - 1, dd)
+  return d.getMonth() === mm - 1 && d.getDate() === dd
+}
+
+/* 5-digit ZIP or ZIP+4, stored as text. */
+export const isValidUSZip = (z) => /^\d{5}(-\d{4})?$/.test((z || '').trim())
+
+export const missingPersonalFields = (p) => {
+  const r = p.personal.primaryResidence
+  return {
+    firstName: !p.personal.legalFirstName?.trim(),
+    lastName: !p.personal.legalLastName?.trim(),
+    dateOfBirth: !isValidDate(p.personal.dateOfBirth),
+    country: !r.country?.trim(),
+    street: !r.street?.trim(),
+    city: !r.city?.trim(),
+    state: !r.state?.trim(),
+    zip: !isValidUSZip(r.zip),
+    citizenship: !p.personal.citizenships.some((c) => c.trim()),
+  }
+}
 
 export const requiredComplete = (p) =>
   Object.values(missingPersonalFields(p)).every((m) => !m)
 
 /* ---------------- Profiles ---------------- */
 
-const emptyResidence = () => ({ country: 'United States', street: '', city: '', state: '', zip: '' })
+export const emptyResidence = () => ({ country: 'United States', street: '', apartment: '', city: '', state: '', zip: '' })
 
 export const blankProfile = () => ({
   shared: false,
@@ -180,10 +199,11 @@ export const blankProfile = () => ({
     middleName: '',
     legalLastName: 'Reeves',
     dateOfBirth: '',
-    primaryResidence: { ...emptyResidence(), city: '' },
+    primaryResidence: emptyResidence(),
     additionalResidences: [],
     citizenships: [''],
     email: 'jonathan.reeves@example.com',
+    phone: '',
   },
   work: { employmentStatus: '', jobTitle: '', occupation: '', employer: '', businessName: '', annualIncome: null, currency: 'USD' },
   goals: [],
@@ -199,10 +219,11 @@ export const seedProfile = () => ({
     middleName: '',
     legalLastName: 'Reeves',
     dateOfBirth: '05/12/1975',
-    primaryResidence: { country: 'United States', street: '145 W 67th St', city: 'New York', state: 'NY', zip: '10023' },
+    primaryResidence: { country: 'United States', street: '145 W 67th St', apartment: '', city: 'New York', state: 'NY', zip: '10023' },
     additionalResidences: [],
     citizenships: ['United States'],
     email: 'jonathan.reeves@example.com',
+    phone: '(212) 555-0164',
   },
   work: { employmentStatus: 'Business owner', jobTitle: '', occupation: 'Consulting', employer: '', businessName: 'Reeves Consulting Group', annualIncome: 450000, currency: 'USD' },
   goals: [

@@ -5,7 +5,7 @@ import {
   fmtMoney, missingPersonalFields, requiredComplete,
 } from './model.js'
 import { parseGoals } from './parse.js'
-import { DateInput, Field, MoneyInput, RadioRow, TextInput } from './ui.jsx'
+import { DateInput, Field, MoneyInput, PhoneInput, RadioRow, TextInput } from './ui.jsx'
 import { AssetList, CategoryGrid, FinancialSummary, LiabilityCard } from './components.jsx'
 
 /* ---------------- Welcome (spec §7) ---------------- */
@@ -34,25 +34,29 @@ export function Welcome({ onStart }) {
 
 /* ---------------- Personal information (spec §9) ---------------- */
 
-function ResidenceFields({ residence, onChange, required, missing }) {
+function ResidenceFields({ residence, onChange, required, errors = {}, onBlurField }) {
   const set = (k, v) => onChange({ ...residence, [k]: v })
+  const blur = (k) => () => onBlurField?.(k)
   return (
     <div className="residence-grid">
-      <Field label="Country" required={required} error={missing?.country}>
-        <TextInput value={residence.country} onChange={(v) => set('country', v)} />
+      <Field label="Country" required={required} error={errors.country}>
+        <TextInput value={residence.country} onChange={(v) => set('country', v)} onBlur={blur('country')} />
       </Field>
-      <Field label="Street address">
-        <TextInput value={residence.street} onChange={(v) => set('street', v)} />
+      <Field label="Street address" required={required} error={errors.street}>
+        <TextInput value={residence.street} onChange={(v) => set('street', v)} onBlur={blur('street')} />
       </Field>
-      <div className="residence-row">
-        <Field label="City" required={required} error={missing?.city}>
-          <TextInput value={residence.city} onChange={(v) => set('city', v)} />
+      <Field label="Apartment, suite, unit, etc." helper="Optional">
+        <TextInput value={residence.apartment} onChange={(v) => set('apartment', v)} />
+      </Field>
+      <div className="addr-row">
+        <Field label="City" required={required} error={errors.city}>
+          <TextInput value={residence.city} onChange={(v) => set('city', v)} onBlur={blur('city')} />
         </Field>
-        <Field label="State">
-          <TextInput value={residence.state} onChange={(v) => set('state', v)} />
+        <Field label="State" required={required} error={errors.state}>
+          <TextInput value={residence.state} onChange={(v) => set('state', v)} onBlur={blur('state')} />
         </Field>
-        <Field label="ZIP code">
-          <TextInput value={residence.zip} onChange={(v) => set('zip', v)} inputMode="numeric" />
+        <Field label="ZIP code" required={required} error={errors.zip}>
+          <TextInput value={residence.zip} onChange={(v) => set('zip', v)} inputMode="numeric" onBlur={blur('zip')} />
         </Field>
       </div>
     </div>
@@ -62,9 +66,22 @@ function ResidenceFields({ residence, onChange, required, missing }) {
 export function Personal({ profile, onChange, onNav, shareAttempted }) {
   const p = profile.personal
   const set = (k, v) => onChange({ ...profile, personal: { ...p, [k]: v } })
-  /* Highlight only missing REQUIRED fields, and only after a blocked Share attempt. */
+  const missing = missingPersonalFields(profile)
   const flag = shareAttempted && !requiredComplete(profile)
-  const missing = flag ? missingPersonalFields(profile) : {}
+  const [touched, setTouched] = useState({})
+  const markTouched = (k) => setTouched((t) => ({ ...t, [k]: true }))
+
+  /* Show an error once the user leaves a field invalid, or after a blocked Share attempt. */
+  const err = (k, message = 'Required') =>
+    missing[k] && (flag || touched[k]) ? message : null
+  const dobError = () =>
+    missing.dateOfBirth && (flag || touched.dateOfBirth)
+      ? (p.dateOfBirth?.trim() ? 'Enter a valid date in MM/DD/YYYY format.' : 'Required')
+      : null
+  const zipError = () =>
+    missing.zip && (flag || touched.zip)
+      ? (p.primaryResidence.zip?.trim() ? 'Enter a valid ZIP code.' : 'Required')
+      : null
 
   useEffect(() => {
     if (flag) {
@@ -80,74 +97,96 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
       <p className="page-copy">Please review your details and add anything missing.</p>
 
       <div className="focus-form">
-        <div className="residence-row">
-          <Field label="Legal first name" required error={missing.firstName}>
-            <TextInput value={p.legalFirstName} onChange={(v) => set('legalFirstName', v)} />
-          </Field>
-          <Field label="Middle name" helper="Optional">
-            <TextInput value={p.middleName} onChange={(v) => set('middleName', v)} />
-          </Field>
-          <Field label="Legal last name" required error={missing.lastName}>
-            <TextInput value={p.legalLastName} onChange={(v) => set('legalLastName', v)} />
-          </Field>
-        </div>
-
-        <Field label="Date of birth" required error={missing.dateOfBirth}>
-          <DateInput value={p.dateOfBirth} onChange={(v) => set('dateOfBirth', v)} />
-        </Field>
-
+        {/* ---- Legal identity ---- */}
         <div className="form-section">
-          <h2 className="form-section-title">Primary residence <span className="field-required">*</span></h2>
-          <ResidenceFields required residence={p.primaryResidence}
-            missing={{ country: missing.country, city: missing.city }}
-            onChange={(r) => set('primaryResidence', r)} />
+          <h2 className="form-section-title">Legal identity</h2>
+          <div className="name-row">
+            <Field label="Legal first name" required error={err('firstName')}>
+              <TextInput value={p.legalFirstName} onChange={(v) => set('legalFirstName', v)} onBlur={() => markTouched('firstName')} />
+            </Field>
+            <Field label="Legal last name" required error={err('lastName')}>
+              <TextInput value={p.legalLastName} onChange={(v) => set('legalLastName', v)} onBlur={() => markTouched('lastName')} />
+            </Field>
+          </div>
+          <div className="field-half">
+            <Field label="Middle name" helper="Optional">
+              <TextInput value={p.middleName} onChange={(v) => set('middleName', v)} />
+            </Field>
+          </div>
+          <Field label="Date of birth" required error={dobError()}>
+            <DateInput className="input-compact" value={p.dateOfBirth}
+              onChange={(v) => set('dateOfBirth', v)} onBlur={() => markTouched('dateOfBirth')} />
+          </Field>
         </div>
 
-        {p.additionalResidences.map((r, i) => (
-          <div className="form-section" key={i}>
-            <div className="form-section-head">
-              <h2 className="form-section-title">Additional residence</h2>
-              <button className="link-danger"
-                onClick={() => set('additionalResidences', p.additionalResidences.filter((_, j) => j !== i))}>
-                Remove
-              </button>
-            </div>
-            <ResidenceFields residence={r}
-              onChange={(nr) => set('additionalResidences', p.additionalResidences.map((x, j) => j === i ? nr : x))} />
-          </div>
-        ))}
-        <button className="btn btn-secondary self-start"
-          onClick={() => set('additionalResidences', [...p.additionalResidences, { country: '', street: '', city: '', state: '', zip: '' }])}>
-          Add another residence
-        </button>
+        {/* ---- Residential address ---- */}
+        <div className="form-section">
+          <h2 className="form-section-title">Residential address</h2>
+          <ResidenceFields required residence={p.primaryResidence}
+            errors={{
+              country: err('country'), street: err('street'), city: err('city'),
+              state: err('state', 'Select a state.'), zip: zipError(),
+            }}
+            onBlurField={(k) => markTouched(k)}
+            onChange={(r) => set('primaryResidence', r)} />
 
-        <div className={'form-section' + (missing.citizenship ? ' field-missing' : '')}>
-          <h2 className="form-section-title">Citizenship <span className="field-required">*</span></h2>
-          {missing.citizenship && <span className="field-error">Required</span>}
-          {p.citizenships.map((c, i) => (
-            <div className="citizenship-row" key={i}>
-              <TextInput value={c} placeholder="United States"
-                onChange={(v) => set('citizenships', p.citizenships.map((x, j) => j === i ? v : x))} />
-              {p.citizenships.length > 1 && (
+          {p.additionalResidences.map((r, i) => (
+            <div className="form-subsection" key={i}>
+              <div className="form-section-head">
+                <h3 className="form-subsection-title">Additional residential address</h3>
                 <button className="link-danger"
-                  onClick={() => set('citizenships', p.citizenships.filter((_, j) => j !== i))}>
+                  onClick={() => set('additionalResidences', p.additionalResidences.filter((_, j) => j !== i))}>
                   Remove
                 </button>
-              )}
+              </div>
+              <ResidenceFields residence={r}
+                onChange={(nr) => set('additionalResidences', p.additionalResidences.map((x, j) => j === i ? nr : x))} />
             </div>
           ))}
-          <button className="btn btn-secondary self-start"
-            onClick={() => set('citizenships', [...p.citizenships, ''])}>
-            Add another citizenship
+          <button className="link-add"
+            onClick={() => set('additionalResidences', [...p.additionalResidences, { country: '', street: '', apartment: '', city: '', state: '', zip: '' }])}>
+            + Add another residential address
           </button>
         </div>
 
-        <Field label="Email">
-          <TextInput value={p.email} onChange={(v) => set('email', v)} />
-        </Field>
+        {/* ---- Citizenship ---- */}
+        <div className="form-section">
+          <h2 className="form-section-title">Citizenship</h2>
+          <Field label="Country of citizenship" required error={err('citizenship')}>
+            <TextInput value={p.citizenships[0] || ''} placeholder="United States"
+              onChange={(v) => set('citizenships', p.citizenships.map((x, j) => j === 0 ? v : x))}
+              onBlur={() => markTouched('citizenship')} />
+          </Field>
+          {p.citizenships.slice(1).map((c, i) => (
+            <div className="citizenship-row" key={i + 1}>
+              <Field label="Additional country of citizenship">
+                <TextInput value={c}
+                  onChange={(v) => set('citizenships', p.citizenships.map((x, j) => j === i + 1 ? v : x))} />
+              </Field>
+              <button className="link-danger citizenship-remove"
+                onClick={() => set('citizenships', p.citizenships.filter((_, j) => j !== i + 1))}>
+                Remove
+              </button>
+            </div>
+          ))}
+          <button className="link-add" onClick={() => set('citizenships', [...p.citizenships, ''])}>
+            + Add another citizenship
+          </button>
+        </div>
+
+        {/* ---- Contact ---- */}
+        <div className="form-section">
+          <h2 className="form-section-title">Contact</h2>
+          <Field label="Email">
+            <TextInput value={p.email} onChange={(v) => set('email', v)} />
+          </Field>
+          <Field label="Phone" helper="Optional">
+            <PhoneInput value={p.phone} onChange={(v) => set('phone', v)} />
+          </Field>
+        </div>
       </div>
 
-      <div className="focus-actions">
+      <div className="sticky-footer">
         <button className="btn btn-secondary" onClick={() => onNav('work')}>Continue to work & income</button>
       </div>
     </div>
@@ -201,7 +240,7 @@ export function Work({ profile, onChange, onNav }) {
         )}
       </div>
 
-      <div className="focus-actions">
+      <div className="sticky-footer">
         <button className="btn btn-secondary" onClick={() => onNav('personal')}>Back</button>
         <button className="btn btn-secondary" onClick={() => onNav('goals')}>Continue to goals</button>
       </div>
@@ -320,7 +359,7 @@ export function Goals({ profile, onChange, onNav }) {
         </>
       )}
 
-      <div className="focus-actions">
+      <div className="sticky-footer">
         <button className="btn btn-secondary" onClick={() => onNav('work')}>Back</button>
         <button className="btn btn-secondary" onClick={() => onNav('networth')}>Continue to net worth</button>
       </div>
@@ -417,7 +456,7 @@ export function NetWorth({ profile, tab, onTab, onNav, onAddAsset, onEditAsset, 
         <FinancialSummary profile={profile} />
       </div>
 
-      <div className="focus-actions focus-actions-start">
+      <div className="sticky-footer sticky-footer-start">
         <button className="btn btn-secondary" onClick={() => onNav('goals')}>Back</button>
       </div>
     </div>

@@ -91,7 +91,7 @@ input, select, textarea { font: inherit; color: inherit; }
   padding: var(--space-48) var(--space-24);
 }
 .screen { display: flex; flex-direction: column; gap: var(--space-24); }
-.screen-narrow { max-width: 640px; }
+.screen-narrow { max-width: 556px; }
 .page-title { font: var(--text-heading-md); }
 .page-title-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); }
 .page-copy { font: var(--text-body-md); color: var(--content-secondary); }
@@ -425,12 +425,51 @@ input, select, textarea { font: inherit; color: inherit; }
 .crumb-sep { color: var(--content-tertiary); }
 .crumb-current { color: var(--content-primary); }
 
-.form-section { display: flex; flex-direction: column; gap: var(--space-12); margin-top: var(--space-8); }
-.form-section-title { font: var(--text-label-lg); }
+.form-section { display: flex; flex-direction: column; gap: var(--space-12); margin-top: var(--space-16); }
+.form-section-title { font: var(--text-label-lg); margin-bottom: var(--space-4); }
 .form-section-head { display: flex; align-items: baseline; justify-content: space-between; }
+.form-subsection {
+  display: flex; flex-direction: column; gap: var(--space-12);
+  margin-top: var(--space-8); padding-top: var(--space-12);
+  border-top: var(--border-w) solid var(--border-default);
+}
+.form-subsection-title { font: var(--text-label-md); color: var(--content-secondary); }
 .residence-grid { display: flex; flex-direction: column; gap: var(--space-12); }
 .residence-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--space-12); }
-.citizenship-row { display: flex; align-items: center; gap: var(--space-12); }
+
+/* Legal identity: equal-width first/last name; compact middle + DOB */
+.name-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-12); }
+@media (max-width: 720px) { .name-row { grid-template-columns: 1fr; } }
+.field-half { max-width: calc(50% - var(--space-8)); }
+.input-compact { max-width: 200px; }
+
+/* City 50% · State 25% · ZIP 25% */
+.addr-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--space-12); }
+@media (max-width: 720px) { .addr-row { grid-template-columns: 1fr; } }
+
+.citizenship-row { display: flex; align-items: flex-end; gap: var(--space-12); }
+.citizenship-row .field { flex: 1; }
+.citizenship-remove { margin-bottom: var(--space-8); }
+
+/* Tertiary repeatable actions — clearly quieter than Continue */
+.link-add {
+  align-self: flex-start;
+  font: var(--text-label-md); color: var(--content-accent);
+  padding: var(--space-4) 0;
+  transition: color var(--duration-fast) var(--ease);
+}
+.link-add:hover { color: var(--content-primary); }
+
+/* Sticky page footer: navigation stays visible on short viewports */
+.sticky-footer {
+  position: sticky; bottom: 0; z-index: 5;
+  display: flex; justify-content: flex-end; gap: var(--space-12);
+  padding: var(--space-16) 0;
+  margin-top: var(--space-8);
+  background: var(--bg-page);
+  border-top: var(--border-w) solid var(--border-default);
+}
+.sticky-footer-start { justify-content: flex-start; }
 
 /* ---------------- Goals ---------------- */
 

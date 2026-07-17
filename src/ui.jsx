@@ -10,7 +10,7 @@ export function Field({ label, helper, required, error, children }) {
         {required && <span className="field-required" aria-hidden="true"> *</span>}
       </span>
       {children}
-      {error ? <span className="field-error">Required</span>
+      {error ? <span className="field-error">{typeof error === 'string' ? error : 'Required'}</span>
              : helper && <span className="field-helper">{helper}</span>}
     </label>
   )
@@ -209,7 +209,7 @@ export function Breadcrumb({ parent, onParent, current }) {
 }
 
 /* Date input with light MM/DD/YYYY masking. */
-export function DateInput({ value, onChange }) {
+export function DateInput({ value, onChange, className = '', onBlur }) {
   const format = (raw) => {
     const d = raw.replace(/\D/g, '').slice(0, 8)
     if (d.length <= 2) return d
@@ -217,7 +217,22 @@ export function DateInput({ value, onChange }) {
     return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`
   }
   return (
-    <input className="input" value={value || ''} placeholder="MM / DD / YYYY" inputMode="numeric"
+    <input className={'input ' + className} value={value || ''} placeholder="MM / DD / YYYY" inputMode="numeric"
+      onChange={(e) => onChange(format(e.target.value))} onBlur={onBlur} />
+  )
+}
+
+/* US phone input with light (XXX) XXX-XXXX masking. */
+export function PhoneInput({ value, onChange }) {
+  const format = (raw) => {
+    const d = raw.replace(/\D/g, '').slice(0, 10)
+    if (d.length === 0) return ''
+    if (d.length <= 3) return `(${d}`
+    if (d.length <= 6) return `(${d.slice(0, 3)}) ${d.slice(3)}`
+    return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`
+  }
+  return (
+    <input className="input" value={value || ''} placeholder="(415) 555-0172" inputMode="tel"
       onChange={(e) => onChange(format(e.target.value))} />
   )
 }
