@@ -235,14 +235,19 @@ input, select, textarea { font: inherit; color: inherit; }
 .card-title { font: var(--text-label-md); }
 .card-subtitle { font: var(--text-body-sm); color: var(--content-secondary); }
 .card-right { display: flex; align-items: center; }
+/* Same look as the old ⋯ button (28px, tertiary, radius 8, quiet hover),
+   but slides in on card hover. */
 .card-remove {
-  width: 0; opacity: 0; overflow: hidden;
-  display: flex; align-items: center; justify-content: flex-end;
-  color: var(--content-secondary);
-  transition: width var(--duration-fast) var(--ease), opacity var(--duration-fast) var(--ease);
+  width: 0; height: 28px; opacity: 0; overflow: hidden;
+  flex: none;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--content-tertiary);
+  border-radius: var(--radius-8);
+  transition: width var(--duration-fast) var(--ease), opacity var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
-.card-clickable:hover .card-remove, .card-remove:focus-visible { width: 26px; opacity: 1; }
-.card-remove:hover { color: var(--color-red-bright); }
+.card-clickable:hover .card-remove, .card-remove:focus-visible { width: 28px; opacity: 1; }
+.card-remove:hover { background: var(--bg-secondary); color: var(--content-primary); }
 
 .value-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); }
 .value-text { font: var(--text-label-md); }
