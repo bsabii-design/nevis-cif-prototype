@@ -91,7 +91,8 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
   }, [flag])
 
   return (
-    <div className="screen screen-narrow">
+    <div className="screen">
+      <div className="narrow-col">
       <h1 className="page-title">Personal information</h1>
       {flag && <p className="page-message">Add the required details below before sharing.</p>}
       <p className="page-copy">Please review your details and add anything missing.</p>
@@ -186,8 +187,12 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
         </div>
       </div>
 
+      </div>
+
       <div className="sticky-footer">
-        <button className="btn btn-secondary" onClick={() => onNav('work')}>Continue to work & income</button>
+        <div className="sticky-footer-col">
+          <button className="btn btn-secondary" onClick={() => onNav('work')}>Continue to work & income</button>
+        </div>
       </div>
     </div>
   )
@@ -201,7 +206,8 @@ export function Work({ profile, onChange, onNav }) {
   const st = w.employmentStatus
 
   return (
-    <div className="screen screen-narrow">
+    <div className="screen">
+      <div className="narrow-col">
       <div className="page-title-row">
         <h1 className="page-title">Work & income</h1>
         <span className="optional-tag">Optional</span>
@@ -240,9 +246,13 @@ export function Work({ profile, onChange, onNav }) {
         )}
       </div>
 
+      </div>
+
       <div className="sticky-footer">
-        <button className="btn btn-secondary" onClick={() => onNav('personal')}>Back</button>
-        <button className="btn btn-secondary" onClick={() => onNav('goals')}>Continue to goals</button>
+        <div className="sticky-footer-col">
+          <button className="btn btn-secondary" onClick={() => onNav('personal')}>Back</button>
+          <button className="btn btn-secondary" onClick={() => onNav('goals')}>Continue to goals</button>
+        </div>
       </div>
     </div>
   )
@@ -315,7 +325,8 @@ export function Goals({ profile, onChange, onNav }) {
   }
 
   return (
-    <div className="screen screen-narrow">
+    <div className="screen">
+      <div className="narrow-col">
       <h1 className="page-title">Your goals</h1>
 
       {goals.length === 0 ? (
@@ -359,9 +370,13 @@ export function Goals({ profile, onChange, onNav }) {
         </>
       )}
 
+      </div>
+
       <div className="sticky-footer">
-        <button className="btn btn-secondary" onClick={() => onNav('work')}>Back</button>
-        <button className="btn btn-secondary" onClick={() => onNav('networth')}>Continue to net worth</button>
+        <div className="sticky-footer-col">
+          <button className="btn btn-secondary" onClick={() => onNav('work')}>Back</button>
+          <button className="btn btn-secondary" onClick={() => onNav('networth')}>Continue to net worth</button>
+        </div>
       </div>
     </div>
   )
@@ -456,8 +471,10 @@ export function NetWorth({ profile, tab, onTab, onNav, onAddAsset, onEditAsset, 
         <FinancialSummary profile={profile} />
       </div>
 
-      <div className="sticky-footer sticky-footer-start">
-        <button className="btn btn-secondary" onClick={() => onNav('goals')}>Back</button>
+      <div className="sticky-footer">
+        <div className="sticky-footer-col sticky-footer-start">
+          <button className="btn btn-secondary" onClick={() => onNav('goals')}>Back</button>
+        </div>
       </div>
     </div>
   )

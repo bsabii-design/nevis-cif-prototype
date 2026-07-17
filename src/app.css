@@ -454,22 +454,28 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Tertiary repeatable actions — clearly quieter than Continue */
 .link-add {
   align-self: flex-start;
-  font: var(--text-label-md); color: var(--content-accent);
+  font: var(--text-label-md); color: var(--content-secondary);
   padding: var(--space-4) 0;
   transition: color var(--duration-fast) var(--ease);
 }
 .link-add:hover { color: var(--content-primary); }
 
-/* Sticky page footer: navigation stays visible on short viewports */
+/* Narrow form column inside a full-width screen */
+.narrow-col { max-width: 556px; display: flex; flex-direction: column; gap: var(--space-24); }
+
+/* Sticky page footer: full page width, action aligned to the form column */
 .sticky-footer {
   position: sticky; bottom: 0; z-index: 5;
-  display: flex; justify-content: flex-end; gap: var(--space-12);
   padding: var(--space-16) 0;
   margin-top: var(--space-8);
   background: var(--bg-page);
   border-top: var(--border-w) solid var(--border-default);
 }
-.sticky-footer-start { justify-content: flex-start; }
+.sticky-footer-col {
+  max-width: 556px;
+  display: flex; justify-content: flex-end; gap: var(--space-12);
+}
+.sticky-footer-start { justify-content: flex-start; max-width: none; }
 
 /* ---------------- Goals ---------------- */
 
