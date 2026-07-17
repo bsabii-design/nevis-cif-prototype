@@ -214,7 +214,7 @@ export default function App() {
           {r.name !== 'welcome' && (
             <Sidebar activeKey={NAV_KEY_FOR_ROUTE[r.name]} onNav={goSection} clientName="Jonathan Reeves" />
           )}
-          <main className="page">
+          <main className={'page' + (r.name === 'welcome' ? ' page-centered' : '')}>
             {r.name === 'welcome' && (
               <Welcome onStart={() => { setSeenWelcome(true); forceNavigate({ name: 'personal' }) }} />
             )}
