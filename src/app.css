@@ -136,6 +136,8 @@ input, select, textarea { font: inherit; color: inherit; }
 .page-title { font: 500 24px/32px var(--font-serif); }
 .page-title-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); }
 .page-copy { font: var(--text-body-sm); color: var(--content-secondary); }
+/* Title + supporting copy sit tight (4px); 16px to the next block. */
+.title-block { display: flex; flex-direction: column; gap: var(--space-4); margin-bottom: -8px; }
 .optional-tag {
   font: var(--text-label-sm); color: var(--content-secondary);
   padding: var(--space-4) var(--space-12);
@@ -243,10 +245,12 @@ input, select, textarea { font: inherit; color: inherit; }
   display: flex; align-items: center; justify-content: center;
   color: var(--content-tertiary);
   border-radius: var(--radius-8);
+  margin-left: 0;
   transition: width var(--duration-fast) var(--ease), opacity var(--duration-fast) var(--ease),
+    margin-left var(--duration-fast) var(--ease),
     background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
-.card-clickable:hover .card-remove, .card-remove:focus-visible { width: 28px; opacity: 1; }
+.card-clickable:hover .card-remove, .card-remove:focus-visible { width: 28px; opacity: 1; margin-left: var(--space-8); }
 .card-remove:hover { background: var(--bg-secondary); color: var(--content-primary); }
 
 .value-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); }
@@ -330,7 +334,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .summary-stat-label { font: var(--text-body-sm); color: var(--content-tertiary); }
 .summary-stat-value { font: var(--text-body-sm); color: var(--content-primary); }
 
-.assets-head { display: flex; align-items: center; justify-content: space-between; margin-top: var(--space-8); }
+.assets-head { display: flex; align-items: center; justify-content: space-between; }
 .assets-title { font: var(--text-label-md); }
 
 /* Category bubbles (multi-select) */
@@ -357,7 +361,8 @@ input, select, textarea { font: inherit; color: inherit; }
   gap: var(--space-48);
   align-items: start;
 }
-.nw-main { min-width: 0; display: flex; flex-direction: column; gap: var(--space-16); }
+.nw-main { min-width: 0; display: flex; flex-direction: column; gap: var(--space-24); }
+.nw-main > .group + .group { margin-top: var(--space-4); } /* 28px between groups (mock) */
 .nw-empty-title { font: var(--text-heading-sm); }
 .list-actions { display: flex; justify-content: flex-end; gap: var(--space-12); }
 

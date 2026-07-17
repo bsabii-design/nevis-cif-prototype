@@ -93,9 +93,11 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
   return (
     <div className="screen">
       <div className="narrow-col">
-      <h1 className="page-title">Personal information</h1>
-      {flag && <p className="page-message">Add the required details below before sharing.</p>}
-      <p className="page-copy">Please review your details and add anything missing.</p>
+      <div className="title-block">
+        <h1 className="page-title">Personal information</h1>
+        {flag && <p className="page-message">Add the required details below before sharing.</p>}
+        <p className="page-copy">Please review your details and add anything missing.</p>
+      </div>
 
       <div className="focus-form">
         {/* ---- Legal identity ---- */}
@@ -202,11 +204,13 @@ export function Work({ profile, onChange, onNav }) {
   return (
     <div className="screen">
       <div className="narrow-col">
-      <div className="page-title-row">
-        <h1 className="page-title">Occupation & income</h1>
-        <span className="optional-tag">Optional</span>
+      <div className="title-block">
+        <div className="page-title-row">
+          <h1 className="page-title">Occupation & income</h1>
+          <span className="optional-tag">Optional</span>
+        </div>
+        <p className="page-copy">Add any context that would be useful for your conversation with Sarah.</p>
       </div>
-      <p className="page-copy">Add any context that would be useful for your conversation with Sarah.</p>
 
       <div className="focus-form">
         <Field label="Employment status">
@@ -402,11 +406,13 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   return (
     <div className="screen">
       <div className="narrow-col">
-      <h1 className="page-title">Net worth</h1>
-      <p className="page-copy">
-        Add anything you own or owe to build a clearer financial picture.<br />
-        You can update it anytime.
-      </p>
+      <div className="title-block">
+        <h1 className="page-title">Net worth</h1>
+        <p className="page-copy">
+          Add anything you own or owe to build a clearer financial picture.<br />
+          You can update it anytime.
+        </p>
+      </div>
 
       <FinancialSummary profile={profile} />
 
