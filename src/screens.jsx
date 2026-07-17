@@ -454,7 +454,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
                         onEdit={() => onEditAsset(a)} onRemove={() => onRemoveAsset(a)} />
                     ))}
                     <button className="link-add" onClick={() => onAddAsset(cat.key)}>
-                      + Add {items.length > 0 ? 'another ' : ''}{cat.add}
+                      + Add
                     </button>
                   </section>
                 )
@@ -494,7 +494,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
                         onEdit={() => onEditLiability(l)} onRemove={() => onRemoveLiability(l)} />
                     ))}
                     <button className="link-add" onClick={() => onAddLiability(cat.key)}>
-                      + Add {items.length > 0 ? 'another ' : ''}{cat.add}
+                      + Add
                     </button>
                   </section>
                 )
