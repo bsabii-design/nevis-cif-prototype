@@ -1,110 +1,70 @@
-/* Mock NLP for the capture bar: text in → draft cards out. No AI calls. */
-import { INSTITUTIONS } from './data.js'
-import { buildAsset, buildLiability } from './editors.jsx'
+/* Mocked AI: goals text → goal cards, statement → extracted accounts. */
+import { uid } from './model.js'
 
-export const VOICE_TRANSCRIPT = "I've got a pension from my old job, not sure how much is in it"
+/* ---------------- Goals parsing (spec §11) ---------------- */
 
-export const isQuestion = (t) =>
-  /\?\s*$/.test(t.trim()) ||
-  /^(should|what|how|can|do i|does|is it|would|could)\b/i.test(t.trim())
+const WORD_NUMBERS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, fifteen: 15, twenty: 20 }
+const THIS_YEAR = new Date().getFullYear()
 
-const findInstitution = (text) =>
-  INSTITUTIONS.find((n) => text.toLowerCase().includes(n.toLowerCase()))
+const sentenceCase = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s)
 
-const CRYPTO_PLATFORMS = ['Coinbase', 'Kraken', 'Gemini']
+const cleanTitle = (clause) =>
+  sentenceCase(
+    clause
+      .replace(/^(i['’]d like to|i['’]d love to|i want to|i hope to|i plan to|we['’]d like to|we want to|and|also)\s+/i, '')
+      .replace(/\s+in about .*$/i, '')
+      .replace(/\s+by \d{4}.*$/i, '')
+      .replace(/[.?!]\s*$/, '')
+      .trim()
+  )
 
-/* "2 million" → 2000000, "800k" → 800000, "4.8" → 4800000 (wealth-context
-   bare numbers under 100 read as millions), "1,250,000" → as written. */
-const extractAmount = (clause) => {
-  const cleaned = clause.replace(/401\s*\(?k\)?/gi, '').replace(/,/g, '')
-  const m = cleaned.match(/\$?\s*(\d+(?:\.\d+)?)\s*(million|mil\b|m\b|k\b|thousand|grand)?/i)
+const extractYear = (clause) => {
+  const explicit = clause.match(/\b(20\d\d)\b/)
+  if (explicit) return Number(explicit[1])
+  const inYears = clause.match(/in about (\w+) years?|in (\w+) years?/i)
+  if (inYears) {
+    const w = (inYears[1] || inYears[2] || '').toLowerCase()
+    const n = WORD_NUMBERS[w] ?? (Number(w) || null)
+    if (n) return THIS_YEAR + n
+  }
+  return null
+}
+
+const extractGoalAmount = (clause) => {
+  const m = clause.replace(/,/g, '').match(/\$\s*(\d+(?:\.\d+)?)\s*(million|m\b|k\b)?/i)
   if (!m) return null
   let n = parseFloat(m[1])
   const suf = (m[2] || '').toLowerCase()
   if (suf.startsWith('m')) n *= 1e6
-  else if (suf) n *= 1e3
-  else if (n < 100) n *= 1e6
+  else if (suf === 'k') n *= 1e3
   return Math.round(n)
 }
 
-const parseClause = (clause) => {
-  const lower = clause.toLowerCase()
-  const institution = findInstitution(clause)
-  const value = extractAmount(clause)
-
-  // Liabilities first: mortgage / loan / credit line / owe
-  if (/(mortgage|loan|credit line|owe|debt)/i.test(lower)) {
-    const type = /mortgage/i.test(lower) ? 'Mortgage' : /credit/i.test(lower) ? 'Credit line' : 'Loan'
-    return { kind: 'liability', form: { type, lender: institution || '', balance: value, currency: 'USD' } }
+export const parseGoals = (text) => {
+  // The demo sentence maps to the exact cards from the spec.
+  if (/sell my business/i.test(text) && /coast/i.test(text) && /college/i.test(text)) {
+    return [
+      { id: uid(), title: 'Sell my business', targetYear: 2036, targetAmount: null, currency: 'USD' },
+      { id: uid(), title: 'Move closer to the coast', targetYear: 2036, targetAmount: null, currency: 'USD' },
+      { id: uid(), title: "Help pay for my children's college", targetYear: null, targetAmount: null, currency: 'USD' },
+    ]
   }
-
-  // Real estate
-  const reKw = lower.match(/\b(house|home|apartment|condo|townhouse|property|land)\b/)
-  if (reKw) {
-    const typeMap = { house: 'House', home: 'House', apartment: 'Apartment', condo: 'Condo', townhouse: 'Townhouse', property: 'House', land: 'Land' }
-    let name = ''
-    const inLoc = clause.match(/(?:house|home|apartment|condo|property|land)\s+in\s+([A-Z][\w]+)/i)
-    const preLoc = clause.match(/([A-Z][a-z]+)\s+(house|home|apartment|condo)/)
-    if (inLoc) name = `${inLoc[1][0].toUpperCase()}${inLoc[1].slice(1)} ${reKw[1]}`
-    else if (preLoc) name = `${preLoc[1]} ${preLoc[2]}`
-    return { kind: 'asset', category: 'realestate', form: { name, propertyType: typeMap[reKw[1]], value, currency: 'USD' } }
-  }
-
-  // Crypto
-  if (/(crypto|bitcoin|ethereum|btc|eth)\b/i.test(lower) || CRYPTO_PLATFORMS.includes(institution)) {
-    return { kind: 'asset', category: 'crypto', form: { whereHeld: institution || '', value, currency: 'USD' } }
-  }
-
-  // Investment (incl. pension)
-  const accountType =
-    /pension/i.test(lower) ? 'Pension' :
-    /\bira\b/i.test(lower) ? 'IRA' :
-    /401/.test(lower) ? '401(k)' : 'Brokerage account'
-  if (institution || accountType !== 'Brokerage account' || /(brokerage|invest|stocks|account|savings)/i.test(lower)) {
-    return { kind: 'asset', category: 'investment', form: { institution: institution || '', accountType, value, currency: 'USD' } }
-  }
-
-  return null
+  const clauses = text.split(/,\s*(?:and\s+)?|\s+and\s+|\.\s+|;\s*/i).map((c) => c.trim()).filter(Boolean)
+  const goals = clauses
+    .map((clause) => {
+      const title = cleanTitle(clause)
+      if (!title || title.length < 3) return null
+      return { id: uid(), title, targetYear: extractYear(clause), targetAmount: extractGoalAmount(clause), currency: 'USD' }
+    })
+    .filter(Boolean)
+  return goals.length ? goals : [{ id: uid(), title: sentenceCase(text.trim()), targetYear: null, targetAmount: null, currency: 'USD' }]
 }
 
-/* → { assets: [asset-shaped drafts], liabilities: [liability-shaped drafts] } */
-export const parseCapture = (input) => {
-  const clauses = input.split(/,\s*(?:and\s+)?|\s+and\s+|;\s*/i).map((c) => c.trim()).filter(Boolean)
-  const assets = []
-  const liabilities = []
-  for (const clause of clauses) {
-    const parsed = parseClause(clause)
-    if (!parsed) continue
-    if (parsed.kind === 'liability') liabilities.push(buildLiability(parsed.form))
-    else assets.push(buildAsset(parsed.category, parsed.form))
-  }
-  if (assets.length === 0 && liabilities.length === 0) {
-    // Never an error: one generic draft with the text as its name.
-    assets.push(buildAsset('other', { description: input.trim(), currency: 'USD' }))
-  }
-  return { assets, liabilities }
-}
+/* ---------------- Statement extraction (spec §17–18) ---------------- */
 
-/* ---- Batch statement mocks: deterministic patterns per file index ---- */
+export const MOCK_STATEMENT_NAME = 'Fidelity_statement.pdf'
 
-let batchSeq = 900
-export const mockFileResults = (index, existingAssets) => {
-  const mk = (institution, accountType, value) =>
-    ({ id: ++batchSeq, institution, accountType, value, currency: 'USD' })
-  switch (index % 4) {
-    case 0:
-      return { found: [mk('Fidelity', 'Brokerage account', 1850000), mk('Fidelity', '401(k)', 620000)] }
-    case 1:
-      return { found: [mk('Vanguard', 'IRA', 1100000), mk('Fidelity', 'Brokerage account', 1850000)] }
-    case 2: {
-      const rows = [mk('Morgan Stanley', 'Brokerage account', 2300000)]
-      const coinbase = existingAssets.find((a) => a.title === 'Coinbase')
-      const upd = mk('Coinbase', 'Brokerage account', 940000)
-      if (coinbase) { upd.updateAssetId = coinbase.id; upd.updateTitle = coinbase.title }
-      rows.push(upd)
-      return { found: rows }
-    }
-    default:
-      return { unreadable: true }
-  }
-}
+export const extractedAccounts = () => [
+  { id: uid(), title: 'Fidelity Brokerage Account', institution: 'Fidelity', accountType: 'Brokerage account', category: 'investment', value: 1240500, currency: 'USD' },
+  { id: uid(), title: 'Traditional IRA', institution: 'Fidelity', accountType: 'Traditional IRA', category: 'retirement', value: 480200, currency: 'USD' },
+]

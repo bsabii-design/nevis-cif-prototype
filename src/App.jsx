@@ -1,393 +1,246 @@
-import { useRef, useState } from 'react'
-import { TopBar, AssetGroups, SummaryPanel, LiabilityCard } from './components.jsx'
-import { AssetEditor, LiabilityEditor } from './editors.jsx'
-import { CaptureBar, BatchPanel } from './capture.jsx'
-import { parseCapture } from './parse.js'
-import { blankLiabilities, seedProfile, uid } from './data.js'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { assetTitle, blankProfile, loadState, saveState, seedProfile } from './model.js'
+import { Dialog } from './ui.jsx'
+import { TopBar } from './components.jsx'
+import { AssetForm, LiabilityForm, UploadFlow } from './forms.jsx'
+import { Goals, NetWorth, Overview, Personal, Review, SharedConfirm, Welcome, Work } from './screens.jsx'
 import { useSavedFlash } from './hooks.js'
 
-const initial = seedProfile()
+const LEAVE_COPY = {
+  asset: { title: 'Leave without adding this asset?', body: 'Your entries will be lost.' },
+  'asset-edit': { title: 'Leave without saving your changes?', body: 'Your changes will be lost.' },
+  liability: { title: 'Leave without adding this liability?', body: 'Your entries will be lost.' },
+  'liability-edit': { title: 'Leave without saving your changes?', body: 'Your changes will be lost.' },
+  extract: { title: 'Leave without adding these accounts?', body: 'Your changes will be lost.', stay: 'Keep reviewing' },
+}
 
-const focusFirstDraft = () =>
-  setTimeout(() => {
-    document.querySelector('.draft-zone .editor input, .draft-zone .editor select')?.focus()
-  }, 80)
+const NAV_KEY_FOR_ROUTE = {
+  overview: 'overview', personal: 'personal', work: 'work', goals: 'goals',
+  networth: 'networth', 'asset-form': 'networth', 'liability-form': 'networth',
+  upload: 'networth', review: 'review', shared: 'review',
+}
 
 export default function App() {
-  const [assets, setAssets] = useState(initial.assets)
-  const [liabilities, setLiabilities] = useState(initial.liabilities)
-  /* editing: null | {kind:'asset'|'liability', id: number|null} — id null means a new card */
-  const [editing, setEditing] = useState(null)
-  const [draftAssets, setDraftAssets] = useState([])
-  const [draftLiabilities, setDraftLiabilities] = useState([])
-  const [batchFiles, setBatchFiles] = useState(null)
-  const [toast, setToast] = useState(null) // {msg, undo}
+  const [state] = useState(() => loadState())
+  const [profile, setProfile] = useState(() => state?.profile ?? seedProfile())
+  const [seenWelcome, setSeenWelcome] = useState(() => state?.seenWelcome ?? true)
+  const [route, setRoute] = useState(() => (state?.seenWelcome ?? true) ? { name: 'overview' } : { name: 'welcome' })
   const [tick, setTick] = useState(0)
-  const [highlightId, setHighlightId] = useState(null)
+  const [leaveDialog, setLeaveDialog] = useState(null)   // {kind, to}
+  const [removeDialog, setRemoveDialog] = useState(null) // {kind, item}
   const saved = useSavedFlash(tick)
-  const oweRef = useRef(null)
-  const toastTimer = useRef(null)
+  const guardRef = useRef(null)
   const touch = () => setTick((t) => t + 1)
 
-  const showToast = (msg, undo) => {
-    clearTimeout(toastTimer.current)
-    setToast({ msg, undo })
-    toastTimer.current = setTimeout(() => setToast(null), 5000)
-  }
-  const handleUndo = () => {
-    toast?.undo()
-    clearTimeout(toastTimer.current)
-    setToast(null)
-    touch()
-  }
+  /* Persist profile + welcome flag (prototype: localStorage). */
+  useEffect(() => {
+    saveState({ profile, seenWelcome })
+  }, [profile, seenWelcome])
 
-  /* ---- capture bar ---- */
+  const setGuard = useCallback((g) => { guardRef.current = g }, [])
 
-  const handleCapture = (text) => {
-    const parsed = parseCapture(text)
-    if (parsed.assets.length) setDraftAssets((d) => [...d, ...parsed.assets])
-    if (parsed.liabilities.length) setDraftLiabilities((d) => [...d, ...parsed.liabilities])
-    focusFirstDraft()
-  }
-
-  const handleFiles = (names) => setBatchFiles(names.slice(0, 8))
-
-  const applyBatch = (items) => {
-    setAssets((list) => {
-      let next = [...list]
-      for (const item of items) {
-        if (item.updateAssetId) {
-          next = next.map((a) => (a.id === item.updateAssetId ? { ...a, value: item.value, currency: item.currency } : a))
-        } else {
-          next.push({
-            id: item.id, category: 'investment',
-            title: item.institution || 'Investment account', subtitle: item.accountType,
-            institution: item.institution, accountType: item.accountType,
-            value: item.value ?? null, currency: item.currency || 'USD',
-          })
-        }
-      }
-      return next
-    })
-    setBatchFiles(null)
-    touch()
-  }
-
-  /* ---- drafts ---- */
-
-  const updateDraftAsset = (built) =>
-    setDraftAssets((list) => list.map((d) => (d.id === built.id ? built : d)))
-  const updateDraftLiability = (built) =>
-    setDraftLiabilities((list) => list.map((d) => (d.id === built.id ? built : d)))
-
-  const maybeAddMortgageDraft = (asset, mortgage) => {
-    if (mortgage && !liabilities.items.some((l) => l.linkedAssetId === asset.id)) {
-      setLiabilities((l) => ({
-        ...l, explicitNone: false,
-        items: [...l.items, {
-          id: uid(), type: 'Mortgage', lender: '', balance: null, currency: 'USD',
-          interestRate: null, linkedAssetId: asset.id, draft: true,
-        }],
-      }))
+  /* All navigation goes through here so open forms can intercept it. */
+  const navigate = (to) => {
+    if (guardRef.current) {
+      setLeaveDialog({ kind: guardRef.current.kind, to })
+      return
     }
+    setRoute(to)
+    window.scrollTo(0, 0)
   }
-
-  const commitDraftAsset = (built, { mortgage } = {}) => {
-    setDraftAssets((list) => list.filter((d) => d.id !== built.id))
-    setAssets((list) => [...list, built])
-    maybeAddMortgageDraft(built, mortgage)
-    touch()
+  const forceNavigate = (to) => {
+    guardRef.current = null
+    setLeaveDialog(null)
+    setRoute(to)
+    window.scrollTo(0, 0)
   }
-  const commitDraftLiability = (built) => {
-    setDraftLiabilities((list) => list.filter((d) => d.id !== built.id))
-    setLiabilities((l) => ({ ...l, explicitNone: false, items: [...l.items, built] }))
-    touch()
-  }
+  const goSection = (key) => navigate(key === 'networth' ? { name: 'networth', tab: 'assets' } : { name: key })
 
-  const addAllAssets = () => {
-    setAssets((list) => [...list, ...draftAssets])
-    setDraftAssets([])
-    touch()
-  }
-  const addAllLiabilities = () => {
-    setLiabilities((l) => ({ ...l, explicitNone: false, items: [...l.items, ...draftLiabilities] }))
-    setDraftLiabilities([])
-    touch()
-  }
+  const updateProfile = (next) => { setProfile(next); touch() }
 
-  /* ---- assets ---- */
+  /* ---- financial objects: explicit commits ---- */
 
-  const commitAsset = (built, { mortgage } = {}) => {
-    setAssets((list) =>
-      list.some((a) => a.id === built.id)
-        ? list.map((a) => (a.id === built.id ? { ...a, ...built } : a))
-        : [...list, built]
-    )
-    maybeAddMortgageDraft(built, mortgage)
-    setEditing(null)
-    touch()
-  }
-
-  const removeAsset = (id) => {
-    const index = assets.findIndex((a) => a.id === id)
-    const item = assets[index]
-    setAssets((list) => list.filter((a) => a.id !== id))
-    setEditing(null)
-    showToast(`${item.title} removed`, () =>
-      setAssets((list) => {
-        const next = [...list]
-        next.splice(Math.min(index, next.length), 0, item)
-        return next
-      })
-    )
-    touch()
-  }
-
-  /* ---- liabilities ---- */
-
-  const commitLiability = (built) => {
-    setLiabilities((l) => ({
-      ...l,
-      explicitNone: false,
-      items: l.items.some((it) => it.id === built.id)
-        ? l.items.map((it) => (it.id === built.id ? { ...it, ...built, draft: false } : it))
-        : [...l.items, built],
+  const commitAsset = (asset) => {
+    guardRef.current = null
+    setProfile((p) => ({
+      ...p,
+      assets: p.assets.some((a) => a.id === asset.id)
+        ? p.assets.map((a) => (a.id === asset.id ? asset : a))
+        : [...p.assets, asset],
     }))
-    setEditing(null)
+    touch()
+    forceNavigate({ name: 'networth', tab: 'assets' })
+  }
+
+  const commitLiability = (liability) => {
+    guardRef.current = null
+    setProfile((p) => ({
+      ...p,
+      liabilitiesExplicitlyNone: false,
+      liabilities: p.liabilities.some((l) => l.id === liability.id)
+        ? p.liabilities.map((l) => (l.id === liability.id ? liability : l))
+        : [...p.liabilities, liability],
+    }))
+    touch()
+    forceNavigate({ name: 'networth', tab: 'liabilities' })
+  }
+
+  const commitExtracted = (accounts) => {
+    guardRef.current = null
+    setProfile((p) => ({
+      ...p,
+      assets: [
+        ...p.assets,
+        ...accounts.map((a) => ({
+          id: a.id, category: a.accountType.includes('IRA') || ['401(k)', 'Pension'].includes(a.accountType) ? 'retirement' : 'investment',
+          subtype: a.accountType, name: a.title,
+          institutionOrProvider: a.institution, address: '',
+          currency: a.currency, value: a.value ?? null,
+        })),
+      ],
+    }))
+    touch()
+    forceNavigate({ name: 'networth', tab: 'assets' })
+  }
+
+  const confirmRemove = () => {
+    const { kind, item } = removeDialog
+    if (kind === 'asset') {
+      setProfile((p) => ({ ...p, assets: p.assets.filter((a) => a.id !== item.id) }))
+    } else {
+      setProfile((p) => ({ ...p, liabilities: p.liabilities.filter((l) => l.id !== item.id) }))
+    }
+    setRemoveDialog(null)
     touch()
   }
 
-  const removeLiability = (id) => {
-    const index = liabilities.items.findIndex((it) => it.id === id)
-    const item = liabilities.items[index]
-    setLiabilities((l) => ({ ...l, items: l.items.filter((it) => it.id !== id) }))
-    setEditing(null)
-    showToast(`${item.type} removed`, () =>
-      setLiabilities((l) => {
-        const next = [...l.items]
-        next.splice(Math.min(index, next.length), 0, item)
-        return { ...l, items: next }
-      })
-    )
+  const answerNoLiabilities = () => {
+    setProfile((p) => ({ ...p, liabilitiesExplicitlyNone: true, liabilities: [] }))
     touch()
   }
 
-  const answerNone = () => {
-    setLiabilities({ explicitNone: true, items: [] })
+  const share = () => {
+    setProfile((p) => ({ ...p, shared: true }))
     touch()
+    forceNavigate({ name: 'shared' })
   }
 
-  /* ---- misc ---- */
+  /* ---- demo controls ---- */
 
-  const showMissing = () => {
-    const first = assets.find((a) => a.value == null)
-    if (!first) return
-    setHighlightId(first.id)
-    document.getElementById('asset-' + first.id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    setTimeout(() => setHighlightId(null), 1800)
-  }
-
-  const goToLiabilities = () =>
-    oweRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-
-  const clearTransient = () => {
-    setEditing(null); setBatchFiles(null); setToast(null)
-    setDraftAssets([]); setDraftLiabilities([])
-  }
   const resetDemo = () => {
-    const fresh = seedProfile()
-    setAssets(fresh.assets)
-    setLiabilities(fresh.liabilities)
-    clearTransient()
+    guardRef.current = null
+    setProfile(seedProfile())
+    setSeenWelcome(true)
+    setLeaveDialog(null); setRemoveDialog(null)
+    forceNavigate({ name: 'overview' })
     touch()
   }
   const blankStart = () => {
-    setAssets([]); setLiabilities(blankLiabilities())
-    clearTransient()
+    guardRef.current = null
+    setProfile(blankProfile())
+    setSeenWelcome(false)
+    setLeaveDialog(null); setRemoveDialog(null)
+    forceNavigate({ name: 'welcome' })
     touch()
   }
 
-  const properties = assets.filter((a) => a.category === 'realestate')
-  const editingAsset = editing?.kind === 'asset' ? editing.id : undefined
-  const editingLiability = editing?.kind === 'liability' ? editing.id : undefined
-  const showChips = assets.length + liabilities.items.length < 3
+  /* ---- render ---- */
 
-  const assetEditorFor = (asset) => (
-    <AssetEditor
-      asset={asset}
-      onCommit={commitAsset}
-      onDiscard={() => setEditing(null)}
-      onRemove={asset ? () => removeAsset(asset.id) : undefined}
-    />
-  )
+  const r = route
+  const leaveTo = (tab) => navigate({ name: 'networth', tab })
 
   return (
     <>
-      <TopBar saved={saved} clientName="Jonathan Reeves" />
-      <main
-        className="content"
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => {
-          e.preventDefault()
-          const names = [...(e.dataTransfer?.files || [])].map((f) => f.name)
-          if (names.length) handleFiles(names)
-        }}
-      >
-        <div className="main-col">
-          <h1 className="page-title">Your net worth</h1>
-
-          {/* ---------- What you own ---------- */}
-          <section className="block">
-            <div className="block-head">
-              <h2 className="block-title">What you own</h2>
-            </div>
-
-            {editingAsset === null && assetEditorFor(null)}
-
-            {draftAssets.length > 0 && (
-              <div className="draft-zone">
-                {draftAssets.length >= 2 && (
-                  <div className="draft-actions">
-                    <span className="draft-count">{draftAssets.length} ready to add</span>
-                    <span className="editor-actions-spacer" />
-                    <button className="btn btn-ghost" onClick={() => setDraftAssets([])}>Discard</button>
-                    <button className="btn btn-secondary" onClick={addAllAssets}>Add all</button>
-                  </div>
-                )}
-                {draftAssets.map((d) => (
-                  <AssetEditor
-                    key={d.id} asset={d} draft
-                    onFormChange={updateDraftAsset}
-                    onCommit={commitDraftAsset}
-                    onDiscard={() => setDraftAssets((l) => l.filter((x) => x.id !== d.id))}
-                    onRemove={() => setDraftAssets((l) => l.filter((x) => x.id !== d.id))}
-                  />
-                ))}
-              </div>
-            )}
-
-            {assets.length === 0 && draftAssets.length === 0 && editingAsset === undefined ? (
-              <p className="block-empty">What you own — nothing here yet. Use the bar below to get started.</p>
-            ) : (
-              <AssetGroups
-                assets={assets}
-                editingId={editingAsset}
-                onOpen={(id) => setEditing({ kind: 'asset', id })}
-                renderEditor={assetEditorFor}
-                highlightId={highlightId}
-              />
-            )}
-          </section>
-
-          {/* ---------- What you owe ---------- */}
-          <section className="block" ref={oweRef}>
-            <div className="block-head">
-              <h2 className="block-title">What you owe</h2>
-            </div>
-
-            {editingLiability === null && (
-              <LiabilityEditor
-                properties={properties}
-                onCommit={commitLiability}
-                onDiscard={() => setEditing(null)}
-              />
-            )}
-
-            {draftLiabilities.length > 0 && (
-              <div className="draft-zone">
-                {draftLiabilities.length >= 2 && (
-                  <div className="draft-actions">
-                    <span className="draft-count">{draftLiabilities.length} ready to add</span>
-                    <span className="editor-actions-spacer" />
-                    <button className="btn btn-ghost" onClick={() => setDraftLiabilities([])}>Discard</button>
-                    <button className="btn btn-secondary" onClick={addAllLiabilities}>Add all</button>
-                  </div>
-                )}
-                {draftLiabilities.map((d) => (
-                  <LiabilityEditor
-                    key={d.id} liability={d} draft properties={properties}
-                    onFormChange={updateDraftLiability}
-                    onCommit={commitDraftLiability}
-                    onDiscard={() => setDraftLiabilities((l) => l.filter((x) => x.id !== d.id))}
-                    onRemove={() => setDraftLiabilities((l) => l.filter((x) => x.id !== d.id))}
-                  />
-                ))}
-              </div>
-            )}
-
-            {liabilities.items.length > 0 && (
-              <div className="group">
-                {liabilities.items.map((l) =>
-                  l.id === editingLiability ? (
-                    <LiabilityEditor
-                      key={l.id} liability={l} properties={properties}
-                      onCommit={commitLiability}
-                      onDiscard={() => setEditing(null)}
-                      onRemove={() => removeLiability(l.id)}
-                    />
-                  ) : (
-                    <LiabilityCard
-                      key={l.id} liability={l} assets={assets}
-                      onOpen={() => setEditing({ kind: 'liability', id: l.id })}
-                    />
-                  )
-                )}
-              </div>
-            )}
-
-            {liabilities.explicitNone && (
-              <p className="owe-none">
-                No liabilities — this counts as $0 in your net worth.{' '}
-                <button className="link" onClick={() => setEditing({ kind: 'liability', id: null })}>
-                  Actually, add a liability
-                </button>
-              </p>
-            )}
-
-            {liabilities.items.length === 0 && !liabilities.explicitNone &&
-              draftLiabilities.length === 0 && editingLiability === undefined && (
-              <>
-                <p className="block-empty">What you owe — nothing here yet. Use the bar below to get started.</p>
-                <button className="btn btn-secondary owe-none-btn" onClick={answerNone}>
-                  I don't have any liabilities
-                </button>
-              </>
-            )}
-          </section>
-
-          {batchFiles && (
-            <BatchPanel
-              key={batchFiles.join('|')}
-              fileNames={batchFiles}
-              assets={assets}
-              onApply={applyBatch}
-              onDiscard={() => setBatchFiles(null)}
-            />
-          )}
-
-          <CaptureBar
-            showChips={showChips}
-            onSubmit={handleCapture}
-            onFiles={handleFiles}
-            onAddManually={() => setEditing({ kind: 'asset', id: null })}
+      <TopBar
+        activeKey={NAV_KEY_FOR_ROUTE[r.name]}
+        onNav={goSection}
+        saved={saved}
+        clientName="Jonathan Reeves"
+        showNav={r.name !== 'welcome'}
+      />
+      <main className="page">
+        {r.name === 'welcome' && (
+          <Welcome onStart={() => { setSeenWelcome(true); forceNavigate({ name: 'overview' }) }} />
+        )}
+        {r.name === 'overview' && <Overview profile={profile} onNav={goSection} />}
+        {r.name === 'personal' && <Personal profile={profile} onChange={updateProfile} onNav={goSection} />}
+        {r.name === 'work' && <Work profile={profile} onChange={updateProfile} onNav={goSection} />}
+        {r.name === 'goals' && <Goals profile={profile} onChange={updateProfile} onNav={goSection} />}
+        {r.name === 'networth' && (
+          <NetWorth
+            profile={profile}
+            tab={r.tab || 'assets'}
+            onTab={(tab) => navigate({ name: 'networth', tab })}
+            onAddAsset={(category) => navigate({ name: 'asset-form', category })}
+            onEditAsset={(a) => navigate({ name: 'asset-form', assetId: a.id })}
+            onRemoveAsset={(a) => setRemoveDialog({ kind: 'asset', item: a })}
+            onAddLiability={(category) => navigate({ name: 'liability-form', category })}
+            onEditLiability={(l) => navigate({ name: 'liability-form', liabilityId: l.id })}
+            onRemoveLiability={(l) => setRemoveDialog({ kind: 'liability', item: l })}
+            onUpload={() => navigate({ name: 'upload' })}
+            onAnswerNone={answerNoLiabilities}
+            onChange={updateProfile}
           />
-        </div>
-
-        <SummaryPanel
-          assets={assets} liabilities={liabilities}
-          onShowMissing={showMissing} onGoToLiabilities={goToLiabilities}
-        />
+        )}
+        {r.name === 'asset-form' && (
+          <AssetForm
+            asset={r.assetId ? profile.assets.find((a) => a.id === r.assetId) : null}
+            initialCategory={r.category}
+            setGuard={setGuard}
+            onCommit={commitAsset}
+            onLeave={leaveTo}
+          />
+        )}
+        {r.name === 'liability-form' && (
+          <LiabilityForm
+            liability={r.liabilityId ? profile.liabilities.find((l) => l.id === r.liabilityId) : null}
+            initialCategory={r.category}
+            setGuard={setGuard}
+            onCommit={commitLiability}
+            onLeave={leaveTo}
+          />
+        )}
+        {r.name === 'upload' && (
+          <UploadFlow setGuard={setGuard} onCommit={commitExtracted} onLeave={leaveTo} />
+        )}
+        {r.name === 'review' && <Review profile={profile} onNav={goSection} onShare={share} />}
+        {r.name === 'shared' && <SharedConfirm onOverview={() => forceNavigate({ name: 'overview' })} />}
       </main>
+
       <footer className="footer">
         <button className="footer-link" onClick={resetDemo}>Reset demo</button>
         <span className="footer-sep">·</span>
         <button className="footer-link" onClick={blankStart}>Blank start</button>
       </footer>
-      {toast && (
-        <div className="toast" role="status">
-          <span>{toast.msg} ·</span>
-          <button className="link" onClick={handleUndo}>Undo</button>
-        </div>
+
+      {leaveDialog && (() => {
+        const editing = (leaveDialog.kind === 'asset' && route.assetId) || (leaveDialog.kind === 'liability' && route.liabilityId)
+        const copy = LEAVE_COPY[editing ? `${leaveDialog.kind}-edit` : leaveDialog.kind]
+        return (
+          <Dialog
+            title={copy.title}
+            body={copy.body}
+            cancelLabel={copy.stay || 'Keep editing'}
+            confirmLabel="Leave"
+            danger
+            onCancel={() => setLeaveDialog(null)}
+            onConfirm={() => forceNavigate(leaveDialog.to)}
+          />
+        )
+      })()}
+
+      {removeDialog && (
+        <Dialog
+          title={removeDialog.kind === 'asset' ? `Remove ${assetTitle(removeDialog.item)}?` : 'Remove this liability?'}
+          body={removeDialog.kind === 'asset'
+            ? 'This asset will no longer be included in your financial picture.'
+            : 'This liability will no longer be included in your financial picture.'}
+          cancelLabel="Cancel"
+          confirmLabel={removeDialog.kind === 'asset' ? 'Remove asset' : 'Remove liability'}
+          danger
+          onCancel={() => setRemoveDialog(null)}
+          onConfirm={confirmRemove}
+        />
       )}
     </>
   )
