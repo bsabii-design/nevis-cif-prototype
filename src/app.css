@@ -106,7 +106,7 @@ input, select, textarea { font: inherit; color: inherit; }
   position: sticky; top: 57px; align-self: flex-start;
   height: calc(100vh - 57px);
 }
-.side-links { display: flex; flex-direction: column; }
+.side-links { display: flex; flex-direction: column; gap: var(--space-2); }
 .side-link {
   text-align: left; width: 100%;
   font: var(--text-label-md); color: var(--content-secondary);
@@ -413,9 +413,18 @@ input, select, textarea { font: inherit; color: inherit; }
   padding: 0 var(--space-16) var(--space-20);
 }
 .panel-foot {
+  position: relative;
   flex: none;
   display: flex; justify-content: flex-end; gap: var(--space-8);
   padding: var(--space-12) var(--space-16);
+  background: var(--bg-page);
+}
+.panel-foot::before {
+  content: '';
+  position: absolute; bottom: 100%; left: 0; right: 0;
+  height: var(--space-24);
+  background: linear-gradient(to top, var(--color-beige), var(--color-beige-0));
+  pointer-events: none;
 }
 .upload-row {
   display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4);
@@ -601,7 +610,8 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Narrow form column inside a full-width screen */
 .narrow-col { max-width: 556px; display: flex; flex-direction: column; gap: var(--space-24); }
 
-/* Bottom navigation: pinned, aligned to the content column, no divider (mock) */
+/* Bottom navigation: pinned, aligned to the content column, no divider (mock).
+   A soft fade above lets scrolling cards slip underneath gently. */
 .content-footer {
   position: sticky; bottom: 0; z-index: 5;
   width: 100%; max-width: 572px;
@@ -609,6 +619,13 @@ input, select, textarea { font: inherit; color: inherit; }
   padding: var(--space-12) 0;
   background: var(--bg-page);
   display: flex; justify-content: space-between; gap: var(--space-12);
+}
+.content-footer::before {
+  content: '';
+  position: absolute; bottom: 100%; left: 0; right: 0;
+  height: var(--space-24);
+  background: linear-gradient(to top, var(--color-beige), var(--color-beige-0));
+  pointer-events: none;
 }
 .ml-auto { margin-left: auto; }
 
