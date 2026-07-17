@@ -188,12 +188,6 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
       </div>
 
       </div>
-
-      <div className="sticky-footer">
-        <div className="sticky-footer-col">
-          <button className="btn btn-secondary ml-auto" onClick={() => onNav('work')}>Continue</button>
-        </div>
-      </div>
     </div>
   )
 }
@@ -209,7 +203,7 @@ export function Work({ profile, onChange, onNav }) {
     <div className="screen">
       <div className="narrow-col">
       <div className="page-title-row">
-        <h1 className="page-title">Work & income</h1>
+        <h1 className="page-title">Occupation & income</h1>
         <span className="optional-tag">Optional</span>
       </div>
       <p className="page-copy">Add any context that would be useful for your conversation with Sarah.</p>
@@ -246,13 +240,6 @@ export function Work({ profile, onChange, onNav }) {
         )}
       </div>
 
-      </div>
-
-      <div className="sticky-footer">
-        <div className="sticky-footer-col">
-          <button className="btn btn-secondary" onClick={() => onNav('personal')}>Back</button>
-          <button className="btn btn-secondary" onClick={() => onNav('goals')}>Continue</button>
-        </div>
       </div>
     </div>
   )
@@ -372,12 +359,6 @@ export function Goals({ profile, onChange, onNav }) {
 
       </div>
 
-      <div className="sticky-footer">
-        <div className="sticky-footer-col">
-          <button className="btn btn-secondary" onClick={() => onNav('work')}>Back</button>
-          <button className="btn btn-secondary" onClick={() => onNav('networth')}>Continue</button>
-        </div>
-      </div>
     </div>
   )
 }
@@ -406,9 +387,9 @@ function CategoryBubbles({ categories, selected, locked, onToggle }) {
   )
 }
 
-export function NetWorth({ profile, tab, onTab, onNav, selectedCats, onToggleCat,
+export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   onAddAsset, onAddLiability, onEditAsset, onRemoveAsset, onEditLiability, onRemoveLiability,
-  onUpload, onAnswerNone, sidePanel }) {
+  onAnswerNone }) {
   const { assets, liabilities, liabilitiesExplicitlyNone: none } = profile
 
   const liabsWithRecords = new Set(liabilities.map((l) => l.category))
@@ -420,14 +401,14 @@ export function NetWorth({ profile, tab, onTab, onNav, selectedCats, onToggleCat
 
   return (
     <div className="screen">
-      <div className="page-title-row">
-        <h1 className="page-title">Your net worth</h1>
-        <button className="btn btn-secondary" onClick={onUpload}>Upload statement</button>
-      </div>
+      <div className="narrow-col">
+      <h1 className="page-title">Net worth</h1>
       <p className="page-copy">
         Add anything you own or owe to build a clearer financial picture.<br />
         You can update it anytime.
       </p>
+
+      <FinancialSummary profile={profile} />
 
       <div className="nw-tabs" role="tablist">
         <button role="tab" aria-selected={tab === 'assets'}
@@ -442,12 +423,12 @@ export function NetWorth({ profile, tab, onTab, onNav, selectedCats, onToggleCat
         </button>
       </div>
 
-      <div className="nw-layout">
-        <div className="nw-main">
+      <div className="nw-main">
           {tab === 'assets' && (
             <>
-              <div className="list-actions">
-                <button className="btn btn-secondary" onClick={() => onAddAsset(null)}>Add asset</button>
+              <div className="assets-head">
+                <h2 className="nw-empty-title">Your assets</h2>
+                <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
               </div>
 
               {assetGroups.map((cat) => {
@@ -520,21 +501,7 @@ export function NetWorth({ profile, tab, onTab, onNav, selectedCats, onToggleCat
               )}
             </>
           )}
-        </div>
-        {sidePanel ? (
-          <div className="right-col">
-            {sidePanel}
-            <FinancialSummary profile={profile} sticky={false} />
-          </div>
-        ) : (
-          <FinancialSummary profile={profile} />
-        )}
       </div>
-
-      <div className="sticky-footer">
-        <div className="sticky-footer-col">
-          <button className="btn btn-secondary" onClick={() => onNav('goals')}>Back</button>
-        </div>
       </div>
     </div>
   )

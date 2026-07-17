@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { assetTitle, blankProfile, loadState, requiredComplete, saveState, seedProfile } from './model.js'
 import { Dialog } from './ui.jsx'
-import { TopBar } from './components.jsx'
-import { AssetPanel, LiabilityModal, UploadFlow } from './forms.jsx'
+import { Sidebar, TopBar } from './components.jsx'
+import { AssetPanel, LiabilityModal } from './forms.jsx'
 import { Goals, NetWorth, Personal, Welcome, Work } from './screens.jsx'
 import { useSavedFlash } from './hooks.js'
 
@@ -13,8 +13,15 @@ const LEAVE_COPY = {
 }
 
 const NAV_KEY_FOR_ROUTE = {
-  personal: 'personal', work: 'work', goals: 'goals',
-  networth: 'networth', upload: 'networth',
+  personal: 'personal', work: 'work', goals: 'goals', networth: 'networth',
+}
+
+/* Sequential bottom navigation per section. */
+const FOOTER_NAV = {
+  personal: { next: 'work' },
+  work: { back: 'personal', next: 'goals' },
+  goals: { back: 'work', next: 'networth' },
+  networth: { back: 'goals' },
 }
 
 const MAIN_SECTIONS = ['personal', 'work', 'goals', 'networth']
@@ -142,7 +149,8 @@ export default function App() {
       ],
     }))
     touch()
-    forceNavigate({ name: 'networth', tab: 'assets' })
+    guardRef.current = null
+    setAssetPanel(null)
   }
 
   const confirmRemove = () => {
@@ -196,55 +204,69 @@ export default function App() {
   return (
     <>
       <TopBar
-        activeKey={NAV_KEY_FOR_ROUTE[r.name]}
-        onNav={goSection}
         saved={saved}
         clientName="Jonathan Reeves"
         showNav={r.name !== 'welcome'}
         shared={profile.shared}
         onShare={requestShare}
       />
-      <main className="page">
-        {r.name === 'welcome' && (
-          <Welcome onStart={() => { setSeenWelcome(true); forceNavigate({ name: 'personal' }) }} />
-        )}
-        {r.name === 'personal' && (
-          <Personal profile={profile} onChange={updateProfile} onNav={goSection} shareAttempted={shareAttempted} />
-        )}
-        {r.name === 'work' && <Work profile={profile} onChange={updateProfile} onNav={goSection} />}
-        {r.name === 'goals' && <Goals profile={profile} onChange={updateProfile} onNav={goSection} />}
-        {r.name === 'networth' && (
-          <NetWorth
-            profile={profile}
-            tab={r.tab || 'assets'}
-            onTab={(tab) => navigate({ name: 'networth', tab })}
-            onNav={goSection}
-            selectedCats={selectedCats}
-            onToggleCat={toggleCat}
-            onAddAsset={(category) => openAssetPanel({ category, id: null })}
-            onAddLiability={(category) => setObjectModal({ kind: 'liability', category, id: null })}
-            onEditAsset={(a) => openAssetPanel({ category: a.category, id: a.id })}
-            onRemoveAsset={(a) => setRemoveDialog({ kind: 'asset', item: a })}
-            onEditLiability={(l) => setObjectModal({ kind: 'liability', category: l.category, id: l.id })}
-            onRemoveLiability={(l) => setRemoveDialog({ kind: 'liability', item: l })}
-            onUpload={() => navigate({ name: 'upload' })}
-            onAnswerNone={answerNoLiabilities}
-            sidePanel={assetPanel && (
-              <AssetPanel
-                key={assetPanel.id ?? assetPanel.category ?? 'new'}
-                category={assetPanel.category}
-                asset={assetPanel.id ? profile.assets.find((a) => a.id === assetPanel.id) : null}
-                onCommit={commitAsset}
-                onClose={() => { guardRef.current = null; setAssetPanel(null) }}
-                setGuard={setGuard}
+      <div className="app-body">
+        <div className="shell">
+          {r.name !== 'welcome' && (
+            <Sidebar activeKey={NAV_KEY_FOR_ROUTE[r.name]} onNav={goSection} />
+          )}
+          <main className="page">
+            {r.name === 'welcome' && (
+              <Welcome onStart={() => { setSeenWelcome(true); forceNavigate({ name: 'personal' }) }} />
+            )}
+            {r.name === 'personal' && (
+              <Personal profile={profile} onChange={updateProfile} onNav={goSection} shareAttempted={shareAttempted} />
+            )}
+            {r.name === 'work' && <Work profile={profile} onChange={updateProfile} onNav={goSection} />}
+            {r.name === 'goals' && <Goals profile={profile} onChange={updateProfile} onNav={goSection} />}
+            {r.name === 'networth' && (
+              <NetWorth
+                profile={profile}
+                tab={r.tab || 'assets'}
+                onTab={(tab) => navigate({ name: 'networth', tab })}
+                selectedCats={selectedCats}
+                onToggleCat={toggleCat}
+                onAddAsset={(category) => openAssetPanel({ category, id: null })}
+                onAddLiability={(category) => setObjectModal({ kind: 'liability', category, id: null })}
+                onEditAsset={(a) => openAssetPanel({ category: a.category, id: a.id })}
+                onRemoveAsset={(a) => setRemoveDialog({ kind: 'asset', item: a })}
+                onEditLiability={(l) => setObjectModal({ kind: 'liability', category: l.category, id: l.id })}
+                onRemoveLiability={(l) => setRemoveDialog({ kind: 'liability', item: l })}
+                onAnswerNone={answerNoLiabilities}
               />
             )}
-          />
+          </main>
+          {assetPanel && r.name === 'networth' && (
+            <AssetPanel
+              key={assetPanel.id ?? assetPanel.category ?? 'new'}
+              category={assetPanel.category}
+              asset={assetPanel.id ? profile.assets.find((a) => a.id === assetPanel.id) : null}
+              onCommitAsset={commitAsset}
+              onCommitAccounts={commitExtracted}
+              onClose={() => { guardRef.current = null; setAssetPanel(null) }}
+              setGuard={setGuard}
+            />
+          )}
+        </div>
+
+        {FOOTER_NAV[r.name] && (
+          <div className="sticky-footer">
+            <div className="sticky-footer-col">
+              {FOOTER_NAV[r.name].back && (
+                <button className="btn btn-secondary" onClick={() => goSection(FOOTER_NAV[r.name].back)}>Back</button>
+              )}
+              {FOOTER_NAV[r.name].next && (
+                <button className="btn btn-secondary ml-auto" onClick={() => goSection(FOOTER_NAV[r.name].next)}>Continue</button>
+              )}
+            </div>
+          </div>
         )}
-        {r.name === 'upload' && (
-          <UploadFlow setGuard={setGuard} onCommit={commitExtracted} onLeave={leaveTo} />
-        )}
-      </main>
+      </div>
 
       <footer className="footer">
         <button className="footer-link" onClick={resetDemo}>Reset demo</button>

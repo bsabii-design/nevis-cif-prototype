@@ -7,11 +7,11 @@ import { useEffect, useRef, useState } from 'react'
 import { OverflowMenu } from './ui.jsx'
 import { useCountUp } from './hooks.js'
 
-/* ---------------- Top bar ---------------- */
+/* ---------------- Top bar + sidebar (layout per Figma mock) ---------------- */
 
 export const NAV = [
   { key: 'personal', label: 'Personal' },
-  { key: 'work', label: 'Work & income' },
+  { key: 'work', label: 'Occupation & income' },
   { key: 'goals', label: 'Goals' },
   { key: 'networth', label: 'Net worth' },
 ]
@@ -42,66 +42,65 @@ function CollabAvatar() {
   )
 }
 
-export function TopBar({ activeKey, onNav, saved, clientName, showNav = true, shared, onShare }) {
+export function TopBar({ saved, clientName, showNav = true, shared, onShare }) {
   return (
     <header className="topbar">
       <div className="topbar-inner">
         <span className="wordmark">Nevis</span>
-        {showNav && (
-          <nav className="tabs" aria-label="Sections">
-            {NAV.map((s) => (
-              <button key={s.key}
-                className={'tab' + (s.key === activeKey ? ' tab-active' : '')}
-                onClick={() => onNav(s.key)}>
-                {s.label}
-              </button>
-            ))}
-          </nav>
-        )}
         <div className="topbar-right">
           <span className={'saved' + (saved ? ' saved-visible' : '')} aria-live="polite">
             <span className="saved-dot" />
             Saved
           </span>
-          {showNav && (shared ? <CollabAvatar /> : (
+          {showNav && shared && <CollabAvatar />}
+          <span className="client-avatar" title={clientName}>{clientName[0]}</span>
+          {showNav && !shared && (
             <button className="btn btn-primary" onClick={onShare}>Share</button>
-          ))}
-          <span className="client-name">{clientName}</span>
+          )}
         </div>
       </div>
     </header>
   )
 }
 
-/* ---------------- Financial summary (spec §22) ---------------- */
+export function Sidebar({ activeKey, onNav }) {
+  return (
+    <nav className="sidebar" aria-label="Sections">
+      {NAV.map((s) => (
+        <button key={s.key}
+          className={'side-link' + (s.key === activeKey ? ' side-link-active' : '')}
+          onClick={() => onNav(s.key)}>
+          {s.label}
+        </button>
+      ))}
+    </nav>
+  )
+}
 
-export function FinancialSummary({ profile, sticky = true }) {
+/* ---------------- Financial summary card (spec §22 logic unchanged) ---------------- */
+
+export function FinancialSummary({ profile }) {
   const s = computeSummary(profile)
   const shown = useCountUp(s.nw)
   return (
-    <aside className={'panel' + (sticky ? '' : ' panel-static')}>
-      <div className="nw-block">
-        <div className="nw-label">Estimated net worth</div>
-        <div className={'nw-figure' + (s.nw == null ? ' nw-figure-empty' : '')}>
-          {s.nw == null ? '—' : fmtUSD(shown)}
-        </div>
-        {s.line && <span className="nw-line">{s.line}</span>}
+    <section className="summary-card">
+      <span className="nw-label">Estimated net worth</span>
+      <div className={'nw-figure' + (s.nw == null ? ' nw-figure-empty' : '')}>
+        {s.nw == null ? '—' : fmtUSD(shown)}
       </div>
+      {s.line && <span className="nw-line">{s.line}</span>}
       {s.rows && (
-        <>
-          <div className="divider" />
-          <div className="breakdown">
-            {s.rows.map((r) => (
-              <div className="breakdown-row" key={r.label}>
-                <span>{r.label}</span>
-                <span className={'breakdown-val' + (/^[$€£C]|^\d|^—/.test(r.value) ? '' : ' breakdown-val-muted')}>{r.value}</span>
-              </div>
-            ))}
-          </div>
-        </>
+        <div className="summary-stats">
+          {s.rows.map((r) => (
+            <div className="summary-stat" key={r.label}>
+              <span className="summary-stat-label">{r.label}</span>
+              <span className={'summary-stat-value' + (/^[$€£C]|^\d|^—/.test(r.value) ? '' : ' breakdown-val-muted')}>{r.value}</span>
+            </div>
+          ))}
+          {hasForeignValues(profile) && <span className="panel-note">Includes values converted to USD.</span>}
+        </div>
       )}
-      {hasForeignValues(profile) && <p className="panel-note">Includes values converted to USD.</p>}
-    </aside>
+    </section>
   )
 }
 
@@ -114,7 +113,7 @@ export function AssetCard({ asset, onEdit, onRemove }) {
     <div className="card card-clickable" onClick={onEdit} role="button" tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onEdit()}>
       <div className="card-left">
-        {avatar && <span className="avatar" style={{ background: avatar.color }} aria-hidden="true">{avatar.letter}</span>}
+        {avatar && <span className="dot" style={{ background: avatar.color }} aria-hidden="true" />}
         <div className="card-info">
           <div className="card-title">{assetTitle(asset)}</div>
           <div className="card-subtitle">{assetSubtitle(asset)}</div>

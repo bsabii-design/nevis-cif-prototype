@@ -181,9 +181,13 @@ function AssetFields({ category, form, set, isNew }) {
   )
 }
 
-/* ---------------- Non-modal side panel: add / edit asset (spec §3–8) ---------------- */
+/* ---------------- Non-modal side panel: upload + manual entry ---------------- */
 
-export function AssetPanel({ category: initialCategory, asset, onCommit, onClose, setGuard }) {
+const emptyAssetForm = () => assetToForm(null)
+
+export function AssetPanel({ category: initialCategory, asset, onCommitAsset, onCommitAccounts, onClose, setGuard }) {
+  const direct = !!(asset || initialCategory)
+  const [stage, setStage] = useState(direct ? 'form' : 'choice') // choice | form | upload | reading | review
   const [category, setCategory] = useState(asset?.category || initialCategory || null)
   const [form, setForm] = useState(() => {
     const f = assetToForm(asset)
@@ -191,29 +195,58 @@ export function AssetPanel({ category: initialCategory, asset, onCommit, onClose
     return f
   })
   const initialRef = useRef(JSON.stringify(assetToForm(asset)))
-  const [confirmLeave, setConfirmLeave] = useState(false)
+  const [accounts, setAccounts] = useState([])
+  const [edited, setEdited] = useState(false)
+  const [confirmLeave, setConfirmLeave] = useState(null) // {run}
+  const fileRef = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
-  const dirty = asset
+  const formDirty = asset
     ? JSON.stringify(form) !== initialRef.current
     : !!(form.name || form.institutionOrProvider || form.address || form.value != null)
+  const dirty = stage === 'form' ? formDirty : stage === 'review' ? edited : false
 
-  /* Register with the app-level guard so navigation asks before discarding. */
   useEffect(() => {
-    setGuard(dirty ? { kind: asset ? 'asset-edit' : 'asset' } : null)
+    const kind = stage === 'review' ? 'extract' : asset ? 'asset-edit' : 'asset'
+    setGuard(dirty ? { kind } : null)
     return () => setGuard(null)
-  }, [dirty, asset, setGuard])
+  }, [dirty, stage, asset, setGuard])
 
-  const requestClose = () => (dirty ? setConfirmLeave(true) : onClose())
+  const guarded = (run) => (dirty ? setConfirmLeave({ run }) : run())
+  const requestClose = () => guarded(onClose)
+  const backToChoice = () => guarded(() => {
+    setStage('choice'); setCategory(null); setForm(emptyAssetForm())
+    setAccounts([]); setEdited(false)
+  })
+
   const pickCategory = (key) => {
     setCategory(key)
     setForm((f) => ({ ...f, subtype: defaultSubtype(key) }))
+    setStage('form')
+  }
+
+  const startReading = () => {
+    setStage('reading')
+    setTimeout(() => {
+      setAccounts(extractedAccounts())
+      setEdited(false)
+      setStage('review')
+    }, 1500)
+  }
+
+  const setAccount = (id, k, v) => {
+    setEdited(true)
+    setAccounts((list) => list.map((a) => (a.id === id ? { ...a, [k]: v } : a)))
+  }
+  const removeAccount = (id) => {
+    setEdited(true)
+    setAccounts((list) => list.filter((a) => a.id !== id))
   }
 
   const cat = category ? assetCategory(category) : null
 
-  const commit = () => {
-    onCommit({
+  const commitForm = () => {
+    onCommitAsset({
       id: asset?.id ?? uid(),
       category,
       subtype: form.subtype,
@@ -225,52 +258,137 @@ export function AssetPanel({ category: initialCategory, asset, onCommit, onClose
     })
   }
 
+  const title =
+    stage === 'choice' ? 'Add assets' :
+    stage === 'upload' || stage === 'reading' ? 'Upload a statement' :
+    stage === 'review' ? `We found ${accounts.length} account${accounts.length === 1 ? '' : 's'}` :
+    asset ? `Edit ${cat.single.toLowerCase()}` : cat.formTitle
+
+  const confirmCopy = stage === 'review'
+    ? { title: 'Leave without adding these accounts?', body: 'Your changes will be lost.', stay: 'Keep reviewing' }
+    : asset
+      ? { title: 'Leave without saving changes?', body: 'Your changes will be lost.', stay: 'Keep editing' }
+      : { title: 'Leave without adding this asset?', body: 'Your entries will be lost.', stay: 'Keep editing' }
+
   return (
-    <aside className="panel side-panel">
-      {!category ? (
-        <>
-          <div className="side-panel-head">
-            <h2 className="dialog-title">Add an asset</h2>
-            <button className="menu-trigger" aria-label="Close" onClick={requestClose}>✕</button>
+    <aside className="shell-panel" aria-label={title}>
+      <div className="panel-head">
+        <div className="panel-head-titles">
+          {!direct && stage !== 'choice' && (
+            <button className="panel-back" onClick={backToChoice}>Back to Add assets</button>
+          )}
+          <h2 className="panel-title">{title}</h2>
+        </div>
+        <button className="menu-trigger" aria-label="Close" onClick={requestClose}>✕</button>
+      </div>
+
+      <div className="panel-body">
+        {stage === 'choice' && (
+          <>
+            <button className="upload-row" onClick={() => setStage('upload')}>
+              <span className="upload-row-title">Upload a statement</span>
+              <span className="upload-row-copy">We'll extract accounts and values from a recent statement.</span>
+            </button>
+            <div className="or-row" role="separator">Or add manually</div>
+            <div className="panel-types">
+              {ASSET_CATEGORIES.map((c) => (
+                <button key={c.key} className="panel-type" onClick={() => pickCategory(c.key)}>
+                  {c.single}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {stage === 'upload' && (
+          <>
+            <div
+              className="upload-zone"
+              role="button" tabIndex={0}
+              onClick={() => fileRef.current?.click()}
+              onKeyDown={(e) => e.key === 'Enter' && fileRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); startReading() }}
+            >
+              <span className="upload-title">Drag and drop a file here</span>
+              <span className="upload-or">or</span>
+              <span className="btn btn-secondary">Choose a file</span>
+              <span className="upload-hint">PDF, JPG or PNG</span>
+            </div>
+            <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" hidden onChange={startReading} />
+          </>
+        )}
+
+        {stage === 'reading' && (
+          <div className="reading">
+            <span className="spinner" aria-hidden="true" />
+            <span className="reading-text">Reading {MOCK_STATEMENT_NAME}</span>
           </div>
-          <p className="page-copy">What type of asset would you like to add?</p>
-          <div className="panel-types">
-            {ASSET_CATEGORIES.map((c) => (
-              <button key={c.key} className="panel-type" onClick={() => pickCategory(c.key)}>
-                {c.single}
-              </button>
+        )}
+
+        {stage === 'review' && (
+          <>
+            <p className="page-copy">Review the details before adding them to your profile.</p>
+            {accounts.map((a) => (
+              <div className="extract-card" key={a.id}>
+                <div className="extract-head">
+                  <span className="extract-title">{a.title}</span>
+                  <button className="link-danger" onClick={() => removeAccount(a.id)}>Remove account</button>
+                </div>
+                <Field label="Institution">
+                  <InstitutionCombobox value={a.institution} onChange={(v) => setAccount(a.id, 'institution', v)} />
+                </Field>
+                <Field label="Account type">
+                  <Select value={a.accountType} onChange={(v) => setAccount(a.id, 'accountType', v)} options={SUBTYPE_OPTIONS} />
+                </Field>
+                <Field label="Current value">
+                  <MoneyInput amount={a.value} currency={a.currency}
+                    onAmount={(v) => setAccount(a.id, 'value', v)}
+                    onCurrency={(c) => setAccount(a.id, 'currency', c)} />
+                </Field>
+              </div>
             ))}
-          </div>
-        </>
-      ) : (
-        <>
-          <h2 className="dialog-title">{asset ? `Edit ${cat.single.toLowerCase()}` : cat.formTitle}</h2>
+          </>
+        )}
+
+        {stage === 'form' && (
           <div className="focus-form">
             <AssetFields category={category} form={form} set={set} isNew={!asset} />
           </div>
-          <div className="dialog-actions">
-            <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
-            <button className="btn btn-primary" disabled={!canAddAsset(category, form)} onClick={commit}>
+        )}
+      </div>
+
+      {(stage === 'form' || (stage === 'review' && accounts.length > 0)) && (
+        <div className="panel-foot">
+          <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
+          {stage === 'form' ? (
+            <button className="btn btn-primary" disabled={!canAddAsset(category, form)} onClick={commitForm}>
               {asset ? 'Save changes' : cat.cta}
             </button>
-          </div>
-        </>
+          ) : (
+            <button className="btn btn-primary" onClick={() => onCommitAccounts(accounts)}>
+              Add {accounts.length} account{accounts.length === 1 ? '' : 's'}
+            </button>
+          )}
+        </div>
       )}
 
       {confirmLeave && (
         <Dialog
-          title={asset ? 'Leave without saving changes?' : 'Leave without adding this asset?'}
-          body={asset ? 'Your changes will be lost.' : 'Your entries will be lost.'}
-          cancelLabel="Keep editing"
+          title={confirmCopy.title}
+          body={confirmCopy.body}
+          cancelLabel={confirmCopy.stay}
           confirmLabel="Leave"
           danger
-          onCancel={() => setConfirmLeave(false)}
-          onConfirm={onClose}
+          onCancel={() => setConfirmLeave(null)}
+          onConfirm={() => { const run = confirmLeave.run; setConfirmLeave(null); run() }}
         />
       )}
     </aside>
   )
 }
+
+const SUBTYPE_OPTIONS = [...INVESTMENT_TYPES.filter((t) => t !== 'Other'), ...RETIREMENT_TYPES]
 
 /* ---------------- Liability modal ---------------- */
 
@@ -349,115 +467,5 @@ export function LiabilityModal({ category, liability, onCommit, onClose }) {
         />
       )}
     </ModalShell>
-  )
-}
-
-/* ---------------- Upload statement + extraction review (unchanged logic) ---------------- */
-
-const SUBTYPE_OPTIONS = [...INVESTMENT_TYPES.filter((t) => t !== 'Other'), ...RETIREMENT_TYPES]
-
-function useGuard(setGuard, dirty, kind) {
-  useEffect(() => {
-    setGuard(dirty ? { kind } : null)
-    return () => setGuard(null)
-  }, [dirty, kind, setGuard])
-}
-
-export function UploadFlow({ setGuard, onCommit, onLeave }) {
-  const [stage, setStage] = useState('upload') // upload | reading | review
-  const [accounts, setAccounts] = useState([])
-  const [edited, setEdited] = useState(false)
-  const fileRef = useRef(null)
-
-  useGuard(setGuard, stage === 'review' && edited, 'extract')
-
-  const startReading = () => {
-    setStage('reading')
-    setTimeout(() => {
-      setAccounts(extractedAccounts())
-      setStage('review')
-    }, 1500)
-  }
-
-  const setAccount = (id, k, v) => {
-    setEdited(true)
-    setAccounts((list) => list.map((a) => (a.id === id ? { ...a, [k]: v } : a)))
-  }
-  const removeAccount = (id) => {
-    setEdited(true)
-    setAccounts((list) => list.filter((a) => a.id !== id))
-  }
-
-  return (
-    <div className="focus-page">
-      {stage === 'upload' && (
-        <>
-          <h1 className="page-title">Upload a statement</h1>
-          <p className="page-copy">Upload a recent statement and we'll use it to fill in the account details.</p>
-          <div
-            className="upload-zone"
-            role="button" tabIndex={0}
-            onClick={() => fileRef.current?.click()}
-            onKeyDown={(e) => e.key === 'Enter' && fileRef.current?.click()}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); startReading() }}
-          >
-            <span className="upload-title">Drag and drop a file here</span>
-            <span className="upload-or">or</span>
-            <span className="btn btn-secondary">Choose a file</span>
-            <span className="upload-hint">PDF, JPG or PNG</span>
-          </div>
-          <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" hidden onChange={startReading} />
-          <div className="focus-actions focus-actions-start">
-            <button className="btn btn-secondary" onClick={() => onLeave('assets')}>Cancel</button>
-          </div>
-        </>
-      )}
-
-      {stage === 'reading' && (
-        <div className="reading">
-          <span className="spinner" aria-hidden="true" />
-          <span className="reading-text">Reading {MOCK_STATEMENT_NAME}</span>
-        </div>
-      )}
-
-      {stage === 'review' && (
-        <>
-          <h1 className="page-title">We found {accounts.length} account{accounts.length === 1 ? '' : 's'}</h1>
-          <p className="page-copy">Review the details before adding them to your profile.</p>
-          <div className="extract-list">
-            {accounts.map((a) => (
-              <div className="extract-card" key={a.id}>
-                <div className="extract-head">
-                  <span className="extract-title">{a.title}</span>
-                  <button className="link-danger" onClick={() => removeAccount(a.id)}>Remove account</button>
-                </div>
-                <div className="extract-grid">
-                  <Field label="Institution">
-                    <InstitutionCombobox value={a.institution} onChange={(v) => setAccount(a.id, 'institution', v)} />
-                  </Field>
-                  <Field label="Account type">
-                    <Select value={a.accountType} onChange={(v) => setAccount(a.id, 'accountType', v)} options={SUBTYPE_OPTIONS} />
-                  </Field>
-                  <Field label="Current value">
-                    <MoneyInput amount={a.value} currency={a.currency}
-                      onAmount={(v) => setAccount(a.id, 'value', v)}
-                      onCurrency={(c) => setAccount(a.id, 'currency', c)} />
-                  </Field>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="focus-actions">
-            <button className="btn btn-secondary" onClick={() => onLeave('assets')}>Cancel</button>
-            {accounts.length > 0 && (
-              <button className="btn btn-primary" onClick={() => onCommit(accounts)}>
-                Add {accounts.length} account{accounts.length === 1 ? '' : 's'}
-              </button>
-            )}
-          </div>
-        </>
-      )}
-    </div>
   )
 }
