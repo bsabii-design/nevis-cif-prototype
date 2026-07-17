@@ -45,6 +45,7 @@
   --bg-overlay:         var(--color-beige-80);
 
   --border-default:  var(--color-black-a16);
+  --border-subtle:   rgba(20, 20, 19, 0.06); /* structural hairlines per mock */
   --border-hovered:  var(--color-black-a24);
   --border-selected: var(--color-black);
 

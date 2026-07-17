@@ -42,7 +42,7 @@ function CollabAvatar() {
   )
 }
 
-export function TopBar({ saved, clientName, showNav = true, shared, onShare }) {
+export function TopBar({ saved, showNav = true, shared, onShare }) {
   return (
     <header className="topbar">
       <div className="topbar-inner">
@@ -52,27 +52,31 @@ export function TopBar({ saved, clientName, showNav = true, shared, onShare }) {
             <span className="saved-dot" />
             Saved
           </span>
-          {showNav && shared && <CollabAvatar />}
-          <span className="client-avatar" title={clientName}>{clientName[0]}</span>
-          {showNav && !shared && (
-            <button className="btn btn-primary" onClick={onShare}>Share</button>
-          )}
+          {showNav && (shared ? <CollabAvatar /> : (
+            <button className="btn btn-secondary" onClick={onShare}>Share</button>
+          ))}
         </div>
       </div>
     </header>
   )
 }
 
-export function Sidebar({ activeKey, onNav }) {
+export function Sidebar({ activeKey, onNav, clientName }) {
   return (
     <nav className="sidebar" aria-label="Sections">
-      {NAV.map((s) => (
-        <button key={s.key}
-          className={'side-link' + (s.key === activeKey ? ' side-link-active' : '')}
-          onClick={() => onNav(s.key)}>
-          {s.label}
-        </button>
-      ))}
+      <div className="side-links">
+        {NAV.map((s) => (
+          <button key={s.key}
+            className={'side-link' + (s.key === activeKey ? ' side-link-active' : '')}
+            onClick={() => onNav(s.key)}>
+            {s.label}
+          </button>
+        ))}
+      </div>
+      <div className="side-identity">
+        <span className="side-avatar" aria-hidden="true">{clientName[0]}</span>
+        <span className="side-name">{clientName}</span>
+      </div>
     </nav>
   )
 }

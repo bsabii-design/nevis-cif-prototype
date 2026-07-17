@@ -427,7 +427,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
           {tab === 'assets' && (
             <>
               <div className="assets-head">
-                <h2 className="nw-empty-title">Your assets</h2>
+                <h2 className="assets-title">Your assets</h2>
                 <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
               </div>
 

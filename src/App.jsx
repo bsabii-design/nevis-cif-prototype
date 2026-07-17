@@ -205,7 +205,6 @@ export default function App() {
     <>
       <TopBar
         saved={saved}
-        clientName="Jonathan Reeves"
         showNav={r.name !== 'welcome'}
         shared={profile.shared}
         onShare={requestShare}
@@ -213,7 +212,7 @@ export default function App() {
       <div className="app-body">
         <div className="shell">
           {r.name !== 'welcome' && (
-            <Sidebar activeKey={NAV_KEY_FOR_ROUTE[r.name]} onNav={goSection} />
+            <Sidebar activeKey={NAV_KEY_FOR_ROUTE[r.name]} onNav={goSection} clientName="Jonathan Reeves" />
           )}
           <main className="page">
             {r.name === 'welcome' && (
@@ -240,6 +239,16 @@ export default function App() {
                 onAnswerNone={answerNoLiabilities}
               />
             )}
+            {FOOTER_NAV[r.name] && (
+              <div className="content-footer">
+                {FOOTER_NAV[r.name].back && (
+                  <button className="btn btn-secondary" onClick={() => goSection(FOOTER_NAV[r.name].back)}>Back</button>
+                )}
+                {FOOTER_NAV[r.name].next && (
+                  <button className="btn btn-secondary ml-auto" onClick={() => goSection(FOOTER_NAV[r.name].next)}>Continue</button>
+                )}
+              </div>
+            )}
           </main>
           {assetPanel && r.name === 'networth' && (
             <AssetPanel
@@ -254,18 +263,6 @@ export default function App() {
           )}
         </div>
 
-        {FOOTER_NAV[r.name] && (
-          <div className="sticky-footer">
-            <div className="sticky-footer-col">
-              {FOOTER_NAV[r.name].back && (
-                <button className="btn btn-secondary" onClick={() => goSection(FOOTER_NAV[r.name].back)}>Back</button>
-              )}
-              {FOOTER_NAV[r.name].next && (
-                <button className="btn btn-secondary ml-auto" onClick={() => goSection(FOOTER_NAV[r.name].next)}>Continue</button>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       <footer className="footer">
