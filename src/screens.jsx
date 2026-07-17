@@ -2,11 +2,11 @@
 import { useEffect, useState } from 'react'
 import {
   ASSET_CATEGORIES, EMPLOYMENT_STATUSES, LIABILITY_CATEGORIES,
-  fmtMoney, missingPersonalFields, requiredComplete,
+  fmtMoney, fmtUSD, missingPersonalFields, requiredComplete, usdOf,
 } from './model.js'
 import { parseGoals } from './parse.js'
 import { DateInput, Field, MoneyInput, PhoneInput, RadioRow, TextInput } from './ui.jsx'
-import { AssetList, CategoryGrid, FinancialSummary, LiabilityCard } from './components.jsx'
+import { AssetCard, FinancialSummary, LiabilityCard } from './components.jsx'
 
 /* ---------------- Welcome (spec §7) ---------------- */
 
@@ -382,11 +382,42 @@ export function Goals({ profile, onChange, onNav }) {
   )
 }
 
-/* ---------------- Net worth (spec §12–13, §19) ---------------- */
+/* ---------------- Net worth: one page, category bubbles, modal forms ---------------- */
 
-export function NetWorth({ profile, tab, onTab, onNav, onAddAsset, onEditAsset, onRemoveAsset,
-  onAddLiability, onEditLiability, onRemoveLiability, onUpload, onAnswerNone, onChange }) {
+function CategoryBubbles({ categories, selected, locked, onToggle }) {
+  return (
+    <div className="bubbles">
+      {categories.map((c) => {
+        const on = selected.has(c.key)
+        return (
+          <button
+            key={c.key}
+            role="checkbox"
+            aria-checked={on}
+            className={'bubble' + (on ? ' bubble-on' : '')}
+            title={locked.has(c.key) ? 'Remove its records first to hide this category' : undefined}
+            onClick={() => onToggle(c.key)}
+          >
+            {c.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+export function NetWorth({ profile, tab, onTab, onNav, selectedCats, onToggleCat,
+  onAdd, onEditAsset, onRemoveAsset, onEditLiability, onRemoveLiability,
+  onUpload, onAnswerNone }) {
   const { assets, liabilities, liabilitiesExplicitlyNone: none } = profile
+
+  const assetsWithRecords = new Set(assets.map((a) => a.category))
+  const liabsWithRecords = new Set(liabilities.map((l) => l.category))
+  const effAssets = new Set([...selectedCats.assets, ...assetsWithRecords])
+  const effLiabs = new Set([...selectedCats.liabilities, ...liabsWithRecords])
+
+  const assetGroups = ASSET_CATEGORIES.filter((c) => effAssets.has(c.key))
+  const liabGroups = LIABILITY_CATEGORIES.filter((c) => effLiabs.has(c.key))
 
   return (
     <div className="screen">
@@ -415,57 +446,87 @@ export function NetWorth({ profile, tab, onTab, onNav, onAddAsset, onEditAsset, 
       <div className="nw-layout">
         <div className="nw-main">
           {tab === 'assets' && (
-            assets.length === 0 ? (
-              <>
+            <>
+              <div className="cat-select">
                 <h2 className="nw-empty-title">What do you own?</h2>
-                <p className="page-copy">Choose a category to add your first asset.<br />You can add more later.</p>
-                <CategoryGrid categories={ASSET_CATEGORIES} onPick={onAddAsset} />
-                <div className="upload-block">
-                  <span>Have a recent account statement?</span>
-                  <button className="btn btn-secondary" onClick={onUpload}>Upload statement</button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="list-actions">
-                  <button className="btn btn-secondary" onClick={() => onAddAsset(null)}>Add asset</button>
-                </div>
-                <AssetList assets={assets} onEdit={onEditAsset} onRemove={onRemoveAsset} />
-              </>
-            )
+                <p className="select-hint">Select all that apply</p>
+                <CategoryBubbles
+                  categories={ASSET_CATEGORIES}
+                  selected={effAssets}
+                  locked={assetsWithRecords}
+                  onToggle={(k) => onToggleCat('assets', k)}
+                />
+              </div>
+
+              {assetGroups.map((cat) => {
+                const items = assets.filter((a) => a.category === cat.key)
+                const known = items.filter((a) => a.value != null)
+                const subtotal = known.reduce((s, a) => s + usdOf(a.value, a.currency), 0)
+                return (
+                  <section className="group" key={cat.key}>
+                    <div className="group-head">
+                      <h3 className="group-name">{cat.label}</h3>
+                      {items.length >= 2 && (
+                        <span className="group-subtotal">{known.length ? fmtUSD(subtotal) : '—'}</span>
+                      )}
+                    </div>
+                    {items.map((a) => (
+                      <AssetCard key={a.id} asset={a}
+                        onEdit={() => onEditAsset(a)} onRemove={() => onRemoveAsset(a)} />
+                    ))}
+                    <button className="link-add" onClick={() => onAdd('asset', cat.key)}>
+                      + Add {items.length > 0 ? 'another ' : ''}{cat.add}
+                    </button>
+                  </section>
+                )
+              })}
+            </>
           )}
 
           {tab === 'liabilities' && (
-            liabilities.length === 0 ? (
-              none ? (
-                <>
-                  <h2 className="nw-empty-title">No liabilities</h2>
-                  <p className="page-copy">You've told us you don't currently have any liabilities.</p>
-                  <button className="btn btn-secondary self-start" onClick={() => onAddLiability(null)}>Add a liability</button>
-                </>
-              ) : (
-                <>
-                  <h2 className="nw-empty-title">What do you owe?</h2>
-                  <p className="page-copy">Choose a category to add a liability.</p>
-                  <CategoryGrid categories={LIABILITY_CATEGORIES} onPick={onAddLiability} />
-                  <div className="upload-block">
-                    <button className="btn btn-secondary" onClick={onAnswerNone}>I don't have any liabilities</button>
-                  </div>
-                </>
-              )
-            ) : (
-              <>
-                <div className="list-actions">
-                  <button className="btn btn-secondary" onClick={() => onAddLiability(null)}>Add liability</button>
-                </div>
-                <div className="group">
-                  {liabilities.map((l) => (
-                    <LiabilityCard key={l.id} liability={l}
-                      onEdit={() => onEditLiability(l)} onRemove={() => onRemoveLiability(l)} />
-                  ))}
-                </div>
-              </>
-            )
+            <>
+              <div className="cat-select">
+                <h2 className="nw-empty-title">What do you owe?</h2>
+                <p className="select-hint">Select all that apply</p>
+                <CategoryBubbles
+                  categories={LIABILITY_CATEGORIES}
+                  selected={effLiabs}
+                  locked={liabsWithRecords}
+                  onToggle={(k) => onToggleCat('liabilities', k)}
+                />
+              </div>
+
+              {none && liabilities.length === 0 && (
+                <p className="owe-none">
+                  No liabilities — you've told us you don't currently have any.
+                  Select a category above if that changes.
+                </p>
+              )}
+
+              {liabGroups.map((cat) => {
+                const items = liabilities.filter((l) => l.category === cat.key)
+                return (
+                  <section className="group" key={cat.key}>
+                    <div className="group-head">
+                      <h3 className="group-name">{cat.group}</h3>
+                    </div>
+                    {items.map((l) => (
+                      <LiabilityCard key={l.id} liability={l}
+                        onEdit={() => onEditLiability(l)} onRemove={() => onRemoveLiability(l)} />
+                    ))}
+                    <button className="link-add" onClick={() => onAdd('liability', cat.key)}>
+                      + Add {items.length > 0 ? 'another ' : ''}{cat.add}
+                    </button>
+                  </section>
+                )
+              })}
+
+              {liabilities.length === 0 && !none && (
+                <button className="btn btn-secondary owe-none-btn" onClick={onAnswerNone}>
+                  I don't have any liabilities
+                </button>
+              )}
+            </>
           )}
         </div>
         <FinancialSummary profile={profile} />

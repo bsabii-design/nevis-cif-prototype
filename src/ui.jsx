@@ -198,16 +198,6 @@ export function OverflowMenu({ items, label = 'More actions' }) {
   )
 }
 
-export function Breadcrumb({ parent, onParent, current }) {
-  return (
-    <nav className="crumbs" aria-label="Breadcrumb">
-      <button className="crumb-link" onClick={onParent}>{parent}</button>
-      <span className="crumb-sep">/</span>
-      <span className="crumb-current">{current}</span>
-    </nav>
-  )
-}
-
 /* Date input with light MM/DD/YYYY masking. */
 export function DateInput({ value, onChange, className = '', onBlur }) {
   const format = (raw) => {

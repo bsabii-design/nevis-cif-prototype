@@ -27,13 +27,13 @@ export const parseAmount = (s) => {
 /* ---------------- Categories ---------------- */
 
 export const ASSET_CATEGORIES = [
-  { key: 'investment', label: 'Investment accounts', single: 'Investment account', hint: 'Brokerage and managed accounts', cta: 'Add account', formTitle: 'Add investment account' },
-  { key: 'retirement', label: 'Retirement accounts', single: 'Retirement account', hint: '401(k), IRA and pension', cta: 'Add account', formTitle: 'Add retirement account' },
-  { key: 'realestate', label: 'Real estate', single: 'Real estate', hint: 'Homes and other property', cta: 'Add asset', formTitle: 'Add real estate' },
-  { key: 'business', label: 'Business interests', single: 'Business interest', hint: 'Private companies and investments', cta: 'Add asset', formTitle: 'Add business interest' },
-  { key: 'crypto', label: 'Crypto', single: 'Crypto', hint: 'Coins, wallets and exchange accounts', cta: 'Add asset', formTitle: 'Add crypto' },
-  { key: 'collectibles', label: 'Art and collectibles', single: 'Collectibles', hint: 'Art, watches, wine and more', cta: 'Add asset', formTitle: 'Add art or collectible' },
-  { key: 'other', label: 'Other assets', single: 'Other asset', hint: 'Anything else of value', cta: 'Add asset', formTitle: 'Add other asset' },
+  { key: 'investment', label: 'Investment accounts', single: 'Investment account', add: 'investment account', cta: 'Add account', formTitle: 'Add investment account' },
+  { key: 'retirement', label: 'Retirement accounts', single: 'Retirement account', add: 'retirement account', cta: 'Add account', formTitle: 'Add retirement account' },
+  { key: 'realestate', label: 'Real estate', single: 'Real estate', add: 'property', cta: 'Add asset', formTitle: 'Add real estate' },
+  { key: 'business', label: 'Business interests', single: 'Business interest', add: 'business interest', cta: 'Add asset', formTitle: 'Add business interest' },
+  { key: 'crypto', label: 'Crypto', single: 'Crypto', add: 'crypto', cta: 'Add asset', formTitle: 'Add crypto' },
+  { key: 'collectibles', label: 'Art and collectibles', single: 'Collectibles', add: 'item', cta: 'Add asset', formTitle: 'Add art or collectible' },
+  { key: 'other', label: 'Other assets', single: 'Other asset', add: 'asset', cta: 'Add asset', formTitle: 'Add other asset' },
 ]
 export const assetCategory = (key) => ASSET_CATEGORIES.find((c) => c.key === key)
 
@@ -43,12 +43,12 @@ export const PROPERTY_TYPES = ['House', 'Apartment', 'Commercial property', 'Lan
 export const COLLECTIBLE_TYPES = ['Art', 'Watches', 'Wine', 'Jewelry', 'Other']
 
 export const LIABILITY_CATEGORIES = [
-  { key: 'mortgage', label: 'Mortgage', formTitle: 'Add a mortgage' },
-  { key: 'personal-loan', label: 'Personal loan', formTitle: 'Add a personal loan' },
-  { key: 'business-loan', label: 'Business loan', formTitle: 'Add a business loan' },
-  { key: 'credit-line', label: 'Line of credit', formTitle: 'Add a line of credit' },
-  { key: 'credit-card', label: 'Credit card balance', formTitle: 'Add a credit card balance' },
-  { key: 'other', label: 'Other debt', formTitle: 'Add other debt' },
+  { key: 'mortgage', label: 'Mortgage', group: 'Mortgage', add: 'mortgage', formTitle: 'Add a mortgage' },
+  { key: 'personal-loan', label: 'Personal loan', group: 'Personal loans', add: 'personal loan', formTitle: 'Add a personal loan' },
+  { key: 'business-loan', label: 'Business loan', group: 'Business loans', add: 'business loan', formTitle: 'Add a business loan' },
+  { key: 'credit-line', label: 'Line of credit', group: 'Lines of credit', add: 'line of credit', formTitle: 'Add a line of credit' },
+  { key: 'credit-card', label: 'Credit card balance', group: 'Credit card balances', add: 'credit card balance', formTitle: 'Add a credit card balance' },
+  { key: 'other', label: 'Other debt', group: 'Other debt', add: 'debt', formTitle: 'Add other debt' },
 ]
 export const liabilityCategory = (key) => LIABILITY_CATEGORIES.find((c) => c.key === key)
 

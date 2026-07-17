@@ -2,21 +2,17 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { assetTitle, blankProfile, loadState, requiredComplete, saveState, seedProfile } from './model.js'
 import { Dialog } from './ui.jsx'
 import { TopBar } from './components.jsx'
-import { AssetForm, LiabilityForm, UploadFlow } from './forms.jsx'
+import { AssetModal, LiabilityModal, UploadFlow } from './forms.jsx'
 import { Goals, NetWorth, Personal, Welcome, Work } from './screens.jsx'
 import { useSavedFlash } from './hooks.js'
 
 const LEAVE_COPY = {
-  asset: { title: 'Leave without adding this asset?', body: 'Your entries will be lost.' },
-  'asset-edit': { title: 'Leave without saving your changes?', body: 'Your changes will be lost.' },
-  liability: { title: 'Leave without adding this liability?', body: 'Your entries will be lost.' },
-  'liability-edit': { title: 'Leave without saving your changes?', body: 'Your changes will be lost.' },
   extract: { title: 'Leave without adding these accounts?', body: 'Your changes will be lost.', stay: 'Keep reviewing' },
 }
 
 const NAV_KEY_FOR_ROUTE = {
   personal: 'personal', work: 'work', goals: 'goals',
-  networth: 'networth', 'asset-form': 'networth', 'liability-form': 'networth', upload: 'networth',
+  networth: 'networth', upload: 'networth',
 }
 
 const MAIN_SECTIONS = ['personal', 'work', 'goals', 'networth']
@@ -34,6 +30,8 @@ export default function App() {
   })
   const [tick, setTick] = useState(0)
   const [leaveDialog, setLeaveDialog] = useState(null)   // {kind, to}
+  const [objectModal, setObjectModal] = useState(null)   // {kind:'asset'|'liability', category, id|null}
+  const [selectedCats, setSelectedCats] = useState(() => state?.selectedCats ?? { assets: [], liabilities: [] })
   const [removeDialog, setRemoveDialog] = useState(null) // {kind, item}
   const [shareDialog, setShareDialog] = useState(false)
   const [shareAttempted, setShareAttempted] = useState(false)
@@ -46,8 +44,8 @@ export default function App() {
   /* Persist profile, welcome flag and last visited section. */
   useEffect(() => {
     const section = NAV_KEY_FOR_ROUTE[route.name]
-    saveState({ profile, seenWelcome, lastSection: section })
-  }, [profile, seenWelcome, route])
+    saveState({ profile, seenWelcome, lastSection: section, selectedCats })
+  }, [profile, seenWelcome, route, selectedCats])
 
   const setGuard = useCallback((g) => { guardRef.current = g }, [])
 
@@ -100,7 +98,7 @@ export default function App() {
         : [...p.assets, asset],
     }))
     touch()
-    forceNavigate({ name: 'networth', tab: 'assets' })
+    setObjectModal(null)
   }
 
   const commitLiability = (liability) => {
@@ -112,7 +110,7 @@ export default function App() {
         : [...p.liabilities, liability],
     }))
     touch()
-    forceNavigate({ name: 'networth', tab: 'liabilities' })
+    setObjectModal(null)
   }
 
   const commitExtracted = (accounts) => {
@@ -143,8 +141,20 @@ export default function App() {
     touch()
   }
 
+  const toggleCat = (kind, key) => {
+    const hasRecords = kind === 'assets'
+      ? profile.assets.some((a) => a.category === key)
+      : profile.liabilities.some((l) => l.category === key)
+    if (hasRecords) return // records are removed individually, never via a bubble
+    setSelectedCats((sc) => ({
+      ...sc,
+      [kind]: sc[kind].includes(key) ? sc[kind].filter((k) => k !== key) : [...sc[kind], key],
+    }))
+  }
+
   const answerNoLiabilities = () => {
     setProfile((p) => ({ ...p, liabilitiesExplicitlyNone: true, liabilities: [] }))
+    setSelectedCats((sc) => ({ ...sc, liabilities: [] }))
     touch()
   }
 
@@ -156,6 +166,7 @@ export default function App() {
     setSeenWelcome(!welcome)
     setLeaveDialog(null); setRemoveDialog(null); setShareDialog(false)
     setShareAttempted(false); setToast(null)
+    setObjectModal(null); setSelectedCats({ assets: [], liabilities: [] })
     forceNavigate(to)
     touch()
   }
@@ -193,33 +204,15 @@ export default function App() {
             tab={r.tab || 'assets'}
             onTab={(tab) => navigate({ name: 'networth', tab })}
             onNav={goSection}
-            onAddAsset={(category) => navigate({ name: 'asset-form', category })}
-            onEditAsset={(a) => navigate({ name: 'asset-form', assetId: a.id })}
+            selectedCats={selectedCats}
+            onToggleCat={toggleCat}
+            onAdd={(kind, category) => setObjectModal({ kind, category, id: null })}
+            onEditAsset={(a) => setObjectModal({ kind: 'asset', category: a.category, id: a.id })}
             onRemoveAsset={(a) => setRemoveDialog({ kind: 'asset', item: a })}
-            onAddLiability={(category) => navigate({ name: 'liability-form', category })}
-            onEditLiability={(l) => navigate({ name: 'liability-form', liabilityId: l.id })}
+            onEditLiability={(l) => setObjectModal({ kind: 'liability', category: l.category, id: l.id })}
             onRemoveLiability={(l) => setRemoveDialog({ kind: 'liability', item: l })}
             onUpload={() => navigate({ name: 'upload' })}
             onAnswerNone={answerNoLiabilities}
-            onChange={updateProfile}
-          />
-        )}
-        {r.name === 'asset-form' && (
-          <AssetForm
-            asset={r.assetId ? profile.assets.find((a) => a.id === r.assetId) : null}
-            initialCategory={r.category}
-            setGuard={setGuard}
-            onCommit={commitAsset}
-            onLeave={leaveTo}
-          />
-        )}
-        {r.name === 'liability-form' && (
-          <LiabilityForm
-            liability={r.liabilityId ? profile.liabilities.find((l) => l.id === r.liabilityId) : null}
-            initialCategory={r.category}
-            setGuard={setGuard}
-            onCommit={commitLiability}
-            onLeave={leaveTo}
           />
         )}
         {r.name === 'upload' && (
@@ -233,6 +226,23 @@ export default function App() {
         <button className="footer-link" onClick={blankStart}>Blank start</button>
       </footer>
 
+      {objectModal?.kind === 'asset' && (
+        <AssetModal
+          category={objectModal.category}
+          asset={objectModal.id ? profile.assets.find((a) => a.id === objectModal.id) : null}
+          onCommit={commitAsset}
+          onClose={() => setObjectModal(null)}
+        />
+      )}
+      {objectModal?.kind === 'liability' && (
+        <LiabilityModal
+          category={objectModal.category}
+          liability={objectModal.id ? profile.liabilities.find((l) => l.id === objectModal.id) : null}
+          onCommit={commitLiability}
+          onClose={() => setObjectModal(null)}
+        />
+      )}
+
       {shareDialog && (
         <Dialog
           title="Share with Sarah?"
@@ -244,21 +254,17 @@ export default function App() {
         />
       )}
 
-      {leaveDialog && (() => {
-        const editing = (leaveDialog.kind === 'asset' && route.assetId) || (leaveDialog.kind === 'liability' && route.liabilityId)
-        const copy = LEAVE_COPY[editing ? `${leaveDialog.kind}-edit` : leaveDialog.kind]
-        return (
-          <Dialog
-            title={copy.title}
-            body={copy.body}
-            cancelLabel={copy.stay || 'Keep editing'}
-            confirmLabel="Leave"
-            danger
-            onCancel={() => setLeaveDialog(null)}
-            onConfirm={() => forceNavigate(leaveDialog.to)}
-          />
-        )
-      })()}
+      {leaveDialog && (
+        <Dialog
+          title={LEAVE_COPY[leaveDialog.kind].title}
+          body={LEAVE_COPY[leaveDialog.kind].body}
+          cancelLabel={LEAVE_COPY[leaveDialog.kind].stay || 'Keep editing'}
+          confirmLabel="Leave"
+          danger
+          onCancel={() => setLeaveDialog(null)}
+          onConfirm={() => forceNavigate(leaveDialog.to)}
+        />
+      )}
 
       {removeDialog && (
         <Dialog

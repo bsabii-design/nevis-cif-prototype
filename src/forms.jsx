@@ -1,22 +1,13 @@
-/* Focused pages: add/edit asset, add/edit liability, upload statement. */
+/* Modal add/edit forms for financial objects; upload statement flow. */
 import { useEffect, useRef, useState } from 'react'
 import {
-  ASSET_CATEGORIES, COLLECTIBLE_TYPES, INVESTMENT_TYPES, LIABILITY_CATEGORIES,
-  PROPERTY_TYPES, RETIREMENT_TYPES, assetCategory, liabilityCategory, uid,
+  COLLECTIBLE_TYPES, INVESTMENT_TYPES, PROPERTY_TYPES, RETIREMENT_TYPES,
+  assetCategory, liabilityCategory, uid,
 } from './model.js'
 import { extractedAccounts, MOCK_STATEMENT_NAME } from './parse.js'
-import { Breadcrumb, Field, InstitutionCombobox, MoneyInput, Select, TextInput } from './ui.jsx'
-import { CategoryGrid } from './components.jsx'
+import { Dialog, Field, InstitutionCombobox, MoneyInput, Select, TextInput } from './ui.jsx'
 
 const VALUE_LATER = "I don't know this yet"
-
-/* Registers this form's dirty state with the app-level navigation guard. */
-function useGuard(setGuard, dirty, kind) {
-  useEffect(() => {
-    setGuard(dirty ? { kind } : null)
-    return () => setGuard(null)
-  }, [dirty, kind, setGuard])
-}
 
 function MoneyField({ label, amount, currency, onAmount, onCurrency }) {
   const [later, setLater] = useState(false)
@@ -36,7 +27,25 @@ function MoneyField({ label, amount, currency, onAmount, onCurrency }) {
   )
 }
 
-/* ---------------- Asset form (spec §14) ---------------- */
+/* ---------------- Modal shell (spec §8): overlays Net worth, blocks background ---------------- */
+
+function ModalShell({ title, onRequestClose, children }) {
+  useEffect(() => {
+    const onKey = (e) => e.key === 'Escape' && onRequestClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onRequestClose])
+  return (
+    <div className="dialog-overlay" onMouseDown={(e) => e.target === e.currentTarget && onRequestClose()}>
+      <div className="modal" role="dialog" aria-modal="true" aria-label={title}>
+        <h2 className="dialog-title">{title}</h2>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+/* ---------------- Asset modal ---------------- */
 
 const assetToForm = (asset) => ({
   name: asset?.name || '',
@@ -59,32 +68,28 @@ const canAddAsset = (category, f) =>
   category === 'crypto' ? !!(f.institutionOrProvider || f.name) :
   !!f.name
 
-export function AssetForm({ asset, initialCategory, setGuard, onCommit, onLeave }) {
-  const [category, setCategory] = useState(asset?.category || initialCategory || null)
+export function AssetModal({ category, asset, onCommit, onClose }) {
+  const catKey = asset?.category || category
+  const cat = assetCategory(catKey)
   const [form, setForm] = useState(() => {
     const f = assetToForm(asset)
-    if (!asset && (asset?.category || initialCategory)) f.subtype = defaultSubtype(asset?.category || initialCategory)
+    if (!asset) f.subtype = defaultSubtype(catKey)
     return f
   })
   const initialRef = useRef(JSON.stringify(assetToForm(asset)))
+  const [confirmLeave, setConfirmLeave] = useState(false)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
   const dirty = asset
     ? JSON.stringify(form) !== initialRef.current
     : !!(form.name || form.institutionOrProvider || form.address || form.value != null)
-  useGuard(setGuard, dirty, 'asset')
 
-  const cat = assetCategory(category)
-
-  const pickCategory = (key) => {
-    setCategory(key)
-    setForm((f) => ({ ...f, subtype: defaultSubtype(key) }))
-  }
+  const requestClose = () => (dirty ? setConfirmLeave(true) : onClose())
 
   const commit = () => {
     onCommit({
       id: asset?.id ?? uid(),
-      category,
+      category: catKey,
       subtype: form.subtype,
       name: form.name.trim(),
       institutionOrProvider: form.institutionOrProvider.trim(),
@@ -95,129 +100,129 @@ export function AssetForm({ asset, initialCategory, setGuard, onCommit, onLeave 
   }
 
   return (
-    <div className="focus-page">
-      <Breadcrumb parent="Net worth" onParent={() => onLeave('assets')} current={asset ? 'Edit asset' : 'Add asset'} />
+    <ModalShell title={asset ? `Edit ${cat.single.toLowerCase()}` : cat.formTitle} onRequestClose={requestClose}>
+      <div className="focus-form">
+        {catKey === 'realestate' && (
+          <>
+            <Field label="Property name">
+              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Austin house" autoFocus={!asset} />
+            </Field>
+            <Field label="Address">
+              <TextInput value={form.address} onChange={(v) => set('address', v)} placeholder="Street, city, state" />
+            </Field>
+            <Field label="Property type">
+              <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={PROPERTY_TYPES} />
+            </Field>
+            <MoneyField label="Current value" amount={form.value} currency={form.currency}
+              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
+          </>
+        )}
 
-      {!category ? (
-        <>
-          <h1 className="page-title">What kind of asset is this?</h1>
-          <CategoryGrid categories={ASSET_CATEGORIES} onPick={pickCategory} />
-        </>
-      ) : (
-        <>
-          <h1 className="page-title">{asset ? `Edit ${cat.single.toLowerCase()}` : cat.formTitle}</h1>
-          <div className="focus-form">
-            {category === 'realestate' && (
-              <>
-                <Field label="Property name">
-                  <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Austin house" autoFocus={!asset} />
-                </Field>
-                <Field label="Address">
-                  <TextInput value={form.address} onChange={(v) => set('address', v)} placeholder="Street, city, state" />
-                </Field>
-                <Field label="Property type">
-                  <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={PROPERTY_TYPES} />
-                </Field>
-                <MoneyField label="Current value" amount={form.value} currency={form.currency}
-                  onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-              </>
-            )}
+        {catKey === 'retirement' && (
+          <>
+            <Field label="Account type">
+              <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={RETIREMENT_TYPES} />
+            </Field>
+            <Field label="Provider">
+              <InstitutionCombobox value={form.institutionOrProvider}
+                onChange={(v) => set('institutionOrProvider', v)} placeholder="Fidelity, Vanguard…" autoFocus={!asset} />
+            </Field>
+            <Field label="Account name" helper="Optional">
+              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Traditional IRA" />
+            </Field>
+            <MoneyField label="Current value" amount={form.value} currency={form.currency}
+              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
+          </>
+        )}
 
-            {category === 'retirement' && (
-              <>
-                <Field label="Account type">
-                  <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={RETIREMENT_TYPES} />
-                </Field>
-                <Field label="Provider">
-                  <InstitutionCombobox value={form.institutionOrProvider}
-                    onChange={(v) => set('institutionOrProvider', v)} placeholder="Fidelity, Vanguard…" autoFocus={!asset} />
-                </Field>
-                <Field label="Account name" helper="Optional">
-                  <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Traditional IRA" />
-                </Field>
-                <MoneyField label="Current value" amount={form.value} currency={form.currency}
-                  onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-              </>
-            )}
+        {catKey === 'investment' && (
+          <>
+            <Field label="Institution">
+              <InstitutionCombobox value={form.institutionOrProvider}
+                onChange={(v) => set('institutionOrProvider', v)} placeholder="Fidelity, Vanguard, Schwab…" autoFocus={!asset} />
+            </Field>
+            <Field label="Account name">
+              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Fidelity Brokerage Account" />
+            </Field>
+            <Field label="Account type">
+              <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={INVESTMENT_TYPES} />
+            </Field>
+            <MoneyField label="Current value" amount={form.value} currency={form.currency}
+              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
+          </>
+        )}
 
-            {category === 'investment' && (
-              <>
-                <Field label="Institution">
-                  <InstitutionCombobox value={form.institutionOrProvider}
-                    onChange={(v) => set('institutionOrProvider', v)} placeholder="Fidelity, Vanguard, Schwab…" autoFocus={!asset} />
-                </Field>
-                <Field label="Account name">
-                  <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Fidelity Brokerage Account" />
-                </Field>
-                <Field label="Account type">
-                  <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={INVESTMENT_TYPES} />
-                </Field>
-                <MoneyField label="Current value" amount={form.value} currency={form.currency}
-                  onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-              </>
-            )}
+        {catKey === 'business' && (
+          <>
+            <Field label="Name">
+              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Reeves Consulting Group" autoFocus={!asset} />
+            </Field>
+            <MoneyField label="Current value" amount={form.value} currency={form.currency}
+              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
+          </>
+        )}
 
-            {category === 'business' && (
-              <>
-                <Field label="Name">
-                  <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Reeves Consulting Group" autoFocus={!asset} />
-                </Field>
-                <MoneyField label="Current value" amount={form.value} currency={form.currency}
-                  onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-              </>
-            )}
+        {catKey === 'crypto' && (
+          <>
+            <Field label="Where it's held">
+              <InstitutionCombobox value={form.institutionOrProvider}
+                onChange={(v) => set('institutionOrProvider', v)} placeholder="Coinbase, cold wallet…" autoFocus={!asset} />
+            </Field>
+            <Field label="Name" helper="Optional">
+              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Crypto holdings" />
+            </Field>
+            <MoneyField label="Current value" amount={form.value} currency={form.currency}
+              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
+          </>
+        )}
 
-            {category === 'crypto' && (
-              <>
-                <Field label="Where it's held">
-                  <InstitutionCombobox value={form.institutionOrProvider}
-                    onChange={(v) => set('institutionOrProvider', v)} placeholder="Coinbase, cold wallet…" autoFocus={!asset} />
-                </Field>
-                <Field label="Name" helper="Optional">
-                  <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Crypto holdings" />
-                </Field>
-                <MoneyField label="Current value" amount={form.value} currency={form.currency}
-                  onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-              </>
-            )}
+        {catKey === 'collectibles' && (
+          <>
+            <Field label="Name">
+              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Art collection" autoFocus={!asset} />
+            </Field>
+            <Field label="Type">
+              <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={COLLECTIBLE_TYPES} />
+            </Field>
+            <MoneyField label="Current value" amount={form.value} currency={form.currency}
+              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
+          </>
+        )}
 
-            {category === 'collectibles' && (
-              <>
-                <Field label="Name">
-                  <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Art collection" autoFocus={!asset} />
-                </Field>
-                <Field label="Type">
-                  <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={COLLECTIBLE_TYPES} />
-                </Field>
-                <MoneyField label="Current value" amount={form.value} currency={form.currency}
-                  onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-              </>
-            )}
+        {catKey === 'other' && (
+          <>
+            <Field label="Name">
+              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Describe the asset" autoFocus={!asset} />
+            </Field>
+            <MoneyField label="Current value" amount={form.value} currency={form.currency}
+              onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
+          </>
+        )}
+      </div>
 
-            {category === 'other' && (
-              <>
-                <Field label="Name">
-                  <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Describe the asset" autoFocus={!asset} />
-                </Field>
-                <MoneyField label="Current value" amount={form.value} currency={form.currency}
-                  onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-              </>
-            )}
-          </div>
+      <div className="dialog-actions">
+        <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
+        <button className="btn btn-primary" disabled={!canAddAsset(catKey, form)} onClick={commit}>
+          {asset ? 'Save changes' : cat.cta}
+        </button>
+      </div>
 
-          <div className="focus-actions">
-            <button className="btn btn-secondary" onClick={() => onLeave('assets')}>Cancel</button>
-            <button className="btn btn-primary" disabled={!canAddAsset(category, form)} onClick={commit}>
-              {asset ? 'Save changes' : cat.cta}
-            </button>
-          </div>
-        </>
+      {confirmLeave && (
+        <Dialog
+          title={asset ? 'Leave without saving your changes?' : 'Leave without adding this asset?'}
+          body={asset ? 'Your changes will be lost.' : 'Your entries will be lost.'}
+          cancelLabel="Keep editing"
+          confirmLabel="Leave"
+          danger
+          onCancel={() => setConfirmLeave(false)}
+          onConfirm={onClose}
+        />
       )}
-    </div>
+    </ModalShell>
   )
 }
 
-/* ---------------- Liability form (spec §20) ---------------- */
+/* ---------------- Liability modal ---------------- */
 
 const liabilityToForm = (l) => ({
   name: l?.name || '',
@@ -227,23 +232,24 @@ const liabilityToForm = (l) => ({
   currency: l?.currency || 'USD',
 })
 
-export function LiabilityForm({ liability, initialCategory, setGuard, onCommit, onLeave }) {
-  const [category, setCategory] = useState(liability?.category || initialCategory || null)
+export function LiabilityModal({ category, liability, onCommit, onClose }) {
+  const catKey = liability?.category || category
+  const cat = liabilityCategory(catKey)
   const [form, setForm] = useState(() => liabilityToForm(liability))
   const initialRef = useRef(JSON.stringify(liabilityToForm(liability)))
+  const [confirmLeave, setConfirmLeave] = useState(false)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
   const dirty = liability
     ? JSON.stringify(form) !== initialRef.current
     : !!(form.name || form.lender || form.outstandingBalance != null || form.interestRate !== '')
-  useGuard(setGuard, dirty, 'liability')
 
-  const cat = liabilityCategory(category)
+  const requestClose = () => (dirty ? setConfirmLeave(true) : onClose())
 
   const commit = () => {
     onCommit({
       id: liability?.id ?? uid(),
-      category,
+      category: catKey,
       name: form.name.trim(),
       lender: form.lender.trim(),
       currency: form.currency,
@@ -253,52 +259,59 @@ export function LiabilityForm({ liability, initialCategory, setGuard, onCommit, 
   }
 
   return (
-    <div className="focus-page">
-      <Breadcrumb parent="Net worth" onParent={() => onLeave('liabilities')} current={liability ? 'Edit liability' : 'Add liability'} />
-
-      {!category ? (
-        <>
-          <h1 className="page-title">What kind of liability is this?</h1>
-          <CategoryGrid categories={LIABILITY_CATEGORIES} onPick={setCategory} />
-        </>
-      ) : (
-        <>
-          <h1 className="page-title">{liability ? `Edit ${cat.label.toLowerCase()}` : cat.formTitle}</h1>
-          <div className="focus-form">
-            <Field label="Name" helper="Optional">
-              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder={cat.label} />
-            </Field>
-            <Field label="Lender">
-              <InstitutionCombobox value={form.lender} onChange={(v) => set('lender', v)}
-                placeholder="Chase, Wells Fargo…" autoFocus={!liability} />
-            </Field>
-            <MoneyField label="Outstanding balance" amount={form.outstandingBalance} currency={form.currency}
-              onAmount={(v) => set('outstandingBalance', v)} onCurrency={(c) => set('currency', c)} />
-            <Field label="Interest rate" helper="Optional">
-              <div className="currency rate-field">
-                <input className="input currency-input" placeholder="4.25" inputMode="decimal"
-                  value={form.interestRate}
-                  onChange={(e) => set('interestRate', e.target.value.replace(/[^0-9.]/g, '').slice(0, 5))} />
-                <span className="currency-suffix">%</span>
-              </div>
-            </Field>
+    <ModalShell title={liability ? `Edit ${cat.label.toLowerCase()}` : cat.formTitle} onRequestClose={requestClose}>
+      <div className="focus-form">
+        <Field label="Name" helper="Optional">
+          <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder={cat.label} />
+        </Field>
+        <Field label="Lender">
+          <InstitutionCombobox value={form.lender} onChange={(v) => set('lender', v)}
+            placeholder="Chase, Wells Fargo…" autoFocus={!liability} />
+        </Field>
+        <MoneyField label="Outstanding balance" amount={form.outstandingBalance} currency={form.currency}
+          onAmount={(v) => set('outstandingBalance', v)} onCurrency={(c) => set('currency', c)} />
+        <Field label="Interest rate" helper="Optional">
+          <div className="currency rate-field">
+            <input className="input currency-input" placeholder="4.25" inputMode="decimal"
+              value={form.interestRate}
+              onChange={(e) => set('interestRate', e.target.value.replace(/[^0-9.]/g, '').slice(0, 5))} />
+            <span className="currency-suffix">%</span>
           </div>
+        </Field>
+      </div>
 
-          <div className="focus-actions">
-            <button className="btn btn-secondary" onClick={() => onLeave('liabilities')}>Cancel</button>
-            <button className="btn btn-primary" onClick={commit}>
-              {liability ? 'Save changes' : 'Add liability'}
-            </button>
-          </div>
-        </>
+      <div className="dialog-actions">
+        <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
+        <button className="btn btn-primary" onClick={commit}>
+          {liability ? 'Save changes' : 'Add liability'}
+        </button>
+      </div>
+
+      {confirmLeave && (
+        <Dialog
+          title={liability ? 'Leave without saving your changes?' : 'Leave without adding this liability?'}
+          body={liability ? 'Your changes will be lost.' : 'Your entries will be lost.'}
+          cancelLabel="Keep editing"
+          confirmLabel="Leave"
+          danger
+          onCancel={() => setConfirmLeave(false)}
+          onConfirm={onClose}
+        />
       )}
-    </div>
+    </ModalShell>
   )
 }
 
-/* ---------------- Upload statement + extraction review (spec §17–18) ---------------- */
+/* ---------------- Upload statement + extraction review (unchanged logic) ---------------- */
 
 const SUBTYPE_OPTIONS = [...INVESTMENT_TYPES.filter((t) => t !== 'Other'), ...RETIREMENT_TYPES]
+
+function useGuard(setGuard, dirty, kind) {
+  useEffect(() => {
+    setGuard(dirty ? { kind } : null)
+    return () => setGuard(null)
+  }, [dirty, kind, setGuard])
+}
 
 export function UploadFlow({ setGuard, onCommit, onLeave }) {
   const [stage, setStage] = useState('upload') // upload | reading | review
@@ -327,8 +340,6 @@ export function UploadFlow({ setGuard, onCommit, onLeave }) {
 
   return (
     <div className="focus-page">
-      <Breadcrumb parent="Net worth" onParent={() => onLeave('assets')} current="Upload statement" />
-
       {stage === 'upload' && (
         <>
           <h1 className="page-title">Upload a statement</h1>
@@ -347,6 +358,9 @@ export function UploadFlow({ setGuard, onCommit, onLeave }) {
             <span className="upload-hint">PDF, JPG or PNG</span>
           </div>
           <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" hidden onChange={startReading} />
+          <div className="focus-actions focus-actions-start">
+            <button className="btn btn-secondary" onClick={() => onLeave('assets')}>Cancel</button>
+          </div>
         </>
       )}
 

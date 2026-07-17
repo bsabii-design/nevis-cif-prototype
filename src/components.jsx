@@ -197,17 +197,3 @@ export function AssetList({ assets, onEdit, onRemove }) {
   )
 }
 
-/* ---------------- Category grid (entry points, not checkboxes) ---------------- */
-
-export function CategoryGrid({ categories, onPick }) {
-  return (
-    <div className="tiles">
-      {categories.map((c) => (
-        <button key={c.key} className="tile" onClick={() => onPick(c.key)}>
-          <span className="tile-label">{c.label}</span>
-          {c.hint && <span className="tile-hint">{c.hint}</span>}
-        </button>
-      ))}
-    </div>
-  )
-}
