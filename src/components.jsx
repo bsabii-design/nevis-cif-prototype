@@ -3,21 +3,46 @@ import {
   ASSET_CATEGORIES, assetCategory, assetSubtitle, assetTitle, computeSummary,
   fmtMoney, fmtUSD, hasForeignValues, institutionAvatar, liabilitySubtitle, liabilityTitle, usdOf,
 } from './model.js'
+import { useEffect, useRef, useState } from 'react'
 import { OverflowMenu } from './ui.jsx'
 import { useCountUp } from './hooks.js'
 
 /* ---------------- Top bar ---------------- */
 
 export const NAV = [
-  { key: 'overview', label: 'Overview' },
   { key: 'personal', label: 'Personal' },
   { key: 'work', label: 'Work & income' },
   { key: 'goals', label: 'Goals' },
   { key: 'networth', label: 'Net worth' },
-  { key: 'review', label: 'Review' },
 ]
 
-export function TopBar({ activeKey, onNav, saved, clientName, showNav = true }) {
+/* Collaborator avatar, Figma-style: the only persistent access indicator. */
+function CollabAvatar() {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+  return (
+    <div className="collab" ref={ref}>
+      <button className="collab-avatar" onClick={() => setOpen(!open)} aria-label="Sarah can view this profile">
+        S
+      </button>
+      <span className="collab-tip" role="tooltip">Sarah can view this profile</span>
+      {open && (
+        <div className="collab-pop">
+          <span className="collab-pop-name">Sarah</span>
+          <span className="collab-pop-role">Can view this profile</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function TopBar({ activeKey, onNav, saved, clientName, showNav = true, shared, onShare }) {
   return (
     <header className="topbar">
       <div className="topbar-inner">
@@ -38,6 +63,9 @@ export function TopBar({ activeKey, onNav, saved, clientName, showNav = true }) 
             <span className="saved-dot" />
             Saved
           </span>
+          {showNav && (shared ? <CollabAvatar /> : (
+            <button className="btn btn-primary" onClick={onShare}>Share</button>
+          ))}
           <span className="client-name">{clientName}</span>
         </div>
       </div>
@@ -180,22 +208,6 @@ export function CategoryGrid({ categories, onPick }) {
           {c.hint && <span className="tile-hint">{c.hint}</span>}
         </button>
       ))}
-    </div>
-  )
-}
-
-/* ---------------- Overview section row ---------------- */
-
-export function SectionRow({ title, tagline, summary, actionLabel, onOpen }) {
-  return (
-    <div className="section-row card-clickable card" onClick={onOpen} role="button" tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && onOpen()}>
-      <div className="card-info">
-        <div className="section-title">{title}</div>
-        {tagline && <div className="section-tagline">{tagline}</div>}
-        {summary && <div className="section-summary">{summary}</div>}
-      </div>
-      <span className="section-action">{actionLabel}</span>
     </div>
   )
 }

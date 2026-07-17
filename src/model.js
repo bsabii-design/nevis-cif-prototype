@@ -157,13 +157,17 @@ export const hasForeignValues = (profile) =>
 
 /* ---------------- Required-before-share logic (spec §5) ---------------- */
 
+export const missingPersonalFields = (p) => ({
+  firstName: !p.personal.legalFirstName?.trim(),
+  lastName: !p.personal.legalLastName?.trim(),
+  dateOfBirth: !p.personal.dateOfBirth?.trim(),
+  country: !p.personal.primaryResidence.country?.trim(),
+  city: !p.personal.primaryResidence.city?.trim(),
+  citizenship: !p.personal.citizenships.some((c) => c.trim()),
+})
+
 export const requiredComplete = (p) =>
-  !!(p.personal.legalFirstName?.trim() &&
-     p.personal.legalLastName?.trim() &&
-     p.personal.dateOfBirth?.trim() &&
-     p.personal.primaryResidence.country?.trim() &&
-     p.personal.primaryResidence.city?.trim() &&
-     p.personal.citizenships.some((c) => c.trim()))
+  Object.values(missingPersonalFields(p)).every((m) => !m)
 
 /* ---------------- Profiles ---------------- */
 

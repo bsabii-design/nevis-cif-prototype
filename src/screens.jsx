@@ -1,12 +1,12 @@
-/* Screens: Welcome, Overview, Personal, Work & income, Goals, Net worth, Review, Shared. */
-import { useState } from 'react'
+/* Screens: Welcome, Personal, Work & income, Goals, Net worth. */
+import { useEffect, useState } from 'react'
 import {
-  ASSET_CATEGORIES, EMPLOYMENT_STATUSES, LIABILITY_CATEGORIES, computeSummary,
-  fmtMoney, fmtUSD, requiredComplete,
+  ASSET_CATEGORIES, EMPLOYMENT_STATUSES, LIABILITY_CATEGORIES,
+  fmtMoney, missingPersonalFields, requiredComplete,
 } from './model.js'
 import { parseGoals } from './parse.js'
 import { DateInput, Field, MoneyInput, RadioRow, TextInput } from './ui.jsx'
-import { AssetList, CategoryGrid, FinancialSummary, LiabilityCard, SectionRow } from './components.jsx'
+import { AssetList, CategoryGrid, FinancialSummary, LiabilityCard } from './components.jsx'
 
 /* ---------------- Welcome (spec §7) ---------------- */
 
@@ -32,104 +32,20 @@ export function Welcome({ onStart }) {
   )
 }
 
-/* ---------------- Overview (spec §8) ---------------- */
-
-export function Overview({ profile, onNav }) {
-  const p = profile
-  const required = requiredComplete(p)
-  const s = computeSummary(p)
-  const goalsCount = p.goals.length
-  const objCount = p.assets.length + p.liabilities.length
-
-  const personalSummary = required
-    ? `${p.personal.legalFirstName} ${p.personal.legalLastName} · ${[p.personal.primaryResidence.city, p.personal.primaryResidence.country].filter(Boolean).join(', ')}`
-    : null
-
-  const workSummary = p.work.employmentStatus
-    ? [p.work.employmentStatus, p.work.annualIncome != null ? `${fmtUSD(p.work.annualIncome)} annual income` : null].filter(Boolean).join(' · ')
-    : null
-
-  const nwSummary = objCount > 0
-    ? `${p.assets.length} asset${p.assets.length === 1 ? '' : 's'} · ${p.liabilities.length} liabilit${p.liabilities.length === 1 ? 'y' : 'ies'}`
-    : null
-
-  return (
-    <div className="screen">
-      {p.shared && (
-        <div className="live-banner">
-          <div className="live-title">Live — Sarah sees your updates</div>
-          <p className="live-copy">
-            Your financial profile is shared with Sarah. Any changes you make will be visible automatically.
-          </p>
-        </div>
-      )}
-
-      <h1 className="page-title">Your financial profile</h1>
-      <p className="page-copy">
-        Add as much as feels useful before your meeting.<br />
-        You can come back and update it anytime.
-      </p>
-
-      <div className="section-rows">
-        <SectionRow
-          title="Personal information"
-          tagline={required ? 'Required details added' : 'Required before sharing'}
-          summary={personalSummary}
-          actionLabel={required ? 'Edit' : 'Review your details'}
-          onOpen={() => onNav('personal')}
-        />
-        <SectionRow
-          title="Work & income"
-          tagline={workSummary ? null : 'Optional'}
-          summary={workSummary || 'Add context about your current work and income'}
-          actionLabel={workSummary ? 'Edit' : 'Add'}
-          onOpen={() => onNav('work')}
-        />
-        <SectionRow
-          title="Goals"
-          tagline={goalsCount ? null : 'Optional'}
-          summary={goalsCount ? `${goalsCount} goal${goalsCount === 1 ? '' : 's'} added` : "Add anything you'd like to plan for with Sarah"}
-          actionLabel={goalsCount ? 'Edit' : 'Add'}
-          onOpen={() => onNav('goals')}
-        />
-        <SectionRow
-          title="Net worth"
-          tagline={objCount ? null : 'Optional'}
-          summary={
-            objCount
-              ? `${nwSummary}${s.nw != null ? ` · Estimated net worth ${fmtUSD(s.nw)}` : ''}`
-              : 'Build a picture of what you own and owe'
-          }
-          actionLabel={objCount ? 'Edit' : 'Add'}
-          onOpen={() => onNav('networth')}
-        />
-      </div>
-
-      {!p.shared && (
-        <div className="overview-cta">
-          <button className="btn btn-primary" onClick={() => onNav(required ? 'review' : 'personal')}>
-            {required ? 'Review and share' : 'Review personal information'}
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-
 /* ---------------- Personal information (spec §9) ---------------- */
 
-function ResidenceFields({ residence, onChange, required }) {
+function ResidenceFields({ residence, onChange, required, missing }) {
   const set = (k, v) => onChange({ ...residence, [k]: v })
   return (
     <div className="residence-grid">
-      <Field label="Country" required={required}>
+      <Field label="Country" required={required} error={missing?.country}>
         <TextInput value={residence.country} onChange={(v) => set('country', v)} />
       </Field>
       <Field label="Street address">
         <TextInput value={residence.street} onChange={(v) => set('street', v)} />
       </Field>
       <div className="residence-row">
-        <Field label="City" required={required}>
+        <Field label="City" required={required} error={missing?.city}>
           <TextInput value={residence.city} onChange={(v) => set('city', v)} />
         </Field>
         <Field label="State">
@@ -143,35 +59,47 @@ function ResidenceFields({ residence, onChange, required }) {
   )
 }
 
-export function Personal({ profile, onChange, onNav }) {
+export function Personal({ profile, onChange, onNav, shareAttempted }) {
   const p = profile.personal
   const set = (k, v) => onChange({ ...profile, personal: { ...p, [k]: v } })
+  /* Highlight only missing REQUIRED fields, and only after a blocked Share attempt. */
+  const flag = shareAttempted && !requiredComplete(profile)
+  const missing = flag ? missingPersonalFields(profile) : {}
+
+  useEffect(() => {
+    if (flag) {
+      setTimeout(() =>
+        document.querySelector('.field-missing')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60)
+    }
+  }, [flag])
 
   return (
     <div className="screen screen-narrow">
       <h1 className="page-title">Personal information</h1>
+      {flag && <p className="page-message">Add the required details below before sharing.</p>}
       <p className="page-copy">Please review your details and add anything missing.</p>
 
       <div className="focus-form">
         <div className="residence-row">
-          <Field label="Legal first name" required>
+          <Field label="Legal first name" required error={missing.firstName}>
             <TextInput value={p.legalFirstName} onChange={(v) => set('legalFirstName', v)} />
           </Field>
           <Field label="Middle name" helper="Optional">
             <TextInput value={p.middleName} onChange={(v) => set('middleName', v)} />
           </Field>
-          <Field label="Legal last name" required>
+          <Field label="Legal last name" required error={missing.lastName}>
             <TextInput value={p.legalLastName} onChange={(v) => set('legalLastName', v)} />
           </Field>
         </div>
 
-        <Field label="Date of birth" required>
+        <Field label="Date of birth" required error={missing.dateOfBirth}>
           <DateInput value={p.dateOfBirth} onChange={(v) => set('dateOfBirth', v)} />
         </Field>
 
         <div className="form-section">
           <h2 className="form-section-title">Primary residence <span className="field-required">*</span></h2>
           <ResidenceFields required residence={p.primaryResidence}
+            missing={{ country: missing.country, city: missing.city }}
             onChange={(r) => set('primaryResidence', r)} />
         </div>
 
@@ -193,8 +121,9 @@ export function Personal({ profile, onChange, onNav }) {
           Add another residence
         </button>
 
-        <div className="form-section">
+        <div className={'form-section' + (missing.citizenship ? ' field-missing' : '')}>
           <h2 className="form-section-title">Citizenship <span className="field-required">*</span></h2>
+          {missing.citizenship && <span className="field-error">Required</span>}
           {p.citizenships.map((c, i) => (
             <div className="citizenship-row" key={i}>
               <TextInput value={c} placeholder="United States"
@@ -219,7 +148,6 @@ export function Personal({ profile, onChange, onNav }) {
       </div>
 
       <div className="focus-actions">
-        <button className="btn btn-secondary" onClick={() => onNav('overview')}>Back</button>
         <button className="btn btn-secondary" onClick={() => onNav('work')}>Continue to work & income</button>
       </div>
     </div>
@@ -402,7 +330,7 @@ export function Goals({ profile, onChange, onNav }) {
 
 /* ---------------- Net worth (spec §12–13, §19) ---------------- */
 
-export function NetWorth({ profile, tab, onTab, onAddAsset, onEditAsset, onRemoveAsset,
+export function NetWorth({ profile, tab, onTab, onNav, onAddAsset, onEditAsset, onRemoveAsset,
   onAddLiability, onEditLiability, onRemoveLiability, onUpload, onAnswerNone, onChange }) {
   const { assets, liabilities, liabilitiesExplicitlyNone: none } = profile
 
@@ -488,104 +416,10 @@ export function NetWorth({ profile, tab, onTab, onAddAsset, onEditAsset, onRemov
         </div>
         <FinancialSummary profile={profile} />
       </div>
-    </div>
-  )
-}
 
-/* ---------------- Review (spec §24) ---------------- */
-
-function ReviewRow({ title, lines, onEdit }) {
-  return (
-    <div className="review-row">
-      <div className="card-info">
-        <div className="section-title">{title}</div>
-        {lines.map((l, i) => <div className="section-summary" key={i}>{l}</div>)}
+      <div className="focus-actions focus-actions-start">
+        <button className="btn btn-secondary" onClick={() => onNav('goals')}>Back</button>
       </div>
-      <button className="btn btn-secondary" onClick={onEdit}>Edit</button>
-    </div>
-  )
-}
-
-export function Review({ profile, onNav, onShare }) {
-  const p = profile
-  const required = requiredComplete(p)
-  const s = computeSummary(p)
-  const knownAssets = p.assets.filter((a) => a.value != null)
-  const knownTotal = s.rows?.find((r) => r.label === 'Total assets')?.value
-
-  const liabilityLine = () => {
-    if (p.liabilities.length === 0) return p.liabilitiesExplicitlyNone ? 'No liabilities' : 'No liabilities added'
-    const unknown = p.liabilities.filter((l) => l.outstandingBalance == null).length
-    const known = p.liabilities.length - unknown
-    if (unknown > 0) return `${p.liabilities.length} liabilit${p.liabilities.length === 1 ? 'y' : 'ies'} · Balance not added`
-    const total = s.rows?.find((r) => r.label === 'Total liabilities')?.value
-    return `${known} liabilit${known === 1 ? 'y' : 'ies'} · ${total}`
-  }
-
-  return (
-    <div className="screen">
-      <h1 className="page-title">Review your financial profile</h1>
-      <p className="page-copy">
-        Review what you've added before sharing it with Sarah.<br />
-        You can keep updating your profile after sharing.
-      </p>
-
-      <div className="nw-layout">
-        <div className="nw-main">
-          <div className="section-rows">
-            <ReviewRow title="Personal information"
-              lines={required
-                ? [`${p.personal.legalFirstName} ${p.personal.legalLastName}`,
-                   [p.personal.primaryResidence.city, p.personal.primaryResidence.state].filter(Boolean).join(', ') + ` · ${p.personal.primaryResidence.country}`]
-                : ['Required details missing']}
-              onEdit={() => onNav('personal')} />
-            <ReviewRow title="Work & income"
-              lines={p.work.employmentStatus
-                ? [p.work.employmentStatus, p.work.annualIncome != null ? `Annual income: ${fmtUSD(p.work.annualIncome)}` : null].filter(Boolean)
-                : ['No work or income information added']}
-              onEdit={() => onNav('work')} />
-            <ReviewRow title="Goals"
-              lines={[p.goals.length ? `${p.goals.length} goal${p.goals.length === 1 ? '' : 's'} added` : 'No goals added']}
-              onEdit={() => onNav('goals')} />
-            <ReviewRow title="Assets"
-              lines={[p.assets.length
-                ? `${p.assets.length} asset${p.assets.length === 1 ? '' : 's'}${knownAssets.length ? ` · ${knownTotal} included` : ''}`
-                : 'No assets added']}
-              onEdit={() => onNav('networth')} />
-            <ReviewRow title="Liabilities" lines={[liabilityLine()]} onEdit={() => onNav('networth')} />
-          </div>
-
-          <div className="share-block">
-            {p.shared ? (
-              <p className="live-title">Live — Sarah sees your updates</p>
-            ) : required ? (
-              <>
-                <button className="btn btn-primary" onClick={onShare}>Share with Sarah</button>
-                <p className="share-copy">You can share what you have now and keep updating it anytime.</p>
-              </>
-            ) : (
-              <>
-                <p className="share-copy">Add your required personal details before sharing.</p>
-                <button className="btn btn-primary" disabled>Share with Sarah</button>
-                <button className="link" onClick={() => onNav('personal')}>Review personal information</button>
-              </>
-            )}
-          </div>
-        </div>
-        <FinancialSummary profile={profile} />
-      </div>
-    </div>
-  )
-}
-
-/* ---------------- Shared confirmation (spec §25) ---------------- */
-
-export function SharedConfirm({ onOverview }) {
-  return (
-    <div className="welcome">
-      <h1 className="welcome-title">Shared with Sarah</h1>
-      <p className="page-copy">Sarah can now see your financial profile and any updates you make.</p>
-      <button className="btn btn-primary welcome-cta" onClick={onOverview}>Return to overview</button>
     </div>
   )
 }

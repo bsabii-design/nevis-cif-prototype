@@ -2,15 +2,16 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CURRENCIES, INSTITUTIONS, institutionAvatar, parseAmount } from './model.js'
 
-export function Field({ label, helper, required, children }) {
+export function Field({ label, helper, required, error, children }) {
   return (
-    <label className="field">
+    <label className={'field' + (error ? ' field-missing' : '')}>
       <span className="field-label">
         {label}
         {required && <span className="field-required" aria-hidden="true"> *</span>}
       </span>
       {children}
-      {helper && <span className="field-helper">{helper}</span>}
+      {error ? <span className="field-error">Required</span>
+             : helper && <span className="field-helper">{helper}</span>}
     </label>
   )
 }

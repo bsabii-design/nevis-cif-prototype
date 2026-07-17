@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { assetTitle, blankProfile, loadState, saveState, seedProfile } from './model.js'
+import { assetTitle, blankProfile, loadState, requiredComplete, saveState, seedProfile } from './model.js'
 import { Dialog } from './ui.jsx'
 import { TopBar } from './components.jsx'
 import { AssetForm, LiabilityForm, UploadFlow } from './forms.jsx'
-import { Goals, NetWorth, Overview, Personal, Review, SharedConfirm, Welcome, Work } from './screens.jsx'
+import { Goals, NetWorth, Personal, Welcome, Work } from './screens.jsx'
 import { useSavedFlash } from './hooks.js'
 
 const LEAVE_COPY = {
@@ -15,27 +15,39 @@ const LEAVE_COPY = {
 }
 
 const NAV_KEY_FOR_ROUTE = {
-  overview: 'overview', personal: 'personal', work: 'work', goals: 'goals',
-  networth: 'networth', 'asset-form': 'networth', 'liability-form': 'networth',
-  upload: 'networth', review: 'review', shared: 'review',
+  personal: 'personal', work: 'work', goals: 'goals',
+  networth: 'networth', 'asset-form': 'networth', 'liability-form': 'networth', upload: 'networth',
 }
+
+const MAIN_SECTIONS = ['personal', 'work', 'goals', 'networth']
 
 export default function App() {
   const [state] = useState(() => loadState())
   const [profile, setProfile] = useState(() => state?.profile ?? seedProfile())
   const [seenWelcome, setSeenWelcome] = useState(() => state?.seenWelcome ?? true)
-  const [route, setRoute] = useState(() => (state?.seenWelcome ?? true) ? { name: 'overview' } : { name: 'welcome' })
+  const [route, setRoute] = useState(() => {
+    if (!(state?.seenWelcome ?? true)) return { name: 'welcome' }
+    const last = state?.lastSection
+    return MAIN_SECTIONS.includes(last)
+      ? (last === 'networth' ? { name: 'networth', tab: 'assets' } : { name: last })
+      : { name: 'personal' }
+  })
   const [tick, setTick] = useState(0)
   const [leaveDialog, setLeaveDialog] = useState(null)   // {kind, to}
   const [removeDialog, setRemoveDialog] = useState(null) // {kind, item}
+  const [shareDialog, setShareDialog] = useState(false)
+  const [shareAttempted, setShareAttempted] = useState(false)
+  const [toast, setToast] = useState(null)
   const saved = useSavedFlash(tick)
   const guardRef = useRef(null)
+  const toastTimer = useRef(null)
   const touch = () => setTick((t) => t + 1)
 
-  /* Persist profile + welcome flag (prototype: localStorage). */
+  /* Persist profile, welcome flag and last visited section. */
   useEffect(() => {
-    saveState({ profile, seenWelcome })
-  }, [profile, seenWelcome])
+    const section = NAV_KEY_FOR_ROUTE[route.name]
+    saveState({ profile, seenWelcome, lastSection: section })
+  }, [profile, seenWelcome, route])
 
   const setGuard = useCallback((g) => { guardRef.current = g }, [])
 
@@ -58,10 +70,29 @@ export default function App() {
 
   const updateProfile = (next) => { setProfile(next); touch() }
 
+  /* ---- share (spec update §4–6) ---- */
+
+  const requestShare = () => {
+    if (requiredComplete(profile)) {
+      setShareDialog(true)
+    } else {
+      setShareAttempted(true)
+      navigate({ name: 'personal' })
+    }
+  }
+
+  const confirmShare = () => {
+    setShareDialog(false)
+    setProfile((p) => ({ ...p, shared: true }))
+    touch()
+    clearTimeout(toastTimer.current)
+    setToast({ title: 'Shared with Sarah', body: 'She can now view this profile and any updates you make.' })
+    toastTimer.current = setTimeout(() => setToast(null), 5000)
+  }
+
   /* ---- financial objects: explicit commits ---- */
 
   const commitAsset = (asset) => {
-    guardRef.current = null
     setProfile((p) => ({
       ...p,
       assets: p.assets.some((a) => a.id === asset.id)
@@ -73,7 +104,6 @@ export default function App() {
   }
 
   const commitLiability = (liability) => {
-    guardRef.current = null
     setProfile((p) => ({
       ...p,
       liabilitiesExplicitlyNone: false,
@@ -86,7 +116,6 @@ export default function App() {
   }
 
   const commitExtracted = (accounts) => {
-    guardRef.current = null
     setProfile((p) => ({
       ...p,
       assets: [
@@ -119,30 +148,19 @@ export default function App() {
     touch()
   }
 
-  const share = () => {
-    setProfile((p) => ({ ...p, shared: true }))
-    touch()
-    forceNavigate({ name: 'shared' })
-  }
-
   /* ---- demo controls ---- */
 
-  const resetDemo = () => {
+  const resetAll = (nextProfile, welcome, to) => {
     guardRef.current = null
-    setProfile(seedProfile())
-    setSeenWelcome(true)
-    setLeaveDialog(null); setRemoveDialog(null)
-    forceNavigate({ name: 'overview' })
+    setProfile(nextProfile)
+    setSeenWelcome(!welcome)
+    setLeaveDialog(null); setRemoveDialog(null); setShareDialog(false)
+    setShareAttempted(false); setToast(null)
+    forceNavigate(to)
     touch()
   }
-  const blankStart = () => {
-    guardRef.current = null
-    setProfile(blankProfile())
-    setSeenWelcome(false)
-    setLeaveDialog(null); setRemoveDialog(null)
-    forceNavigate({ name: 'welcome' })
-    touch()
-  }
+  const resetDemo = () => resetAll(seedProfile(), false, { name: 'personal' })
+  const blankStart = () => resetAll(blankProfile(), true, { name: 'welcome' })
 
   /* ---- render ---- */
 
@@ -157,13 +175,16 @@ export default function App() {
         saved={saved}
         clientName="Jonathan Reeves"
         showNav={r.name !== 'welcome'}
+        shared={profile.shared}
+        onShare={requestShare}
       />
       <main className="page">
         {r.name === 'welcome' && (
-          <Welcome onStart={() => { setSeenWelcome(true); forceNavigate({ name: 'overview' }) }} />
+          <Welcome onStart={() => { setSeenWelcome(true); forceNavigate({ name: 'personal' }) }} />
         )}
-        {r.name === 'overview' && <Overview profile={profile} onNav={goSection} />}
-        {r.name === 'personal' && <Personal profile={profile} onChange={updateProfile} onNav={goSection} />}
+        {r.name === 'personal' && (
+          <Personal profile={profile} onChange={updateProfile} onNav={goSection} shareAttempted={shareAttempted} />
+        )}
         {r.name === 'work' && <Work profile={profile} onChange={updateProfile} onNav={goSection} />}
         {r.name === 'goals' && <Goals profile={profile} onChange={updateProfile} onNav={goSection} />}
         {r.name === 'networth' && (
@@ -171,6 +192,7 @@ export default function App() {
             profile={profile}
             tab={r.tab || 'assets'}
             onTab={(tab) => navigate({ name: 'networth', tab })}
+            onNav={goSection}
             onAddAsset={(category) => navigate({ name: 'asset-form', category })}
             onEditAsset={(a) => navigate({ name: 'asset-form', assetId: a.id })}
             onRemoveAsset={(a) => setRemoveDialog({ kind: 'asset', item: a })}
@@ -203,8 +225,6 @@ export default function App() {
         {r.name === 'upload' && (
           <UploadFlow setGuard={setGuard} onCommit={commitExtracted} onLeave={leaveTo} />
         )}
-        {r.name === 'review' && <Review profile={profile} onNav={goSection} onShare={share} />}
-        {r.name === 'shared' && <SharedConfirm onOverview={() => forceNavigate({ name: 'overview' })} />}
       </main>
 
       <footer className="footer">
@@ -212,6 +232,17 @@ export default function App() {
         <span className="footer-sep">·</span>
         <button className="footer-link" onClick={blankStart}>Blank start</button>
       </footer>
+
+      {shareDialog && (
+        <Dialog
+          title="Share with Sarah?"
+          body="Sarah will be able to view everything you've added so far and any updates you make later."
+          cancelLabel="Cancel"
+          confirmLabel="Share"
+          onCancel={() => setShareDialog(false)}
+          onConfirm={confirmShare}
+        />
+      )}
 
       {leaveDialog && (() => {
         const editing = (leaveDialog.kind === 'asset' && route.assetId) || (leaveDialog.kind === 'liability' && route.liabilityId)
@@ -241,6 +272,13 @@ export default function App() {
           onCancel={() => setRemoveDialog(null)}
           onConfirm={confirmRemove}
         />
+      )}
+
+      {toast && (
+        <div className="toast" role="status">
+          <span className="toast-title">{toast.title}</span>
+          <span className="toast-body">{toast.body}</span>
+        </div>
       )}
     </>
   )
