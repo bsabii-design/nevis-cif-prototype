@@ -191,7 +191,7 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
 
       <div className="sticky-footer">
         <div className="sticky-footer-col">
-          <button className="btn btn-secondary" onClick={() => onNav('work')}>Continue to work & income</button>
+          <button className="btn btn-secondary ml-auto" onClick={() => onNav('work')}>Continue</button>
         </div>
       </div>
     </div>
@@ -251,7 +251,7 @@ export function Work({ profile, onChange, onNav }) {
       <div className="sticky-footer">
         <div className="sticky-footer-col">
           <button className="btn btn-secondary" onClick={() => onNav('personal')}>Back</button>
-          <button className="btn btn-secondary" onClick={() => onNav('goals')}>Continue to goals</button>
+          <button className="btn btn-secondary" onClick={() => onNav('goals')}>Continue</button>
         </div>
       </div>
     </div>
@@ -375,7 +375,7 @@ export function Goals({ profile, onChange, onNav }) {
       <div className="sticky-footer">
         <div className="sticky-footer-col">
           <button className="btn btn-secondary" onClick={() => onNav('work')}>Back</button>
-          <button className="btn btn-secondary" onClick={() => onNav('networth')}>Continue to net worth</button>
+          <button className="btn btn-secondary" onClick={() => onNav('networth')}>Continue</button>
         </div>
       </div>
     </div>
@@ -472,7 +472,7 @@ export function NetWorth({ profile, tab, onTab, onNav, onAddAsset, onEditAsset, 
       </div>
 
       <div className="sticky-footer">
-        <div className="sticky-footer-col sticky-footer-start">
+        <div className="sticky-footer-col">
           <button className="btn btn-secondary" onClick={() => onNav('goals')}>Back</button>
         </div>
       </div>
