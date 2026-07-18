@@ -170,7 +170,7 @@ function AssetFields({ category, form, set, isNew }) {
       <Field label="Institution" required>
         <InstitutionCombobox value={form.institutionOrProvider}
           onChange={(v) => set('institutionOrProvider', v)}
-          placeholder="Start typing an institution…" options={INVESTMENT_FIRMS} autoFocus={isNew} />
+          placeholder="Start typing an institution…" options={INVESTMENT_FIRMS} />
       </Field>
       <Field label="Account type" required>
         <div className="radio-row" role="radiogroup" aria-label="Account type">
@@ -244,7 +244,7 @@ function AssetFields({ category, form, set, isNew }) {
     <>
       <Field label="Provider">
         <InstitutionCombobox value={form.institutionOrProvider}
-          onChange={(v) => set('institutionOrProvider', v)} placeholder="Provider name" autoFocus={isNew} />
+          onChange={(v) => set('institutionOrProvider', v)} placeholder="Provider name" />
       </Field>
       <Field label="Name" helper="Optional">
         <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Whole life policy" />
@@ -259,7 +259,7 @@ function AssetFields({ category, form, set, isNew }) {
     <>
       <Field label="Where it's held">
         <InstitutionCombobox value={form.institutionOrProvider}
-          onChange={(v) => set('institutionOrProvider', v)} placeholder="Coinbase, cold wallet…" autoFocus={isNew} />
+          onChange={(v) => set('institutionOrProvider', v)} placeholder="Coinbase, cold wallet…" />
       </Field>
       <Field label="Name" helper="Optional">
         <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Crypto holdings" />
@@ -553,7 +553,7 @@ export function LiabilityModal({ category, liability, onCommit, onClose }) {
         </Field>
         <Field label="Lender">
           <InstitutionCombobox value={form.lender} onChange={(v) => set('lender', v)}
-            placeholder="Chase, Wells Fargo…" autoFocus={!liability} />
+            placeholder="Chase, Wells Fargo…" />
         </Field>
         <MoneyField label="Outstanding balance" amount={form.outstandingBalance} currency={form.currency}
           onAmount={(v) => set('outstandingBalance', v)} onCurrency={(c) => set('currency', c)} />
