@@ -2,10 +2,11 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ASSET_CATEGORIES, BANKS, CASH_BANK_TYPES, COLLECTIBLE_TYPES, INSURANCE_TYPES,
-  INVESTMENT_TYPES, PROPERTY_TYPES, RETIREMENT_TYPES, assetCategory, liabilityCategory, uid,
+  INVESTMENT_FIRMS, INVESTMENT_TYPES, PROPERTY_TYPES, RETIREMENT_GROUPS, RETIREMENT_PLANS,
+  RETIREMENT_PROVIDERS, RETIREMENT_TYPES, assetCategory, liabilityCategory, uid,
 } from './model.js'
 import { extractedAccounts, MOCK_STATEMENT_NAME } from './parse.js'
-import { Dialog, Field, InstitutionCombobox, MoneyInput, Select, TextInput } from './ui.jsx'
+import { Dialog, Field, GroupedSelect, InstitutionCombobox, MoneyInput, Select, TextInput } from './ui.jsx'
 
 const VALUE_LATER = "I don't know this yet"
 
@@ -47,6 +48,13 @@ function ModalShell({ title, onRequestClose, children }) {
 
 /* ---------------- Asset fields (shared by the side panel) ---------------- */
 
+const INVESTMENT_CHIPS = [
+  { value: 'Brokerage account', label: 'Brokerage' },
+  { value: 'Managed account', label: 'Managed' },
+  { value: 'Trust account', label: 'Trust' },
+  { value: 'Other', label: 'Other' },
+]
+
 const CASH_CHIPS = [
   ...CASH_BANK_TYPES.map((t) => ({ value: t, label: t === 'Certificate of deposit' ? 'CD' : t })),
   { value: 'Cash', label: 'Cash' },
@@ -63,19 +71,27 @@ const assetToForm = (asset) => {
     currency: asset?.currency || 'USD',
     customType: '',
   }
-  /* Cash: saved custom types map back onto the "Other" chip. */
+  /* Saved custom types map back onto the "Other" option. */
   if (asset?.category === 'cash' && f.subtype &&
       ![...CASH_BANK_TYPES, 'Cash'].includes(f.subtype)) {
     f.customType = f.subtype
     f.subtype = 'Other'
+  }
+  if (asset?.category === 'investment' && f.subtype && !INVESTMENT_TYPES.includes(f.subtype)) {
+    f.customType = f.subtype
+    f.subtype = 'Other'
+  }
+  if (asset?.category === 'retirement' && f.subtype && !RETIREMENT_PLANS.includes(f.subtype)) {
+    f.customType = f.subtype
+    f.subtype = 'Other retirement account'
   }
   return f
 }
 
 const defaultSubtype = (category) =>
   category === 'cash' ? '' :
-  category === 'investment' ? 'Brokerage account' :
-  category === 'retirement' ? '401(k)' :
+  category === 'investment' ? '' :
+  category === 'retirement' ? '' :
   category === 'realestate' ? 'House' :
   category === 'insurance' ? 'Whole life insurance' :
   category === 'collectibles' ? 'Art' : ''
@@ -87,8 +103,12 @@ const canAddAsset = (category, f) => {
     if (f.subtype === 'Other') return !!f.customType.trim()
     return !!f.institutionOrProvider.trim()
   }
-  if (['investment', 'insurance', 'crypto'].includes(category)) return !!(f.institutionOrProvider || f.name)
-  if (category === 'retirement') return true
+  if (category === 'investment' || category === 'retirement') {
+    if (!f.subtype || !f.institutionOrProvider.trim()) return false
+    const other = category === 'investment' ? 'Other' : 'Other retirement account'
+    return f.subtype === other ? !!f.customType.trim() : true
+  }
+  if (['insurance', 'crypto'].includes(category)) return !!(f.institutionOrProvider || f.name)
   return !!f.name
 }
 
@@ -147,34 +167,65 @@ function AssetFields({ category, form, set, isNew }) {
   }
   if (category === 'investment') return (
     <>
-      <Field label="Institution">
+      <Field label="Institution" required>
         <InstitutionCombobox value={form.institutionOrProvider}
-          onChange={(v) => set('institutionOrProvider', v)} placeholder="Fidelity, Vanguard, Schwab…" autoFocus={isNew} />
+          onChange={(v) => set('institutionOrProvider', v)}
+          placeholder="Start typing an institution…" options={INVESTMENT_FIRMS} autoFocus={isNew} />
       </Field>
-      <Field label="Account name">
-        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Fidelity Brokerage Account" />
+      <Field label="Account type" required>
+        <div className="radio-row" role="radiogroup" aria-label="Account type">
+          {INVESTMENT_CHIPS.map((c) => (
+            <button key={c.value} role="radio" aria-checked={form.subtype === c.value} aria-label={c.value}
+              className={'radio-pill' + (form.subtype === c.value ? ' radio-pill-on' : '')}
+              onClick={() => set('subtype', c.value)}>
+              {c.label}
+            </button>
+          ))}
+        </div>
       </Field>
-      <Field label="Account type">
-        <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={INVESTMENT_TYPES} />
+      {form.subtype === 'Other' && (
+        <Field label="Account type name" required>
+          <TextInput value={form.customType} onChange={(v) => set('customType', v)}
+            placeholder="Enter account type" autoFocus />
+        </Field>
+      )}
+      <Field label="Account nickname" helper="Optional">
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Fidelity brokerage" />
       </Field>
-      {money}
+      <MoneyField label="Current value" amount={form.value} currency={form.currency}
+        onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)}
+        helper="Optional — a rough estimate is fine." allowLater={false} />
     </>
   )
-  if (category === 'retirement') return (
-    <>
-      <Field label="Account type">
-        <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={RETIREMENT_TYPES} />
-      </Field>
-      <Field label="Provider">
-        <InstitutionCombobox value={form.institutionOrProvider}
-          onChange={(v) => set('institutionOrProvider', v)} placeholder="Fidelity, Vanguard…" autoFocus={isNew} />
-      </Field>
-      <Field label="Account name" helper="Optional">
-        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Traditional IRA" />
-      </Field>
-      {money}
-    </>
-  )
+  if (category === 'retirement') {
+    const isPension = form.subtype === 'Pension'
+    return (
+      <>
+        <Field label="Account type" required>
+          <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
+            groups={RETIREMENT_GROUPS} placeholder="Select account type" />
+        </Field>
+        {form.subtype === 'Other retirement account' && (
+          <Field label="Account type name" required>
+            <TextInput value={form.customType} onChange={(v) => set('customType', v)}
+              placeholder="Enter account type" autoFocus />
+          </Field>
+        )}
+        <Field label={isPension ? 'Employer or plan provider' : 'Provider'} required>
+          <InstitutionCombobox value={form.institutionOrProvider}
+            onChange={(v) => set('institutionOrProvider', v)}
+            placeholder="Start typing a provider…" options={RETIREMENT_PROVIDERS} />
+        </Field>
+        <Field label="Account nickname" helper="Optional">
+          <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Current employer 401(k)" />
+        </Field>
+        <MoneyField label={isPension ? 'Estimated pension value' : 'Current balance'}
+          amount={form.value} currency={form.currency}
+          onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)}
+          helper="Optional — a rough estimate is fine." allowLater={false} />
+      </>
+    )
+  }
   if (category === 'realestate') return (
     <>
       <Field label="Property name">
@@ -305,7 +356,12 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
     onCommitAsset({
       id: asset?.id ?? uid(),
       category,
-      subtype: category === 'cash' && form.subtype === 'Other' ? form.customType.trim() : form.subtype,
+      subtype:
+        (category === 'cash' && form.subtype === 'Other') ||
+        (category === 'investment' && form.subtype === 'Other') ||
+        (category === 'retirement' && form.subtype === 'Other retirement account')
+          ? form.customType.trim()
+          : form.subtype,
       name: form.name.trim(),
       institutionOrProvider: form.institutionOrProvider.trim(),
       address: form.address.trim(),

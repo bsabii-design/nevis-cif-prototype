@@ -137,7 +137,9 @@ export function AssetCard({ asset, onEdit, onRemove }) {
           <span className="value-missing-text">
             {asset.category === 'cash'
               ? (asset.subtype === 'Cash' ? 'Amount not added' : 'Balance not added')
-              : 'Value not added'}
+              : asset.category === 'retirement'
+                ? (asset.subtype === 'Pension' ? 'Value not added' : 'Balance not added')
+                : 'Value not added'}
           </span>
         ) : (
           <div className="value-wrap">

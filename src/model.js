@@ -48,8 +48,28 @@ export const BANKS = [
   'U.S. Bank', 'PNC', 'Ally Bank', 'Truist', 'TD Bank', 'Fifth Third Bank', 'Citizens Bank',
 ]
 export const INSURANCE_TYPES = ['Whole life insurance', 'Universal life insurance', 'Annuity', 'Other']
-export const INVESTMENT_TYPES = ['Brokerage account', 'Managed account', 'Trust account', 'Other']
-export const RETIREMENT_TYPES = ['401(k)', 'Traditional IRA', 'Roth IRA', 'Pension', 'Other retirement account']
+export const INVESTMENT_TYPES = ['Brokerage account', 'Managed account', 'Trust account']
+
+/* Investment-first suggestions for the investment account form. */
+export const INVESTMENT_FIRMS = [
+  'Fidelity', 'Vanguard', 'Charles Schwab', 'E*TRADE', 'Morgan Stanley',
+  'Merrill', 'J.P. Morgan', 'Interactive Brokers', 'Robinhood', 'Betterment',
+  'T. Rowe Price', 'Goldman Sachs', 'UBS', 'Edward Jones',
+]
+
+/* Retirement plan providers for the retirement account form. */
+export const RETIREMENT_PROVIDERS = [
+  'Fidelity', 'Vanguard', 'Charles Schwab', 'Empower', 'Principal',
+  'TIAA', 'Voya', 'Merrill', 'John Hancock', 'Edward Jones',
+]
+
+export const RETIREMENT_GROUPS = [
+  { label: 'Employer-sponsored plans', options: ['401(k)', '403(b)', '457(b)', 'Thrift Savings Plan (TSP)', 'Pension'] },
+  { label: 'Individual retirement accounts', options: ['Traditional IRA', 'Roth IRA', 'SEP IRA', 'SIMPLE IRA'] },
+  { label: 'Other', options: ['Other retirement account'] },
+]
+export const RETIREMENT_PLANS = RETIREMENT_GROUPS.flatMap((g) => g.options)
+export const RETIREMENT_TYPES = ['401(k)', '403(b)', '457(b)', 'Traditional IRA', 'Roth IRA', 'SEP IRA', 'SIMPLE IRA', 'Pension']
 export const PROPERTY_TYPES = ['House', 'Apartment', 'Commercial property', 'Land', 'Other']
 export const COLLECTIBLE_TYPES = ['Art', 'Watches', 'Wine', 'Jewelry', 'Other']
 

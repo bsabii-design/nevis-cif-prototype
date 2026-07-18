@@ -523,7 +523,20 @@ input, select, textarea { font: inherit; color: inherit; }
   border: var(--border-w) solid var(--border-default);
   border-radius: var(--radius-8);
   box-shadow: var(--shadow-md);
+  max-height: 236px; /* ~6 rows before internal scrolling */
+  overflow-y: auto;
 }
+
+/* Grouped custom select */
+.gsel-trigger { display: flex; align-items: center; text-align: left; }
+.gsel-placeholder { color: var(--content-tertiary); }
+.gsel-section { display: flex; flex-direction: column; }
+.gsel-section + .gsel-section { margin-top: var(--space-4); }
+.gsel-group {
+  font: var(--text-label-sm); color: var(--content-tertiary);
+  padding: var(--space-8) var(--space-8) var(--space-4);
+}
+.gsel-option { width: 100%; text-align: left; }
 .combo-item {
   display: flex; align-items: center; gap: var(--space-8);
   padding: var(--space-8);

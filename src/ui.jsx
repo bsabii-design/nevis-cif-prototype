@@ -143,6 +143,45 @@ export function InstitutionCombobox({ value, onChange, placeholder, autoFocus, o
   )
 }
 
+/* Grouped custom select (product-styled dropdown, not the native menu). */
+export function GroupedSelect({ value, onChange, groups, placeholder }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    const onKey = (e) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('mousedown', onDown)
+    window.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey) }
+  }, [open])
+  return (
+    <div className="combo" ref={ref}>
+      <button type="button" className="input select gsel-trigger"
+        aria-haspopup="listbox" aria-expanded={open}
+        onClick={() => setOpen(!open)}>
+        <span className={value ? '' : 'gsel-placeholder'}>{value || placeholder}</span>
+      </button>
+      {open && (
+        <ul className="combo-list" role="listbox">
+          {groups.map((g) => (
+            <li key={g.label} className="gsel-section">
+              <span className="gsel-group">{g.label}</span>
+              {g.options.map((o) => (
+                <button key={o} type="button" role="option" aria-selected={o === value}
+                  className={'combo-item gsel-option' + (o === value ? ' combo-item-active' : '')}
+                  onClick={() => { onChange(o); setOpen(false) }}>
+                  {o}
+                </button>
+              ))}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 /* Single-choice pill group (employment status). Not a toggle. */
 export function RadioRow({ options, value, onChange, name }) {
   return (
