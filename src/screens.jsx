@@ -6,7 +6,7 @@ import {
 } from './model.js'
 import { parseGoals } from './parse.js'
 import { DateInput, Field, MoneyInput, PhoneInput, RadioRow, TextInput } from './ui.jsx'
-import { AssetCard, FinancialSummary, LiabilityCard } from './components.jsx'
+import { AssetRow, FinancialSummary, LiabilityCard } from './components.jsx'
 
 /* ---------------- Welcome (spec §7) ---------------- */
 
@@ -369,6 +369,18 @@ export function Goals({ profile, onChange, onNav }) {
 
 /* ---------------- Net worth: one page, category bubbles, modal forms ---------------- */
 
+const GROUP_ADD_LABEL = {
+  cash: 'Add bank account',
+  investment: 'Add investment account',
+  retirement: 'Add retirement account',
+  realestate: 'Add property',
+  business: 'Add business interest',
+  insurance: 'Add insurance or annuity',
+  crypto: 'Add crypto asset',
+  collectibles: 'Add collectible',
+  other: 'Add other asset',
+}
+
 function CategoryBubbles({ categories, selected, locked, onToggle }) {
   return (
     <div className="bubbles">
@@ -445,17 +457,21 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
                   <section className="group" key={cat.key}>
                     <div className="group-head">
                       <h3 className="group-name">{cat.label}</h3>
-                      {items.length >= 2 && (
-                        <span className="group-subtotal">{known.length ? fmtUSD(subtotal) : '—'}</span>
-                      )}
+                      <span className="group-subtotal">{known.length ? fmtUSD(subtotal) : '—'}</span>
+                      <button className="group-plus"
+                        aria-label={GROUP_ADD_LABEL[cat.key]} title={GROUP_ADD_LABEL[cat.key]}
+                        onClick={() => onAddAsset(cat.key)}>
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true">
+                          <line x1="7" y1="2" x2="7" y2="12" /><line x1="2" y1="7" x2="12" y2="7" />
+                        </svg>
+                      </button>
                     </div>
-                    {items.map((a) => (
-                      <AssetCard key={a.id} asset={a}
-                        onEdit={() => onEditAsset(a)} onRemove={() => onRemoveAsset(a)} />
-                    ))}
-                    <button className="link-add" onClick={() => onAddAsset(cat.key)}>
-                      + Add
-                    </button>
+                    <div className="group-box">
+                      {items.map((a) => (
+                        <AssetRow key={a.id} asset={a}
+                          onEdit={() => onEditAsset(a)} onRemove={() => onRemoveAsset(a)} />
+                      ))}
+                    </div>
                   </section>
                 )
               })}

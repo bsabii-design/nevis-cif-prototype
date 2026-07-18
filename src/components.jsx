@@ -4,6 +4,7 @@ import {
   fmtMoney, fmtUSD, hasForeignValues, institutionAvatar, liabilitySubtitle, liabilityTitle, usdOf,
 } from './model.js'
 import { useEffect, useRef, useState } from 'react'
+import { OverflowMenu } from './ui.jsx'
 import { useCountUp } from './hooks.js'
 
 /* ---------------- Top bar + sidebar (layout per Figma mock) ---------------- */
@@ -119,39 +120,69 @@ const TrashIcon = () => (
   </svg>
 )
 
-export function AssetCard({ asset, onEdit, onRemove }) {
-  const avatar = institutionAvatar(asset.institutionOrProvider)
+const stripAcct = (t) => (t || '').replace(/ account$/, '')
+
+/* Primary / secondary hierarchy per category (spec §6). */
+export const assetRowText = (a) => {
+  const t = a.subtype, inst = a.institutionOrProvider, name = a.name
+  if (a.category === 'cash' || a.category === 'investment' || a.category === 'retirement') {
+    const type = a.category === 'investment' ? stripAcct(t) : t
+    return { primary: [type, inst].filter(Boolean).join(' · ') || name || 'Account', secondary: name || null }
+  }
+  if (a.category === 'realestate') {
+    return name
+      ? { primary: name, secondary: [t, a.address].filter(Boolean).join(' · ') || null }
+      : { primary: t || 'Property', secondary: a.address || null }
+  }
+  if (a.category === 'business') return { primary: name || 'Business interest', secondary: name ? 'Business interest' : null }
+  if (a.category === 'insurance') {
+    return name
+      ? { primary: name, secondary: [inst, t].filter(Boolean).join(' · ') || null }
+      : { primary: t || 'Insurance or annuity', secondary: inst || null }
+  }
+  if (a.category === 'crypto') {
+    return name
+      ? { primary: name, secondary: inst || null }
+      : { primary: inst || 'Crypto', secondary: null }
+  }
+  if (a.category === 'collectibles') {
+    return name ? { primary: name, secondary: t || null } : { primary: t || 'Collectible', secondary: null }
+  }
+  return { primary: name || 'Asset', secondary: null }
+}
+
+const missingValueLabel = (a) =>
+  a.category === 'cash'
+    ? (a.subtype === 'Cash' ? 'Amount not added' : 'Balance not added')
+    : a.category === 'retirement'
+      ? (a.subtype === 'Pension' ? 'Value not added' : 'Balance not added')
+      : 'Value not added'
+
+/* One shared row for every saved asset type. No icons, avatars or logos. */
+export function AssetRow({ asset, onEdit, onRemove }) {
   const cur = asset.currency ?? 'USD'
+  const { primary, secondary } = assetRowText(asset)
   return (
-    <div className="card card-clickable" onClick={onEdit} role="button" tabIndex={0}
+    <div className="arow" onClick={onEdit} role="button" tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onEdit()}>
-      <div className="card-left">
-        {avatar && <span className="dot" style={{ background: avatar.color }} aria-hidden="true" />}
-        <div className="card-info">
-          <div className="card-title">{assetTitle(asset)}</div>
-          <div className="card-subtitle">{assetSubtitle(asset)}</div>
-        </div>
+      <div className="arow-text">
+        <div className="arow-primary">{primary}</div>
+        {secondary && <div className="arow-secondary">{secondary}</div>}
       </div>
-      <div className="card-right">
+      <div className="arow-value">
         {asset.value == null ? (
-          <span className="value-missing-text">
-            {asset.category === 'cash'
-              ? (asset.subtype === 'Cash' ? 'Amount not added' : 'Balance not added')
-              : asset.category === 'retirement'
-                ? (asset.subtype === 'Pension' ? 'Value not added' : 'Balance not added')
-                : 'Value not added'}
-          </span>
+          <span className="value-missing-text">{missingValueLabel(asset)}</span>
         ) : (
           <div className="value-wrap">
             <span className="value-text">{fmtMoney(asset.value, cur)}</span>
             {cur !== 'USD' && <span className="value-approx">≈ {fmtUSD(usdOf(asset.value, cur))}</span>}
           </div>
         )}
-        <button className="card-remove" aria-label="Remove asset"
-          onClick={(e) => { e.stopPropagation(); onRemove() }}>
-          <TrashIcon />
-        </button>
       </div>
+      <OverflowMenu items={[
+        { label: 'Edit', onSelect: onEdit },
+        { label: 'Remove asset', danger: true, onSelect: onRemove },
+      ]} />
     </div>
   )
 }
@@ -184,34 +215,3 @@ export function LiabilityCard({ liability, onEdit, onRemove }) {
     </div>
   )
 }
-
-/* Grouped asset list: headers only when multiple categories exist. */
-export function AssetList({ assets, onEdit, onRemove }) {
-  const cats = ASSET_CATEGORIES.filter((c) => assets.some((a) => a.category === c.key))
-  const grouped = cats.length > 1
-  return (
-    <div className="groups">
-      {cats.map((cat) => {
-        const items = assets.filter((a) => a.category === cat.key)
-        const known = items.filter((a) => a.value != null)
-        const subtotal = known.reduce((s, a) => s + usdOf(a.value, a.currency), 0)
-        return (
-          <section className="group" key={cat.key}>
-            {grouped && (
-              <div className="group-head">
-                <h3 className="group-name">{cat.label}</h3>
-                {items.length >= 2 && (
-                  <span className="group-subtotal">{known.length ? fmtUSD(subtotal) : '—'}</span>
-                )}
-              </div>
-            )}
-            {items.map((a) => (
-              <AssetCard key={a.id} asset={a} onEdit={() => onEdit(a)} onRemove={() => onRemove(a)} />
-            ))}
-          </section>
-        )
-      })}
-    </div>
-  )
-}
-

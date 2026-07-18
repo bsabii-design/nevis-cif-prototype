@@ -219,9 +219,48 @@ input, select, textarea { font: inherit; color: inherit; }
 
 .groups { display: flex; flex-direction: column; gap: 28px; }
 .group { display: flex; flex-direction: column; gap: var(--space-8); }
-.group-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
-.group-name { font: var(--text-label-sm); }
+.group-head { display: flex; align-items: center; gap: var(--space-8); margin-bottom: var(--space-4); }
+.group-name { font: var(--text-label-sm); flex: 1; min-width: 0; }
 .group-subtotal { font: var(--text-body-sm); color: var(--content-tertiary); }
+/* Reserved add slot: subtotal never moves when the plus appears */
+.group-plus {
+  width: 28px; height: 28px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--content-secondary);
+  border-radius: var(--radius-8);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease), background-color var(--duration-fast) var(--ease);
+}
+.group:hover .group-plus, .group:focus-within .group-plus, .group-plus:focus-visible { opacity: 1; }
+.group-plus:hover { background: var(--bg-secondary); color: var(--content-primary); }
+
+/* One shared container per category; rows divided, not floating cards */
+.group-box {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-12);
+}
+.arow {
+  display: flex; align-items: center; gap: var(--space-12);
+  height: 60px;
+  padding: 0 var(--space-12);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+.arow + .arow { border-top: var(--border-w) solid var(--border-subtle); }
+.arow:first-child { border-radius: var(--radius-12) var(--radius-12) 0 0; }
+.arow:last-child { border-radius: 0 0 var(--radius-12) var(--radius-12); }
+.arow:only-child { border-radius: var(--radius-12); }
+.arow:hover { background: var(--bg-ghost-hover); }
+.arow-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-4); }
+.arow-primary {
+  font: var(--text-label-md);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.arow-secondary {
+  font: var(--text-body-sm); color: var(--content-secondary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.arow-value { flex: none; text-align: right; white-space: nowrap; }
 
 .card {
   position: relative;
