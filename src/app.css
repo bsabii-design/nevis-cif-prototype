@@ -261,6 +261,18 @@ input, select, textarea { font: inherit; color: inherit; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .arow-value { flex: none; text-align: right; white-space: nowrap; }
+/* Reserved action slot: only opacity changes, layout never moves */
+.arow-remove {
+  width: 28px; height: 28px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--content-tertiary);
+  border-radius: var(--radius-8);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+}
+.arow:hover .arow-remove, .arow:focus-within .arow-remove, .arow-remove:focus-visible { opacity: 1; }
+.arow-remove:hover { background: var(--bg-secondary); color: var(--content-primary); }
 
 .card {
   position: relative;

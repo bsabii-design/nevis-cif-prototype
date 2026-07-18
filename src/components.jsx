@@ -4,7 +4,6 @@ import {
   fmtMoney, fmtUSD, hasForeignValues, institutionAvatar, liabilitySubtitle, liabilityTitle, usdOf,
 } from './model.js'
 import { useEffect, useRef, useState } from 'react'
-import { OverflowMenu } from './ui.jsx'
 import { useCountUp } from './hooks.js'
 
 /* ---------------- Top bar + sidebar (layout per Figma mock) ---------------- */
@@ -179,10 +178,10 @@ export function AssetRow({ asset, onEdit, onRemove }) {
           </div>
         )}
       </div>
-      <OverflowMenu items={[
-        { label: 'Edit', onSelect: onEdit },
-        { label: 'Remove asset', danger: true, onSelect: onRemove },
-      ]} />
+      <button className="arow-remove" aria-label="Remove asset" title="Remove asset"
+        onClick={(e) => { e.stopPropagation(); onRemove() }}>
+        <TrashIcon />
+      </button>
     </div>
   )
 }
