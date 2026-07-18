@@ -71,13 +71,23 @@ export function MoneyInput({ amount, currency = 'USD', onAmount, onCurrency, aut
   )
 }
 
-/* Autocomplete over the mock institution list; free text always allowed. */
-export function InstitutionCombobox({ value, onChange, placeholder, autoFocus }) {
+/* Searchable editable combobox; free text always allowed.
+   Prefix matches rank first; unmatched input offers Use "…". */
+export function InstitutionCombobox({ value, onChange, placeholder, autoFocus, options = INSTITUTIONS }) {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
-  const matches = INSTITUTIONS
-    .filter((n) => n.toLowerCase().includes((value || '').trim().toLowerCase()))
-    .slice(0, 6)
+  const query = (value || '').trim().toLowerCase()
+  const matches = options
+    .filter((n) => n.toLowerCase().includes(query))
+    .sort((a, b) => {
+      const ap = a.toLowerCase().startsWith(query) ? 0 : 1
+      const bp = b.toLowerCase().startsWith(query) ? 0 : 1
+      return ap - bp || a.localeCompare(b)
+    })
+    .slice(0, 8)
+  const exact = options.some((n) => n.toLowerCase() === query)
+  const items = [...matches]
+  if (query && !exact) items.push({ use: true, name: value.trim() })
 
   const pick = (name) => { onChange(name); setOpen(false); setActive(-1) }
   const avatar = institutionAvatar(value)
@@ -92,7 +102,7 @@ export function InstitutionCombobox({ value, onChange, placeholder, autoFocus })
       <input
         className={'input' + (avatar ? ' combo-input-avatar' : '')}
         role="combobox"
-        aria-expanded={open && matches.length > 0}
+        aria-expanded={open && items.length > 0}
         value={value || ''}
         placeholder={placeholder}
         autoFocus={autoFocus}
@@ -100,24 +110,30 @@ export function InstitutionCombobox({ value, onChange, placeholder, autoFocus })
         onFocus={() => setOpen(true)}
         onBlur={() => { setOpen(false); setActive(-1) }}
         onKeyDown={(e) => {
-          if (!open || matches.length === 0) return
-          if (e.key === 'ArrowDown') { e.preventDefault(); setActive((i) => (i + 1) % matches.length) }
-          if (e.key === 'ArrowUp') { e.preventDefault(); setActive((i) => (i - 1 + matches.length) % matches.length) }
-          if (e.key === 'Enter' && active >= 0) { e.preventDefault(); pick(matches[active]) }
+          if (!open || items.length === 0) return
+          if (e.key === 'ArrowDown') { e.preventDefault(); setActive((i) => (i + 1) % items.length) }
+          if (e.key === 'ArrowUp') { e.preventDefault(); setActive((i) => (i - 1 + items.length) % items.length) }
+          if (e.key === 'Enter' && active >= 0) {
+            e.preventDefault()
+            const it = items[active]
+            pick(typeof it === 'string' ? it : it.name)
+          }
           if (e.key === 'Escape') { setOpen(false); setActive(-1) }
         }}
       />
-      {open && matches.length > 0 && (
+      {open && items.length > 0 && (
         <ul className="combo-list" role="listbox">
-          {matches.map((name, i) => {
-            const av = institutionAvatar(name)
+          {items.map((item, i) => {
+            const isUse = typeof item !== 'string'
+            const name = isUse ? item.name : item
+            const av = isUse ? null : institutionAvatar(name)
             return (
-              <li key={name} role="option" aria-selected={i === active}
+              <li key={isUse ? '__use' : name} role="option" aria-selected={i === active}
                 className={'combo-item' + (i === active ? ' combo-item-active' : '')}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pick(name)}>
-                <span className="avatar avatar-sm" style={{ background: av.color }}>{av.letter}</span>
-                {name}
+                {av && <span className="avatar avatar-sm" style={{ background: av.color }}>{av.letter}</span>}
+                {isUse ? <>Use “{name}”</> : name}
               </li>
             )
           })}

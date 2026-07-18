@@ -28,7 +28,7 @@ export const parseAmount = (s) => {
 
 /* Ordered by how likely a client is to hold the asset type, descending. */
 export const ASSET_CATEGORIES = [
-  { key: 'cash', label: 'Cash & bank accounts', single: 'Cash & bank account', add: 'bank account', cta: 'Add account', formTitle: 'Add cash & bank account' },
+  { key: 'cash', label: 'Cash & bank accounts', single: 'Cash & bank account', add: 'bank account', cta: 'Add account', formTitle: 'Add cash or bank account' },
   { key: 'investment', label: 'Investment accounts', single: 'Investment account', add: 'investment account', cta: 'Add account', formTitle: 'Add investment account' },
   { key: 'retirement', label: 'Retirement accounts', single: 'Retirement account', add: 'retirement account', cta: 'Add account', formTitle: 'Add retirement account' },
   { key: 'realestate', label: 'Real estate', single: 'Real estate', add: 'property', cta: 'Add asset', formTitle: 'Add real estate' },
@@ -40,7 +40,13 @@ export const ASSET_CATEGORIES = [
 ]
 export const assetCategory = (key) => ASSET_CATEGORIES.find((c) => c.key === key)
 
-export const CASH_TYPES = ['Checking', 'Savings', 'Money market', 'CD']
+export const CASH_BANK_TYPES = ['Checking', 'Savings', 'Money market', 'Certificate of deposit']
+
+/* Banking institutions for the cash & bank account form (not investment-first). */
+export const BANKS = [
+  'Chase', 'Bank of America', 'Wells Fargo', 'Citi', 'Capital One',
+  'U.S. Bank', 'PNC', 'Ally Bank', 'Truist', 'TD Bank', 'Fifth Third Bank', 'Citizens Bank',
+]
 export const INSURANCE_TYPES = ['Whole life insurance', 'Universal life insurance', 'Annuity', 'Other']
 export const INVESTMENT_TYPES = ['Brokerage account', 'Managed account', 'Trust account', 'Other']
 export const RETIREMENT_TYPES = ['401(k)', 'Traditional IRA', 'Roth IRA', 'Pension', 'Other retirement account']

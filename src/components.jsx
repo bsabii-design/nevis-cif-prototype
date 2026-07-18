@@ -134,7 +134,11 @@ export function AssetCard({ asset, onEdit, onRemove }) {
       </div>
       <div className="card-right">
         {asset.value == null ? (
-          <span className="value-missing-text">Value not added</span>
+          <span className="value-missing-text">
+            {asset.category === 'cash'
+              ? (asset.subtype === 'Cash' ? 'Amount not added' : 'Balance not added')
+              : 'Value not added'}
+          </span>
         ) : (
           <div className="value-wrap">
             <span className="value-text">{fmtMoney(asset.value, cur)}</span>

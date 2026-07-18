@@ -1,24 +1,24 @@
 /* Modal add/edit forms for financial objects; upload statement flow. */
 import { useEffect, useRef, useState } from 'react'
 import {
-  ASSET_CATEGORIES, CASH_TYPES, COLLECTIBLE_TYPES, INSURANCE_TYPES, INVESTMENT_TYPES,
-  PROPERTY_TYPES, RETIREMENT_TYPES, assetCategory, liabilityCategory, uid,
+  ASSET_CATEGORIES, BANKS, CASH_BANK_TYPES, COLLECTIBLE_TYPES, INSURANCE_TYPES,
+  INVESTMENT_TYPES, PROPERTY_TYPES, RETIREMENT_TYPES, assetCategory, liabilityCategory, uid,
 } from './model.js'
 import { extractedAccounts, MOCK_STATEMENT_NAME } from './parse.js'
 import { Dialog, Field, InstitutionCombobox, MoneyInput, Select, TextInput } from './ui.jsx'
 
 const VALUE_LATER = "I don't know this yet"
 
-function MoneyField({ label, amount, currency, onAmount, onCurrency }) {
+function MoneyField({ label, amount, currency, onAmount, onCurrency, helper, allowLater = true }) {
   const [later, setLater] = useState(false)
   return (
-    <Field label={label} helper={later ? 'You can add this later.' : 'A rough estimate is fine.'}>
+    <Field label={label} helper={helper ?? (later ? 'You can add this later.' : 'A rough estimate is fine.')}>
       <MoneyInput
         amount={amount} currency={currency}
         onAmount={(v) => { setLater(false); onAmount(v) }}
         onCurrency={onCurrency}
       />
-      {amount == null && !later && (
+      {allowLater && amount == null && !later && (
         <button type="button" className="link-quiet" onClick={() => { onAmount(null); setLater(true) }}>
           {VALUE_LATER}
         </button>
@@ -47,48 +47,104 @@ function ModalShell({ title, onRequestClose, children }) {
 
 /* ---------------- Asset fields (shared by the side panel) ---------------- */
 
-const assetToForm = (asset) => ({
-  name: asset?.name || '',
-  institutionOrProvider: asset?.institutionOrProvider || '',
-  address: asset?.address || '',
-  subtype: asset?.subtype || '',
-  value: asset?.value ?? null,
-  currency: asset?.currency || 'USD',
-})
+const CASH_CHIPS = [
+  ...CASH_BANK_TYPES.map((t) => ({ value: t, label: t === 'Certificate of deposit' ? 'CD' : t })),
+  { value: 'Cash', label: 'Cash' },
+  { value: 'Other', label: 'Other' },
+]
+
+const assetToForm = (asset) => {
+  const f = {
+    name: asset?.name || '',
+    institutionOrProvider: asset?.institutionOrProvider || '',
+    address: asset?.address || '',
+    subtype: asset?.subtype || '',
+    value: asset?.value ?? null,
+    currency: asset?.currency || 'USD',
+    customType: '',
+  }
+  /* Cash: saved custom types map back onto the "Other" chip. */
+  if (asset?.category === 'cash' && f.subtype &&
+      ![...CASH_BANK_TYPES, 'Cash'].includes(f.subtype)) {
+    f.customType = f.subtype
+    f.subtype = 'Other'
+  }
+  return f
+}
 
 const defaultSubtype = (category) =>
-  category === 'cash' ? 'Checking' :
+  category === 'cash' ? '' :
   category === 'investment' ? 'Brokerage account' :
   category === 'retirement' ? '401(k)' :
   category === 'realestate' ? 'House' :
   category === 'insurance' ? 'Whole life insurance' :
   category === 'collectibles' ? 'Art' : ''
 
-const canAddAsset = (category, f) =>
-  ['cash', 'investment', 'insurance', 'crypto'].includes(category) ? !!(f.institutionOrProvider || f.name) :
-  category === 'retirement' ? true :
-  !!f.name
+const canAddAsset = (category, f) => {
+  if (category === 'cash') {
+    if (!f.subtype) return false
+    if (f.subtype === 'Cash') return true
+    if (f.subtype === 'Other') return !!f.customType.trim()
+    return !!f.institutionOrProvider.trim()
+  }
+  if (['investment', 'insurance', 'crypto'].includes(category)) return !!(f.institutionOrProvider || f.name)
+  if (category === 'retirement') return true
+  return !!f.name
+}
 
 function AssetFields({ category, form, set, isNew }) {
   const money = (
     <MoneyField label="Current value" amount={form.value} currency={form.currency}
       onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
   )
-  if (category === 'cash') return (
-    <>
-      <Field label="Institution">
-        <InstitutionCombobox value={form.institutionOrProvider}
-          onChange={(v) => set('institutionOrProvider', v)} placeholder="Chase, Bank of America…" autoFocus={isNew} />
-      </Field>
-      <Field label="Account name" helper="Optional">
-        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Everyday checking" />
-      </Field>
-      <Field label="Account type">
-        <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={CASH_TYPES} />
-      </Field>
-      {money}
-    </>
-  )
+  if (category === 'cash') {
+    const chip = form.subtype
+    const isBank = CASH_BANK_TYPES.includes(chip)
+    const balance = (label) => (
+      <MoneyField label={label} amount={form.value} currency={form.currency}
+        onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)}
+        helper="Optional — a rough estimate is fine." allowLater={false} />
+    )
+    return (
+      <>
+        <Field label="Account type" required>
+          <div className="radio-row" role="radiogroup" aria-label="Account type">
+            {CASH_CHIPS.map((c) => (
+              <button key={c.value} role="radio" aria-checked={chip === c.value} aria-label={c.value}
+                className={'radio-pill' + (chip === c.value ? ' radio-pill-on' : '')}
+                onClick={() => set('subtype', c.value)}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </Field>
+        {chip === 'Other' && (
+          <Field label="Account type name" required>
+            <TextInput value={form.customType} onChange={(v) => set('customType', v)}
+              placeholder="Enter account type" autoFocus />
+          </Field>
+        )}
+        {(isBank || chip === 'Other') && (
+          <Field label="Institution" required={isBank} helper={chip === 'Other' ? 'Optional' : undefined}>
+            <InstitutionCombobox value={form.institutionOrProvider}
+              onChange={(v) => set('institutionOrProvider', v)}
+              placeholder="Start typing an institution…" options={BANKS} />
+          </Field>
+        )}
+        {chip && chip !== 'Cash' && (
+          <Field label="Account nickname" helper="Optional">
+            <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Everyday checking" />
+          </Field>
+        )}
+        {chip === 'Cash' && (
+          <Field label="Cash label" helper="Optional">
+            <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Emergency cash" />
+          </Field>
+        )}
+        {chip && balance(chip === 'Cash' ? 'Current amount' : 'Current balance')}
+      </>
+    )
+  }
   if (category === 'investment') return (
     <>
       <Field label="Institution">
@@ -249,7 +305,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
     onCommitAsset({
       id: asset?.id ?? uid(),
       category,
-      subtype: form.subtype,
+      subtype: category === 'cash' && form.subtype === 'Other' ? form.customType.trim() : form.subtype,
       name: form.name.trim(),
       institutionOrProvider: form.institutionOrProvider.trim(),
       address: form.address.trim(),
@@ -258,11 +314,15 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
     })
   }
 
+  const editTitle = () => {
+    if (category === 'cash') return form.subtype === 'Cash' ? 'Edit cash' : 'Edit bank account'
+    return `Edit ${cat.single.toLowerCase()}`
+  }
   const title =
     stage === 'choice' ? 'Add assets' :
     stage === 'upload' || stage === 'reading' ? 'Upload a statement' :
     stage === 'review' ? `We found ${accounts.length} account${accounts.length === 1 ? '' : 's'}` :
-    asset ? `Edit ${cat.single.toLowerCase()}` : cat.formTitle
+    asset ? editTitle() : cat.formTitle
 
   const confirmCopy = stage === 'review'
     ? { title: 'Leave without adding these accounts?', body: 'Your changes will be lost.', stay: 'Keep reviewing' }
@@ -363,7 +423,10 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
           <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
           {stage === 'form' ? (
             <button className="btn btn-primary" disabled={!canAddAsset(category, form)} onClick={commitForm}>
-              {asset ? 'Save changes' : cat.cta}
+              {asset ? 'Save changes'
+                : category === 'cash'
+                  ? (form.subtype === 'Cash' ? 'Add cash' : form.subtype === 'Other' ? 'Add asset' : 'Add account')
+                  : cat.cta}
             </button>
           ) : (
             <button className="btn btn-primary" onClick={() => onCommitAccounts(accounts)}>
