@@ -536,7 +536,11 @@ input, select, textarea { font: inherit; color: inherit; }
   font: var(--text-label-sm); color: var(--content-tertiary);
   padding: var(--space-8) var(--space-8) var(--space-4);
 }
-.gsel-option { width: 100%; text-align: left; }
+.gsel-option {
+  width: 100%; text-align: left;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-8);
+}
+.gsel-check { color: var(--content-secondary); font: var(--text-body-sm); }
 .combo-item {
   display: flex; align-items: center; gap: var(--space-8);
   padding: var(--space-8);

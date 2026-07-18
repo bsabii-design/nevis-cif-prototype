@@ -144,7 +144,8 @@ export function InstitutionCombobox({ value, onChange, placeholder, autoFocus, o
 }
 
 /* Grouped custom select (product-styled dropdown, not the native menu). */
-export function GroupedSelect({ value, onChange, groups, placeholder }) {
+export function GroupedSelect({ value, onChange, groups, options, placeholder }) {
+  const groupList = groups ?? [{ label: null, options }]
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   useEffect(() => {
@@ -164,14 +165,15 @@ export function GroupedSelect({ value, onChange, groups, placeholder }) {
       </button>
       {open && (
         <ul className="combo-list" role="listbox">
-          {groups.map((g) => (
-            <li key={g.label} className="gsel-section">
-              <span className="gsel-group">{g.label}</span>
+          {groupList.map((g, gi) => (
+            <li key={g.label ?? gi} className="gsel-section">
+              {g.label && <span className="gsel-group">{g.label}</span>}
               {g.options.map((o) => (
                 <button key={o} type="button" role="option" aria-selected={o === value}
                   className={'combo-item gsel-option' + (o === value ? ' combo-item-active' : '')}
                   onClick={() => { onChange(o); setOpen(false) }}>
                   {o}
+                  {o === value && <span className="gsel-check" aria-hidden="true">✓</span>}
                 </button>
               ))}
             </li>

@@ -1,29 +1,22 @@
 /* Modal add/edit forms for financial objects; upload statement flow. */
 import { useEffect, useRef, useState } from 'react'
 import {
-  ASSET_CATEGORIES, BANKS, CASH_BANK_TYPES, COLLECTIBLE_TYPES, INSURANCE_TYPES,
-  INVESTMENT_FIRMS, INVESTMENT_TYPES, PROPERTY_TYPES, RETIREMENT_GROUPS, RETIREMENT_PLANS,
-  RETIREMENT_PROVIDERS, RETIREMENT_TYPES, assetCategory, liabilityCategory, uid,
+  ASSET_CATEGORIES, BANKS, CASH_BANK_TYPES, COLLECTIBLE_TYPES, CRYPTO_PLATFORMS,
+  INSURANCE_PROVIDERS, INSURANCE_TYPES, INVESTMENT_FIRMS, INVESTMENT_TYPES, PROPERTY_TYPES,
+  RETIREMENT_GROUPS, RETIREMENT_PLANS, RETIREMENT_PROVIDERS, RETIREMENT_TYPES,
+  assetCategory, liabilityCategory, uid,
 } from './model.js'
 import { extractedAccounts, MOCK_STATEMENT_NAME } from './parse.js'
 import { Dialog, Field, GroupedSelect, InstitutionCombobox, MoneyInput, Select, TextInput } from './ui.jsx'
 
-const VALUE_LATER = "I don't know this yet"
-
-function MoneyField({ label, amount, currency, onAmount, onCurrency, helper, allowLater = true }) {
-  const [later, setLater] = useState(false)
+function MoneyField({ label, amount, currency, onAmount, onCurrency }) {
   return (
-    <Field label={label} helper={helper ?? (later ? 'You can add this later.' : 'A rough estimate is fine.')}>
+    <Field label={label} helper="A rough estimate is fine.">
       <MoneyInput
         amount={amount} currency={currency}
-        onAmount={(v) => { setLater(false); onAmount(v) }}
+        onAmount={onAmount}
         onCurrency={onCurrency}
       />
-      {allowLater && amount == null && !later && (
-        <button type="button" className="link-quiet" onClick={() => { onAmount(null); setLater(true) }}>
-          {VALUE_LATER}
-        </button>
-      )}
     </Field>
   )
 }
@@ -48,18 +41,11 @@ function ModalShell({ title, onRequestClose, children }) {
 
 /* ---------------- Asset fields (shared by the side panel) ---------------- */
 
-const INVESTMENT_CHIPS = [
-  { value: 'Brokerage account', label: 'Brokerage' },
-  { value: 'Managed account', label: 'Managed' },
-  { value: 'Trust account', label: 'Trust' },
-  { value: 'Other', label: 'Other' },
-]
-
-const CASH_CHIPS = [
-  ...CASH_BANK_TYPES.map((t) => ({ value: t, label: t === 'Certificate of deposit' ? 'CD' : t })),
-  { value: 'Cash', label: 'Cash' },
-  { value: 'Other', label: 'Other' },
-]
+const CASH_TYPE_OPTIONS = [...CASH_BANK_TYPES, 'Cash', 'Other']
+const INVESTMENT_TYPE_OPTIONS = [...INVESTMENT_TYPES, 'Other']
+const PROPERTY_TYPE_OPTIONS = [...PROPERTY_TYPES, 'Other']
+const INSURANCE_TYPE_OPTIONS = [...INSURANCE_TYPES, 'Other']
+const COLLECTIBLE_TYPE_OPTIONS = [...COLLECTIBLE_TYPES, 'Other']
 
 const assetToForm = (asset) => {
   const f = {
@@ -72,12 +58,14 @@ const assetToForm = (asset) => {
     customType: '',
   }
   /* Saved custom types map back onto the "Other" option. */
-  if (asset?.category === 'cash' && f.subtype &&
-      ![...CASH_BANK_TYPES, 'Cash'].includes(f.subtype)) {
-    f.customType = f.subtype
-    f.subtype = 'Other'
+  const otherMap = {
+    cash: [...CASH_BANK_TYPES, 'Cash'],
+    investment: INVESTMENT_TYPES,
+    realestate: PROPERTY_TYPES,
+    collectibles: COLLECTIBLE_TYPES,
+    insurance: INSURANCE_TYPES,
   }
-  if (asset?.category === 'investment' && f.subtype && !INVESTMENT_TYPES.includes(f.subtype)) {
+  if (asset && otherMap[asset.category] && f.subtype && !otherMap[asset.category].includes(f.subtype)) {
     f.customType = f.subtype
     f.subtype = 'Other'
   }
@@ -88,202 +76,222 @@ const assetToForm = (asset) => {
   return f
 }
 
-const defaultSubtype = (category) =>
-  category === 'cash' ? '' :
-  category === 'investment' ? '' :
-  category === 'retirement' ? '' :
-  category === 'realestate' ? 'House' :
-  category === 'insurance' ? 'Whole life insurance' :
-  category === 'collectibles' ? 'Art' : ''
+/* No type field selects a default option. */
+const defaultSubtype = () => ''
 
-const canAddAsset = (category, f) => {
+/* Required fields per category; the primary action is never disabled —
+   pressing it highlights what is missing instead. */
+const missingAssetFields = (category, f) => {
+  const m = {}
+  const noInst = !f.institutionOrProvider.trim()
+  const noName = !f.name.trim()
+  const noCustom = !f.customType.trim()
   if (category === 'cash') {
-    if (!f.subtype) return false
-    if (f.subtype === 'Cash') return true
-    if (f.subtype === 'Other') return !!f.customType.trim()
-    return !!f.institutionOrProvider.trim()
+    if (!f.subtype) m.subtype = true
+    else {
+      if (f.subtype === 'Other' && noCustom) m.customType = true
+      if (CASH_BANK_TYPES.includes(f.subtype) && noInst) m.institution = true
+    }
+  } else if (category === 'investment') {
+    if (!f.subtype) m.subtype = true
+    else if (f.subtype === 'Other' && noCustom) m.customType = true
+    if (noInst) m.institution = true
+  } else if (category === 'retirement') {
+    if (!f.subtype) m.subtype = true
+    else if (f.subtype === 'Other retirement account' && noCustom) m.customType = true
+    if (noInst) m.institution = true
+  } else if (category === 'realestate') {
+    if (!f.subtype) m.subtype = true
+    else if (f.subtype === 'Other' && noCustom) m.customType = true
+    if (noName) m.name = true
+  } else if (category === 'insurance') {
+    if (!f.subtype) m.subtype = true
+    if (noInst) m.institution = true
+  } else if (category === 'crypto') {
+    if (noInst) m.institution = true
+  } else if (category === 'collectibles') {
+    if (!f.subtype) m.subtype = true
+    else if (f.subtype === 'Other' && noCustom) m.customType = true
+    if (noName) m.name = true
+  } else {
+    if (noName) m.name = true
   }
-  if (category === 'investment' || category === 'retirement') {
-    if (!f.subtype || !f.institutionOrProvider.trim()) return false
-    const other = category === 'investment' ? 'Other' : 'Other retirement account'
-    return f.subtype === other ? !!f.customType.trim() : true
-  }
-  if (['insurance', 'crypto'].includes(category)) return !!(f.institutionOrProvider || f.name)
-  return !!f.name
+  return m
 }
 
-function AssetFields({ category, form, set, isNew }) {
-  const money = (
-    <MoneyField label="Current value" amount={form.value} currency={form.currency}
-      onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
+function AssetFields({ category, form, set, errors = {} }) {
+  const err = (k) => (errors[k] ? 'Required' : null)
+  const customTypeField = (label = 'Account type name') => (
+    <Field label={label} required error={err('customType')}>
+      <TextInput value={form.customType} onChange={(v) => set('customType', v)}
+        placeholder="Enter account type" autoFocus />
+    </Field>
   )
+
   if (category === 'cash') {
     const chip = form.subtype
     const isBank = CASH_BANK_TYPES.includes(chip)
-    const balance = (label) => (
-      <MoneyField label={label} amount={form.value} currency={form.currency}
-        onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)}
-        helper="Optional — a rough estimate is fine." allowLater={false} />
-    )
     return (
       <>
-        <Field label="Account type" required>
-          <div className="radio-row" role="radiogroup" aria-label="Account type">
-            {CASH_CHIPS.map((c) => (
-              <button key={c.value} role="radio" aria-checked={chip === c.value} aria-label={c.value}
-                className={'radio-pill' + (chip === c.value ? ' radio-pill-on' : '')}
-                onClick={() => set('subtype', c.value)}>
-                {c.label}
-              </button>
-            ))}
-          </div>
+        <Field label="Account type" required error={err('subtype')}>
+          <GroupedSelect value={chip} onChange={(v) => set('subtype', v)}
+            options={CASH_TYPE_OPTIONS} placeholder="Select account type" />
         </Field>
-        {chip === 'Other' && (
-          <Field label="Account type name" required>
-            <TextInput value={form.customType} onChange={(v) => set('customType', v)}
-              placeholder="Enter account type" autoFocus />
-          </Field>
-        )}
+        {chip === 'Other' && customTypeField()}
         {(isBank || chip === 'Other') && (
-          <Field label="Institution" required={isBank} helper={chip === 'Other' ? 'Optional' : undefined}>
+          <Field label="Institution" required={isBank} error={err('institution')}>
             <InstitutionCombobox value={form.institutionOrProvider}
               onChange={(v) => set('institutionOrProvider', v)}
               placeholder="Start typing an institution…" options={BANKS} />
           </Field>
         )}
         {chip && chip !== 'Cash' && (
-          <Field label="Account nickname" helper="Optional">
+          <Field label="Account nickname">
             <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Everyday checking" />
           </Field>
         )}
         {chip === 'Cash' && (
-          <Field label="Cash label" helper="Optional">
+          <Field label="Cash label">
             <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Emergency cash" />
           </Field>
         )}
-        {chip && balance(chip === 'Cash' ? 'Current amount' : 'Current balance')}
+        {chip && (
+          <MoneyField label={chip === 'Cash' ? 'Current amount' : 'Current balance'}
+            amount={form.value} currency={form.currency}
+            onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
+        )}
       </>
     )
   }
+
   if (category === 'investment') return (
     <>
-      <Field label="Institution" required>
+      <Field label="Institution" required error={err('institution')}>
         <InstitutionCombobox value={form.institutionOrProvider}
           onChange={(v) => set('institutionOrProvider', v)}
           placeholder="Start typing an institution…" options={INVESTMENT_FIRMS} />
       </Field>
-      <Field label="Account type" required>
-        <div className="radio-row" role="radiogroup" aria-label="Account type">
-          {INVESTMENT_CHIPS.map((c) => (
-            <button key={c.value} role="radio" aria-checked={form.subtype === c.value} aria-label={c.value}
-              className={'radio-pill' + (form.subtype === c.value ? ' radio-pill-on' : '')}
-              onClick={() => set('subtype', c.value)}>
-              {c.label}
-            </button>
-          ))}
-        </div>
+      <Field label="Account type" required error={err('subtype')}>
+        <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
+          options={INVESTMENT_TYPE_OPTIONS} placeholder="Select account type" />
       </Field>
-      {form.subtype === 'Other' && (
-        <Field label="Account type name" required>
-          <TextInput value={form.customType} onChange={(v) => set('customType', v)}
-            placeholder="Enter account type" autoFocus />
-        </Field>
-      )}
-      <Field label="Account nickname" helper="Optional">
+      {form.subtype === 'Other' && customTypeField()}
+      <Field label="Account nickname">
         <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Fidelity brokerage" />
       </Field>
       <MoneyField label="Current value" amount={form.value} currency={form.currency}
-        onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)}
-        helper="Optional — a rough estimate is fine." allowLater={false} />
+        onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
     </>
   )
+
   if (category === 'retirement') {
     const isPension = form.subtype === 'Pension'
     return (
       <>
-        <Field label="Account type" required>
+        <Field label="Account type" required error={err('subtype')}>
           <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
             groups={RETIREMENT_GROUPS} placeholder="Select account type" />
         </Field>
-        {form.subtype === 'Other retirement account' && (
-          <Field label="Account type name" required>
-            <TextInput value={form.customType} onChange={(v) => set('customType', v)}
-              placeholder="Enter account type" autoFocus />
-          </Field>
-        )}
-        <Field label={isPension ? 'Employer or plan provider' : 'Provider'} required>
+        {form.subtype === 'Other retirement account' && customTypeField()}
+        <Field label={isPension ? 'Employer or plan provider' : 'Provider'} required error={err('institution')}>
           <InstitutionCombobox value={form.institutionOrProvider}
             onChange={(v) => set('institutionOrProvider', v)}
             placeholder="Start typing a provider…" options={RETIREMENT_PROVIDERS} />
         </Field>
-        <Field label="Account nickname" helper="Optional">
+        <Field label="Account nickname">
           <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Current employer 401(k)" />
         </Field>
         <MoneyField label={isPension ? 'Estimated pension value' : 'Current balance'}
           amount={form.value} currency={form.currency}
-          onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)}
-          helper="Optional — a rough estimate is fine." allowLater={false} />
+          onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
       </>
     )
   }
+
   if (category === 'realestate') return (
     <>
-      <Field label="Property name">
-        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Austin house" autoFocus={isNew} />
+      <Field label="Property type" required error={err('subtype')}>
+        <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
+          options={PROPERTY_TYPE_OPTIONS} placeholder="Select property type" />
+      </Field>
+      {form.subtype === 'Other' && customTypeField('Property type name')}
+      <Field label="Property name" required error={err('name')}>
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Austin house" />
       </Field>
       <Field label="Address">
         <TextInput value={form.address} onChange={(v) => set('address', v)} placeholder="Street, city, state" />
       </Field>
-      <Field label="Property type">
-        <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={PROPERTY_TYPES} />
-      </Field>
-      {money}
+      <MoneyField label="Current value" amount={form.value} currency={form.currency}
+        onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
     </>
   )
+
+  if (category === 'business') return (
+    <>
+      <Field label="Name" required error={err('name')}>
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Business or investment name" />
+      </Field>
+      <MoneyField label="Current value" amount={form.value} currency={form.currency}
+        onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
+    </>
+  )
+
   if (category === 'insurance') return (
     <>
-      <Field label="Provider">
-        <InstitutionCombobox value={form.institutionOrProvider}
-          onChange={(v) => set('institutionOrProvider', v)} placeholder="Provider name" />
+      <Field label="Type" required error={err('subtype')}>
+        <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
+          options={INSURANCE_TYPE_OPTIONS} placeholder="Select type" />
       </Field>
-      <Field label="Name" helper="Optional">
+      <Field label="Provider" required error={err('institution')}>
+        <InstitutionCombobox value={form.institutionOrProvider}
+          onChange={(v) => set('institutionOrProvider', v)}
+          placeholder="Start typing a provider…" options={INSURANCE_PROVIDERS} />
+      </Field>
+      <Field label="Name">
         <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Whole life policy" />
       </Field>
-      <Field label="Type">
-        <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={INSURANCE_TYPES} />
-      </Field>
-      {money}
+      <MoneyField label="Current value" amount={form.value} currency={form.currency}
+        onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
     </>
   )
+
   if (category === 'crypto') return (
     <>
-      <Field label="Where it's held">
+      <Field label="Platform or wallet" required error={err('institution')}>
         <InstitutionCombobox value={form.institutionOrProvider}
-          onChange={(v) => set('institutionOrProvider', v)} placeholder="Coinbase, cold wallet…" />
+          onChange={(v) => set('institutionOrProvider', v)}
+          placeholder="Coinbase, Kraken, Ledger…" options={CRYPTO_PLATFORMS} />
       </Field>
-      <Field label="Name" helper="Optional">
+      <Field label="Name">
         <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Crypto holdings" />
       </Field>
-      {money}
+      <MoneyField label="Current value" amount={form.value} currency={form.currency}
+        onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
     </>
   )
+
   if (category === 'collectibles') return (
     <>
-      <Field label="Name">
-        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Art collection" autoFocus={isNew} />
+      <Field label="Type" required error={err('subtype')}>
+        <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
+          options={COLLECTIBLE_TYPE_OPTIONS} placeholder="Select type" />
       </Field>
-      <Field label="Type">
-        <Select value={form.subtype} onChange={(v) => set('subtype', v)} options={COLLECTIBLE_TYPES} />
+      {form.subtype === 'Other' && customTypeField('Type name')}
+      <Field label="Name" required error={err('name')}>
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Art collection" />
       </Field>
-      {money}
+      <MoneyField label="Current value" amount={form.value} currency={form.currency}
+        onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
     </>
   )
+
   return (
     <>
-      <Field label="Name">
-        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Describe the asset" autoFocus={isNew} />
+      <Field label="Name" required error={err('name')}>
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Describe the asset" />
       </Field>
-      {money}
+      <MoneyField label="Current value" amount={form.value} currency={form.currency}
+        onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
     </>
   )
 }
@@ -305,6 +313,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
   const [accounts, setAccounts] = useState([])
   const [edited, setEdited] = useState(false)
   const [confirmLeave, setConfirmLeave] = useState(null) // {run}
+  const [attempted, setAttempted] = useState(false)
   const fileRef = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -329,6 +338,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
   const pickCategory = (key) => {
     setCategory(key)
     setForm((f) => ({ ...f, subtype: defaultSubtype(key) }))
+    setAttempted(false)
     setStage('form')
   }
 
@@ -353,14 +363,22 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
   const cat = category ? assetCategory(category) : null
 
   const commitForm = () => {
+    /* The primary action is always active: pressing it surfaces what's missing. */
+    if (Object.keys(missingAssetFields(category, form)).length > 0) {
+      setAttempted(true)
+      setTimeout(() => {
+        const el = document.querySelector('.shell-panel .field-missing input, .shell-panel .field-missing .gsel-trigger')
+        el?.focus()
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 60)
+      return
+    }
     onCommitAsset({
       id: asset?.id ?? uid(),
       category,
       subtype:
-        (category === 'cash' && form.subtype === 'Other') ||
-        (category === 'investment' && form.subtype === 'Other') ||
-        (category === 'retirement' && form.subtype === 'Other retirement account')
-          ? form.customType.trim()
+        form.subtype === 'Other' || form.subtype === 'Other retirement account'
+          ? form.customType.trim() || form.subtype
           : form.subtype,
       name: form.name.trim(),
       institutionOrProvider: form.institutionOrProvider.trim(),
@@ -469,7 +487,8 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
 
         {stage === 'form' && (
           <div className="focus-form">
-            <AssetFields category={category} form={form} set={set} isNew={!asset} />
+            <AssetFields category={category} form={form} set={set}
+              errors={attempted ? missingAssetFields(category, form) : {}} />
           </div>
         )}
       </div>
@@ -478,7 +497,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
         <div className="panel-foot">
           <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
           {stage === 'form' ? (
-            <button className="btn btn-primary" disabled={!canAddAsset(category, form)} onClick={commitForm}>
+            <button className="btn btn-primary" onClick={commitForm}>
               {asset ? 'Save changes'
                 : category === 'cash'
                   ? (form.subtype === 'Cash' ? 'Add cash' : form.subtype === 'Other' ? 'Add asset' : 'Add account')
@@ -548,7 +567,7 @@ export function LiabilityModal({ category, liability, onCommit, onClose }) {
   return (
     <ModalShell title={liability ? `Edit ${cat.label.toLowerCase()}` : cat.formTitle} onRequestClose={requestClose}>
       <div className="focus-form">
-        <Field label="Name" helper="Optional">
+        <Field label="Name">
           <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder={cat.label} />
         </Field>
         <Field label="Lender">
@@ -557,7 +576,7 @@ export function LiabilityModal({ category, liability, onCommit, onClose }) {
         </Field>
         <MoneyField label="Outstanding balance" amount={form.outstandingBalance} currency={form.currency}
           onAmount={(v) => set('outstandingBalance', v)} onCurrency={(c) => set('currency', c)} />
-        <Field label="Interest rate" helper="Optional">
+        <Field label="Interest rate">
           <div className="currency rate-field">
             <input className="input currency-input" placeholder="4.25" inputMode="decimal"
               value={form.interestRate}

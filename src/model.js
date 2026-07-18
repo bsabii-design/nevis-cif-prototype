@@ -47,7 +47,18 @@ export const BANKS = [
   'Chase', 'Bank of America', 'Wells Fargo', 'Citi', 'Capital One',
   'U.S. Bank', 'PNC', 'Ally Bank', 'Truist', 'TD Bank', 'Fifth Third Bank', 'Citizens Bank',
 ]
-export const INSURANCE_TYPES = ['Whole life insurance', 'Universal life insurance', 'Annuity', 'Other']
+export const INSURANCE_TYPES = ['Whole life insurance', 'Universal life insurance', 'Annuity']
+
+/* Insurance and annuity providers. */
+export const INSURANCE_PROVIDERS = [
+  'New York Life', 'Northwestern Mutual', 'MassMutual', 'Prudential',
+  'Pacific Life', 'Nationwide', 'Guardian Life', 'Lincoln Financial', 'Transamerica',
+]
+
+/* Crypto platforms and wallets. */
+export const CRYPTO_PLATFORMS = [
+  'Coinbase', 'Kraken', 'Gemini', 'Binance.US', 'Robinhood', 'Ledger', 'Trezor', 'Cold wallet',
+]
 export const INVESTMENT_TYPES = ['Brokerage account', 'Managed account', 'Trust account']
 
 /* Investment-first suggestions for the investment account form. */
@@ -70,8 +81,8 @@ export const RETIREMENT_GROUPS = [
 ]
 export const RETIREMENT_PLANS = RETIREMENT_GROUPS.flatMap((g) => g.options)
 export const RETIREMENT_TYPES = ['401(k)', '403(b)', '457(b)', 'Traditional IRA', 'Roth IRA', 'SEP IRA', 'SIMPLE IRA', 'Pension']
-export const PROPERTY_TYPES = ['House', 'Apartment', 'Commercial property', 'Land', 'Other']
-export const COLLECTIBLE_TYPES = ['Art', 'Watches', 'Wine', 'Jewelry', 'Other']
+export const PROPERTY_TYPES = ['House', 'Apartment or condo', 'Commercial property', 'Land']
+export const COLLECTIBLE_TYPES = ['Art', 'Watches', 'Jewelry', 'Wine', 'Collectible vehicle']
 
 export const LIABILITY_CATEGORIES = [
   { key: 'mortgage', label: 'Mortgage', group: 'Mortgage', add: 'mortgage', formTitle: 'Add a mortgage' },
