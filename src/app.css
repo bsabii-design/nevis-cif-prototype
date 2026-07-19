@@ -633,8 +633,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .input-filled:hover { background: var(--bg-secondary-hover); border-color: transparent; }
 .input-filled:focus {
   background: var(--bg-surface);
-  border-color: var(--border-default);
-  box-shadow: 0 0 0 3px var(--color-black-a6);
+  border-color: var(--border-selected);
 }
 
 /* Institution autocomplete */

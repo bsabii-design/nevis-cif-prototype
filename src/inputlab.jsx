@@ -98,7 +98,7 @@ export function InputLab() {
           <span className="lab-variant-tag">C</span>
           <div>
             <h2 className="lab-variant-title">Top-aligned — filled + soft focus</h2>
-            <p className="lab-variant-note">Subtle grey fill at rest; on focus it lifts to white with a soft ring instead of a hard border.</p>
+            <p className="lab-variant-note">Subtle grey fill at rest; on focus it lifts to a clean white field with a crisp border — no halo.</p>
           </div>
         </div>
         <div className="lab-stack">
