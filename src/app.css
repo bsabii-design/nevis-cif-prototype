@@ -307,10 +307,9 @@ input, select, textarea { font: inherit; color: inherit; }
   border-radius: var(--radius-full);
   font: var(--text-label-sm); color: var(--content-inverse);
 }
-.avatar-sm { width: 20px; height: 20px; font: 500 9px/1 var(--font-sans); }
+.avatar-sm { width: 18px; height: 18px; font: 500 9px/1 var(--font-sans); }
 /* Institution inline in a row line: avatar 4px before the name (mock 34:2557). */
 .inst { display: inline-flex; align-items: center; gap: var(--space-4); min-width: 0; }
-.inst .avatar { width: 18px; height: 18px; }
 .arow-primary, .arow-secondary { display: flex; align-items: center; gap: var(--space-8); min-width: 0; }
 .arow-sep { flex: none; }
 
