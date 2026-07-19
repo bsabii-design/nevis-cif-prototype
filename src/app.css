@@ -70,7 +70,7 @@ input, select, textarea { font: inherit; color: inherit; }
   padding: var(--space-4) var(--space-8);
   font: var(--text-body-sm); color: var(--content-inverse);
   background: var(--bg-primary);
-  border-radius: var(--radius-4);
+  border-radius: var(--radius-8);
   opacity: 0; pointer-events: none;
   transition: opacity var(--duration-fast) var(--ease);
 }
@@ -223,7 +223,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .group-head {
   position: relative;
   display: flex; align-items: center; gap: var(--space-8);
-  height: 36px;
+  height: 40px;
   padding: 0 var(--space-12);
   background: var(--bg-secondary);
   border-radius: var(--radius-8);
@@ -232,16 +232,17 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Hover swaps the subtotal for the add button in the same spot (Notion-style). */
 .group-subtotal {
   font: var(--text-body-sm); color: var(--content-tertiary);
+  pointer-events: none; /* sits above the absolute plus in paint order — must not eat its clicks */
   transition: opacity var(--duration-fast) var(--ease);
 }
 .group-head:hover .group-subtotal, .group-head:focus-within .group-subtotal { opacity: 0; }
-/* 20px button = 8px clearance on every side of the 36px band */
+/* 28px hit area, 6px clearance in the 40px band */
 .group-plus {
   position: absolute; right: var(--space-8); top: 50%; transform: translateY(-50%);
-  width: 20px; height: 20px;
+  width: 28px; height: 28px;
   display: flex; align-items: center; justify-content: center;
   color: var(--content-secondary);
-  border-radius: var(--radius-4);
+  border-radius: var(--radius-8);
   opacity: 0;
   transition: opacity var(--duration-fast) var(--ease), background-color var(--duration-fast) var(--ease);
 }
