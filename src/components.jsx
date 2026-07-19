@@ -181,15 +181,13 @@ export function AssetRow({ asset, onEdit, onRemove, active }) {
       }}>
       <div className="arow-primary">
         {primary}
-        {primaryType && <span>{primaryType}</span>}
-        {primaryType && primaryInst && <span className="arow-sep">·</span>}
+        {primaryType && <span className="arow-type">{primaryType}</span>}
         {primaryInst && <Inst name={primaryInst} />}
       </div>
       {(secondary || secondaryInst) && (
         <div className="arow-secondary">
           {secondaryInst && <Inst name={secondaryInst} />}
-          {secondaryInst && secondary && <span className="arow-sep">·</span>}
-          {secondary}
+          {secondary && <span className={secondaryInst ? 'arow-note-gap' : undefined}>{secondary}</span>}
         </div>
       )}
       <div className="arow-value">

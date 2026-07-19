@@ -418,37 +418,43 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   return (
     <div className="screen">
       <div className="narrow-col">
-      <div className="title-block">
-        <h1 className="page-title">Net worth</h1>
-        <p className="page-copy">
-          Add anything you own or owe to build a clearer financial picture.<br />
-          You can update it anytime.
-        </p>
-      </div>
+      <div className="nw-header">
+        <div className="nw-header-top">
+          <div className="title-block">
+            <h1 className="page-title">Net worth</h1>
+            <p className="page-copy">
+              Add anything you own or owe to build a clearer financial picture.<br />
+              You can update it anytime.
+            </p>
+          </div>
 
-      <FinancialSummary profile={profile} />
+          <FinancialSummary profile={profile} />
+        </div>
 
-      <div className="nw-tabs" role="tablist">
-        <button role="tab" aria-selected={tab === 'assets'}
-          className={'nw-tab' + (tab === 'assets' ? ' nw-tab-active' : '')}
-          onClick={() => onTab('assets')}>
-          Assets <span className="nw-tab-count">{assets.length}</span>
-        </button>
-        <button role="tab" aria-selected={tab === 'liabilities'}
-          className={'nw-tab' + (tab === 'liabilities' ? ' nw-tab-active' : '')}
-          onClick={() => onTab('liabilities')}>
-          Liabilities <span className="nw-tab-count">{liabilities.length}</span>
-        </button>
+        <div className="nw-divider" />
+
+        <div className="nw-toolbar">
+          <div className="nw-tabs" role="tablist">
+            <button role="tab" aria-selected={tab === 'assets'}
+              className={'nw-pill' + (tab === 'assets' ? ' nw-pill-active' : '')}
+              onClick={() => onTab('assets')}>
+              Assets
+            </button>
+            <button role="tab" aria-selected={tab === 'liabilities'}
+              className={'nw-pill' + (tab === 'liabilities' ? ' nw-pill-active' : '')}
+              onClick={() => onTab('liabilities')}>
+              Liabilities
+            </button>
+          </div>
+          {tab === 'assets' && (
+            <button className="btn btn-primary" disabled={panelOpen} onClick={() => onAddAsset(null)}>Add assets</button>
+          )}
+        </div>
       </div>
 
       <div className="nw-main">
           {tab === 'assets' && (
             <>
-              <div className="assets-head">
-                <h2 className="assets-title">Your assets</h2>
-                <button className="btn btn-primary" disabled={panelOpen} onClick={() => onAddAsset(null)}>Add assets</button>
-              </div>
-
               {assetGroups.map((cat) => {
                 const items = assets.filter((a) => a.category === cat.key)
                 const known = items.filter((a) => a.value != null)
