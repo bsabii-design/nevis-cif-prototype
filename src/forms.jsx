@@ -285,6 +285,13 @@ function AssetFields({ category, form, set, errors = {} }) {
 const emptyAssetForm = () => assetToForm(null)
 
 /* One-line examples that help a non-expert see where their thing belongs. */
+const ChevronRight = () => (
+  <svg className="panel-choice-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"
+    stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M6 4l4 4-4 4" />
+  </svg>
+)
+
 const CATEGORY_EXAMPLES = {
   cash: 'Checking, savings, CDs',
   investment: 'Brokerage, managed, trust accounts',
@@ -417,20 +424,24 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
       <div className="panel-body">
         {stage === 'choice' && (
           <>
-            <button className="upload-hero" onClick={() => setStage('upload')}>
-              <span className="upload-hero-title">Drop in any statement</span>
-              <span className="upload-hero-copy">Nevis reads it and adds your accounts and balances for you.</span>
-              <span className="upload-hero-hint">PDF or a photo · Statements stay private to you and Sarah</span>
-            </button>
-            <div className="or-row" role="separator">Or add manually</div>
-            <div className="panel-types">
+            <div className="panel-choice">
               {ASSET_CATEGORIES.map((c) => (
-                <button key={c.key} className="panel-tile" onClick={() => pickCategory(c.key)}>
-                  <span className="panel-tile-name">{c.single}</span>
-                  <span className="panel-tile-eg">{CATEGORY_EXAMPLES[c.key]}</span>
+                <button key={c.key} className="panel-choice-row" onClick={() => pickCategory(c.key)}>
+                  <span className="panel-choice-main">
+                    <span className="panel-choice-name">{c.single}</span>
+                    <span className="panel-choice-eg">{CATEGORY_EXAMPLES[c.key]}</span>
+                  </span>
+                  <ChevronRight />
                 </button>
               ))}
             </div>
+            <button className="panel-choice-row panel-upload" onClick={() => setStage('upload')}>
+              <span className="panel-choice-main">
+                <span className="panel-choice-name">Upload a statement</span>
+                <span className="panel-choice-eg">Nevis adds your accounts for you · PDF or a photo</span>
+              </span>
+              <ChevronRight />
+            </button>
           </>
         )}
 
@@ -606,11 +617,14 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
 
       <div className="panel-body">
         {stage === 'choice' && (
-          <div className="panel-types">
+          <div className="panel-choice">
             {LIABILITY_CATEGORIES.map((c) => (
-              <button key={c.key} className="panel-tile" onClick={() => pickCategory(c.key)}>
-                <span className="panel-tile-name">{c.label}</span>
-                <span className="panel-tile-eg">{LIABILITY_EXAMPLES[c.key]}</span>
+              <button key={c.key} className="panel-choice-row" onClick={() => pickCategory(c.key)}>
+                <span className="panel-choice-main">
+                  <span className="panel-choice-name">{c.label}</span>
+                  <span className="panel-choice-eg">{LIABILITY_EXAMPLES[c.key]}</span>
+                </span>
+                <ChevronRight />
               </button>
             ))}
           </div>
