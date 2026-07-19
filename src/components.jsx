@@ -52,7 +52,7 @@ export function TopBar({ saved, showNav = true, shared, onShare }) {
             Saved
           </span>
           {showNav && (shared ? <CollabAvatar /> : (
-            <button className="btn btn-primary" onClick={onShare}>Share with Sarah</button>
+            <button className="btn btn-secondary" onClick={onShare}>Share with Sarah</button>
           ))}
         </div>
       </div>

@@ -311,9 +311,6 @@ export default function App() {
                 {FOOTER_NAV[r.name].next && (
                   <button className="btn btn-secondary ml-auto" onClick={() => goSection(FOOTER_NAV[r.name].next)}>Continue</button>
                 )}
-                {r.name === 'networth' && !profile.shared && (
-                  <button className="btn btn-primary ml-auto" onClick={requestShare}>Share with Sarah</button>
-                )}
               </div>
             )}
           </main>
