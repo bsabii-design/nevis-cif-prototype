@@ -248,9 +248,12 @@ input, select, textarea { font: inherit; color: inherit; }
 .group-head:hover .group-plus, .group-head:focus-within .group-plus, .group-plus:focus-visible { opacity: 1; }
 .group-plus:hover { background: var(--bg-secondary-hover); color: var(--content-primary); }
 
-/* Flat single-line rows on the page background, hairline-divided */
+/* Flat single-line rows on the page background, hairline-divided.
+   Table-like columns so the eye scans straight down: primary | nickname | value. */
 .arow {
-  display: flex; align-items: center; gap: var(--space-12);
+  display: grid;
+  grid-template-columns: minmax(0, 240px) minmax(0, 1fr) max-content;
+  align-items: center; column-gap: var(--space-16);
   height: 44px;
   padding: 0 var(--space-12);
   border-radius: var(--radius-8);
@@ -259,15 +262,14 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .arow + .arow { border-top: var(--border-w) solid var(--border-subtle); }
 .arow:hover { background: var(--bg-ghost-hover); }
-.arow-text { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-16); }
-.arow-primary { flex: none; font: var(--text-label-md); }
+.arow-primary { font: var(--text-label-md); overflow: hidden; }
 .arow-secondary {
-  flex: 0 1 auto; min-width: 0;
+  grid-column: 2; min-width: 0;
   font: var(--text-body-sm); color: var(--content-secondary);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .arow-secondary .inst { vertical-align: text-bottom; }
-.arow-value { flex: none; text-align: right; white-space: nowrap; }
+.arow-value { grid-column: 3; justify-self: end; text-align: right; white-space: nowrap; }
 
 .card {
   position: relative;

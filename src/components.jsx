@@ -179,21 +179,19 @@ export function AssetRow({ asset, onEdit, onRemove }) {
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit() }
       }}>
-      <div className="arow-text">
-        <div className="arow-primary">
-          {primary}
-          {primaryType && <span>{primaryType}</span>}
-          {primaryType && primaryInst && <span className="arow-sep">·</span>}
-          {primaryInst && <Inst name={primaryInst} />}
-        </div>
-        {(secondary || secondaryInst) && (
-          <div className="arow-secondary">
-            {secondaryInst && <Inst name={secondaryInst} />}
-            {secondaryInst && secondary && <span className="arow-sep">·</span>}
-            {secondary}
-          </div>
-        )}
+      <div className="arow-primary">
+        {primary}
+        {primaryType && <span>{primaryType}</span>}
+        {primaryType && primaryInst && <span className="arow-sep">·</span>}
+        {primaryInst && <Inst name={primaryInst} />}
       </div>
+      {(secondary || secondaryInst) && (
+        <div className="arow-secondary">
+          {secondaryInst && <Inst name={secondaryInst} />}
+          {secondaryInst && secondary && <span className="arow-sep">·</span>}
+          {secondary}
+        </div>
+      )}
       <div className="arow-value">
         {asset.value == null ? (
           <span className="value-missing-text">{missingValueLabel(asset)}</span>
