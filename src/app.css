@@ -273,7 +273,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .arow-secondary {
   grid-column: 2; min-width: 0;
-  font: var(--text-body-sm); color: var(--content-secondary);
+  font: var(--text-body-md); color: var(--content-secondary);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .arow-value { grid-column: 3; justify-self: end; text-align: right; white-space: nowrap; }
