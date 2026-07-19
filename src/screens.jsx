@@ -462,8 +462,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
             </button>
           </div>
           {tab === 'assets' && (
-            <button className={'btn btn-primary' + (panelOpen && panelTarget && !panelTarget.category && panelTarget.id == null ? ' btn-primary-active' : '')}
-              onClick={() => onAddAsset(null)}>Add assets</button>
+            <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
           )}
         </div>
       </div>

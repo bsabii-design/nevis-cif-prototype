@@ -174,11 +174,6 @@ input, select, textarea { font: inherit; color: inherit; }
 .btn-primary { background: var(--bg-primary); color: var(--content-inverse); }
 .btn-primary:hover { background: var(--bg-primary-hover); }
 .btn-primary:disabled { background: var(--bg-primary-disabled); cursor: default; }
-/* Active source: the panel is open in the "choose what to add" stage. */
-.btn-primary-active, .btn-primary-active:hover {
-  background: var(--bg-primary);
-  box-shadow: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--content-primary);
-}
 .btn-secondary { background: var(--bg-secondary); }
 .btn-secondary:hover { background: var(--bg-secondary-hover); }
 .btn-ghost:hover { background: var(--bg-ghost-hover); }
