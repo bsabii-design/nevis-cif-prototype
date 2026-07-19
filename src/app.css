@@ -260,10 +260,16 @@ input, select, textarea { font: inherit; color: inherit; }
   font: var(--text-body-sm); color: var(--content-secondary);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.arow-value { flex: none; text-align: right; white-space: nowrap; }
-/* Reserved action slot: only opacity changes, layout never moves */
+/* Right area: value on the first line, reserved remove slot on the second.
+   Only the icon's opacity changes between states — layout is constant. */
+.arow-right {
+  flex: none;
+  display: flex; flex-direction: column; align-items: flex-end;
+  gap: var(--space-2);
+}
+.arow-value { text-align: right; white-space: nowrap; }
 .arow-remove {
-  width: 28px; height: 28px; flex: none;
+  width: 24px; height: 24px; flex: none;
   display: flex; align-items: center; justify-content: center;
   color: var(--content-tertiary);
   border-radius: var(--radius-8);
@@ -469,10 +475,11 @@ input, select, textarea { font: inherit; color: inherit; }
 .panel-foot {
   position: relative;
   flex: none;
-  display: flex; justify-content: flex-end; gap: var(--space-8);
+  display: flex; justify-content: flex-end; align-items: center; gap: var(--space-8);
   padding: var(--space-12) var(--space-16);
   background: var(--bg-page);
 }
+.panel-foot-remove { margin-right: auto; }
 .panel-foot::before {
   content: '';
   position: absolute; bottom: 100%; left: 0; right: 0;

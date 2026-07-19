@@ -300,7 +300,7 @@ function AssetFields({ category, form, set, errors = {} }) {
 
 const emptyAssetForm = () => assetToForm(null)
 
-export function AssetPanel({ category: initialCategory, asset, onCommitAsset, onCommitAccounts, onClose, setGuard }) {
+export function AssetPanel({ category: initialCategory, asset, onCommitAsset, onCommitAccounts, onClose, onRemove, setGuard }) {
   const direct = !!(asset || initialCategory)
   const [stage, setStage] = useState(direct ? 'form' : 'choice') // choice | form | upload | reading | review
   const [category, setCategory] = useState(asset?.category || initialCategory || null)
@@ -495,6 +495,9 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
 
       {(stage === 'form' || (stage === 'review' && accounts.length > 0)) && (
         <div className="panel-foot">
+          {stage === 'form' && asset && onRemove && (
+            <button className="btn btn-ghost btn-remove panel-foot-remove" onClick={onRemove}>Remove</button>
+          )}
           <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
           {stage === 'form' ? (
             <button className="btn btn-primary" onClick={commitForm}>

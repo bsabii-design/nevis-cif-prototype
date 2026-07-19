@@ -157,6 +157,7 @@ export default function App() {
     const { kind, item } = removeDialog
     if (kind === 'asset') {
       setProfile((p) => ({ ...p, assets: p.assets.filter((a) => a.id !== item.id) }))
+      if (assetPanel?.id === item.id) { guardRef.current = null; setAssetPanel(null) }
     } else {
       setProfile((p) => ({ ...p, liabilities: p.liabilities.filter((l) => l.id !== item.id) }))
     }
@@ -258,6 +259,10 @@ export default function App() {
               asset={assetPanel.id ? profile.assets.find((a) => a.id === assetPanel.id) : null}
               onCommitAsset={commitAsset}
               onCommitAccounts={commitExtracted}
+              onRemove={assetPanel.id ? () => {
+                const item = profile.assets.find((a) => a.id === assetPanel.id)
+                if (item) setRemoveDialog({ kind: 'asset', item })
+              } : undefined}
               onClose={() => { guardRef.current = null; setAssetPanel(null) }}
               setGuard={setGuard}
             />
