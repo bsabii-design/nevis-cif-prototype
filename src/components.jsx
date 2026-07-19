@@ -183,7 +183,7 @@ export function AssetRow({ asset, onEdit, onRemove }) {
         <div className="arow-primary">
           {primary}
           {primaryType && <span>{primaryType}</span>}
-          {primaryType && primaryInst && <span className="arow-sep">/</span>}
+          {primaryType && primaryInst && <span className="arow-sep">·</span>}
           {primaryInst && <Inst name={primaryInst} />}
         </div>
         {(secondary || secondaryInst) && (
