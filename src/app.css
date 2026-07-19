@@ -251,7 +251,8 @@ input, select, textarea { font: inherit; color: inherit; }
 .group-plus:focus:not(:focus-visible) { outline: none; }
 /* Subject of the open panel is marked in the list: band for add, row for edit */
 .group-head-active { background: var(--bg-secondary-hover); }
-.arow-active, .arow-active:hover { background: var(--bg-ghost-hover); }
+/* Selected (its Edit panel is open): a touch darker than hover so it clearly persists. */
+.arow-active, .arow-active:hover { background: var(--bg-secondary-hover); }
 
 /* Flat single-line rows on the page background, hairline-divided.
    Table-like columns so the eye scans straight down: primary | nickname | value. */
