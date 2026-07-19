@@ -121,12 +121,25 @@ const TrashIcon = () => (
 
 const stripAcct = (t) => (t || '').replace(/ account$/, '')
 
-/* Primary / secondary hierarchy per category (spec §6). */
+/* Institution name with its letter avatar inline, per mock (16px dot before the name). */
+function Inst({ name }) {
+  const av = institutionAvatar(name)
+  return (
+    <span className="inst">
+      {av && <span className="avatar avatar-xs" style={{ background: av.color }} aria-hidden="true">{av.letter}</span>}
+      {name}
+    </span>
+  )
+}
+
+/* Primary / secondary hierarchy per category (spec §6).
+   `primaryType` + `primaryInst` render as "Type / [avatar] Institution". */
 export const assetRowText = (a) => {
   const t = a.subtype, inst = a.institutionOrProvider, name = a.name
   if (a.category === 'cash' || a.category === 'investment' || a.category === 'retirement') {
     const type = a.category === 'investment' ? stripAcct(t) : t
-    return { primary: [type, inst].filter(Boolean).join(' · ') || name || 'Account', secondary: name || null }
+    if (!type && !inst) return { primary: name || 'Account', secondary: null }
+    return { primaryType: type, primaryInst: inst, secondary: name || null }
   }
   if (a.category === 'realestate') {
     return name
@@ -136,13 +149,13 @@ export const assetRowText = (a) => {
   if (a.category === 'business') return { primary: name || 'Business interest', secondary: name ? 'Business interest' : null }
   if (a.category === 'insurance') {
     return name
-      ? { primary: name, secondary: [inst, t].filter(Boolean).join(' · ') || null }
-      : { primary: t || 'Insurance or annuity', secondary: inst || null }
+      ? { primary: name, secondaryInst: inst, secondary: t || null }
+      : { primary: t || 'Insurance or annuity', secondaryInst: inst || null }
   }
   if (a.category === 'crypto') {
     return name
-      ? { primary: name, secondary: inst || null }
-      : { primary: inst || 'Crypto', secondary: null }
+      ? { primary: name, secondaryInst: inst || null }
+      : { primaryInst: inst || null, primary: inst ? undefined : 'Crypto' }
   }
   if (a.category === 'collectibles') {
     return name ? { primary: name, secondary: t || null } : { primary: t || 'Collectible', secondary: null }
@@ -160,21 +173,26 @@ const missingValueLabel = (a) =>
 /* One shared row for every saved asset type. Letter avatar when the row has an institution. */
 export function AssetRow({ asset, onEdit, onRemove }) {
   const cur = asset.currency ?? 'USD'
-  const { primary, secondary } = assetRowText(asset)
-  const avatar = institutionAvatar(asset.institutionOrProvider)
+  const { primary, primaryType, primaryInst, secondary, secondaryInst } = assetRowText(asset)
   return (
     <div className="arow" onClick={onEdit} role="button" tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit() }
       }}>
-      {avatar && (
-        <span className="avatar" style={{ background: avatar.color }} aria-hidden="true">
-          {avatar.letter}
-        </span>
-      )}
       <div className="arow-text">
-        <div className="arow-primary">{primary}</div>
-        {secondary && <div className="arow-secondary">{secondary}</div>}
+        <div className="arow-primary">
+          {primary}
+          {primaryType && <span>{primaryType}</span>}
+          {primaryType && primaryInst && <span className="arow-sep">/</span>}
+          {primaryInst && <Inst name={primaryInst} />}
+        </div>
+        {(secondary || secondaryInst) && (
+          <div className="arow-secondary">
+            {secondaryInst && <Inst name={secondaryInst} />}
+            {secondaryInst && secondary && <span className="arow-sep">·</span>}
+            {secondary}
+          </div>
+        )}
       </div>
       <div className="arow-value">
         {asset.value == null ? (
