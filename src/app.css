@@ -108,6 +108,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .side-links { display: flex; flex-direction: column; gap: var(--space-2); }
 .side-link {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-8);
   text-align: left; width: 100%;
   font: var(--text-label-md); color: var(--content-secondary);
   padding: var(--space-8) var(--space-12);
@@ -125,6 +126,15 @@ input, select, textarea { font: inherit; color: inherit; }
   border-radius: var(--radius-full);
 }
 .side-name { font: var(--text-label-md); }
+/* Section has an answer (content or explicit deferral) — quiet state dot. */
+.side-dot { flex: none; width: 6px; height: 6px; border-radius: var(--radius-full); background: var(--content-tertiary); }
+
+/* Assets empty state + deferral note */
+.nw-empty { display: flex; flex-direction: column; gap: var(--space-8); align-items: flex-start; padding: var(--space-8) 0 var(--space-16); }
+.nw-empty-title { font: var(--text-heading-sm); }
+.nw-deferred-note { font: var(--text-body-sm); color: var(--content-secondary); }
+.link-quiet { font: var(--text-body-sm); color: var(--content-tertiary); text-align: left; transition: color var(--duration-fast) var(--ease); }
+.link-quiet:hover { color: var(--content-primary); }
 
 .page {
   flex: 1; min-width: 0;

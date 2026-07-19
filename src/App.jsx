@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { assetTitle, blankProfile, loadState, requiredComplete, saveState, seedProfile } from './model.js'
+import { assetTitle, blankProfile, loadState, requiredComplete, saveState, sectionState, seedProfile } from './model.js'
 import { Dialog } from './ui.jsx'
 import { Sidebar, TopBar } from './components.jsx'
 import { AssetPanel, LiabilityModal } from './forms.jsx'
@@ -218,7 +218,7 @@ export default function App() {
       <div className="app-body">
         <div className="shell">
           {r.name !== 'welcome' && (
-            <Sidebar activeKey={NAV_KEY_FOR_ROUTE[r.name]} onNav={goSection} clientName="Jonathan Reeves" />
+            <Sidebar activeKey={NAV_KEY_FOR_ROUTE[r.name]} onNav={goSection} clientName="Jonathan Reeves" sections={sectionState(profile)} />
           )}
           <main className={'page' + (r.name === 'welcome' ? ' page-centered' : '')}>
             {r.name === 'welcome' && (
@@ -244,6 +244,7 @@ export default function App() {
                 onEditLiability={(l) => setObjectModal({ kind: 'liability', category: l.category, id: l.id })}
                 onRemoveLiability={(l) => setRemoveDialog({ kind: 'liability', item: l })}
                 onAnswerNone={answerNoLiabilities}
+                onDeferAssets={() => { setProfile((p) => ({ ...p, assetsDeferred: true })); touch() }}
                 panelOpen={!!assetPanel}
                 panelTarget={assetPanel ? { category: panelCat, id: assetPanel.id } : null}
               />

@@ -60,7 +60,7 @@ export function TopBar({ saved, showNav = true, shared, onShare }) {
   )
 }
 
-export function Sidebar({ activeKey, onNav, clientName }) {
+export function Sidebar({ activeKey, onNav, clientName, sections }) {
   return (
     <nav className="sidebar" aria-label="Sections">
       <div className="side-links">
@@ -69,6 +69,7 @@ export function Sidebar({ activeKey, onNav, clientName }) {
             className={'side-link' + (s.key === activeKey ? ' side-link-active' : '')}
             onClick={() => onNav(s.key)}>
             {s.label}
+            {sections?.[s.key] && <span className="side-dot" aria-label="Answered" />}
           </button>
         ))}
       </div>

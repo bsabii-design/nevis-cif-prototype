@@ -338,6 +338,11 @@ export function Goals({ profile, onChange, onNav }) {
       {goals.length === 0 ? (
         <>
           <h2 className="goals-question">What would you like your wealth to help you achieve?</h2>
+          {profile.goalsDeferred && (
+            <p className="nw-deferred-note">
+              You've chosen to explore this together with Sarah — you can still add goals anytime.
+            </p>
+          )}
           <p className="page-copy">
             Describe what you're planning in your own words.<br />
             We'll help turn it into a clear set of goals.
@@ -353,7 +358,10 @@ export function Goals({ profile, onChange, onNav }) {
             <div className="reading"><span className="spinner" aria-hidden="true" /><span className="reading-text">Creating your goals…</span></div>
           ) : (
             <div className="goals-actions">
-              <button className="btn btn-secondary" onClick={() => onNav('networth')}>I'd rather explore this with Sarah</button>
+              <button className="btn btn-secondary"
+                onClick={() => { onChange({ ...profile, goalsDeferred: true }); onNav('networth') }}>
+                I'd rather explore this with Sarah
+              </button>
               <button className="btn btn-primary" disabled={!text.trim()} onClick={create}>Create goals</button>
             </div>
           )}
@@ -420,7 +428,7 @@ function CategoryBubbles({ categories, selected, locked, onToggle }) {
 
 export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   onAddAsset, onAddLiability, onEditAsset, onRemoveAsset, onEditLiability, onRemoveLiability,
-  onAnswerNone, panelOpen, panelTarget }) {
+  onAnswerNone, onDeferAssets, panelOpen, panelTarget }) {
   const { assets, liabilities, liabilitiesExplicitlyNone: none } = profile
 
   /* Collapsing header: when the summary card scrolls out of view, a compact
@@ -492,6 +500,24 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
       <div className="nw-main">
           {tab === 'assets' && (
             <>
+              {assets.length === 0 && (
+                <div className="nw-empty">
+                  <h2 className="nw-empty-title">Start your financial picture</h2>
+                  <p className="page-copy">
+                    Add accounts, property, and anything else you own.<br />
+                    Your net worth builds as you go — rough estimates are fine.
+                  </p>
+                  {profile.assetsDeferred ? (
+                    <p className="nw-deferred-note">
+                      You've chosen to go through this together with Sarah. You can still add things anytime.
+                    </p>
+                  ) : (
+                    <button className="link-quiet" onClick={onDeferAssets}>
+                      I'd rather go through this with Sarah
+                    </button>
+                  )}
+                </div>
+              )}
               {assetGroups.map((cat) => {
                 const items = assets.filter((a) => a.category === cat.key)
                 const known = items.filter((a) => a.value != null)
