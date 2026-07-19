@@ -358,8 +358,6 @@ export default function App() {
         <span className="footer-sep">·</span>
         <button className="footer-link" onClick={() => setRoute({ name: 'inputlab' })}>Input lab</button>
       </footer>
-        />
-      )}
 
       {shareDialog && (
         <ShareDialog profile={profile} onCancel={() => setShareDialog(false)} onConfirm={confirmShare} />
