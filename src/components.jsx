@@ -192,7 +192,7 @@ export function AssetRow({ asset, onEdit, onRemove, active }) {
       )}
       <div className="arow-value">
         {asset.value == null ? (
-          <span className="value-missing-text">{missingValueLabel(asset)}</span>
+          <span className="value-missing-text" title={missingValueLabel(asset)} aria-label={missingValueLabel(asset)}>—</span>
         ) : (
           <div className="value-wrap">
             <span className="value-text">{fmtMoney(asset.value, cur)}</span>
