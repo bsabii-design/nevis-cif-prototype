@@ -221,6 +221,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .group { display: flex; flex-direction: column; gap: var(--space-4); }
 /* Header band: name + subtotal on a muted strip, rows flat below (Linear-style). */
 .group-head {
+  position: relative;
   display: flex; align-items: center; gap: var(--space-8);
   height: 36px;
   padding: 0 var(--space-12);
@@ -228,10 +229,15 @@ input, select, textarea { font: inherit; color: inherit; }
   border-radius: var(--radius-8);
 }
 .group-name { font: var(--text-label-sm); flex: 1; min-width: 0; }
-.group-subtotal { font: var(--text-body-sm); color: var(--content-tertiary); }
-/* Reserved add slot: subtotal never moves when the plus appears */
+/* Hover swaps the subtotal for the add button in the same spot (Notion-style). */
+.group-subtotal {
+  font: var(--text-body-sm); color: var(--content-tertiary);
+  transition: opacity var(--duration-fast) var(--ease);
+}
+.group-head:hover .group-subtotal, .group-head:focus-within .group-subtotal { opacity: 0; }
 .group-plus {
-  width: 28px; height: 28px; flex: none;
+  position: absolute; right: var(--space-8); top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px;
   display: flex; align-items: center; justify-content: center;
   color: var(--content-secondary);
   border-radius: var(--radius-8);
