@@ -300,10 +300,11 @@ function AssetFields({ category, form, set, errors = {} }) {
 
 const emptyAssetForm = () => assetToForm(null)
 
-export function AssetPanel({ category: initialCategory, asset, onCommitAsset, onCommitAccounts, onClose, onRemove, setGuard }) {
+export function AssetPanel({ category: initialCategory, asset, onCommitAsset, onCommitAccounts, onClose, onRemove, setGuard, onCategoryChange }) {
   const direct = !!(asset || initialCategory)
   const [stage, setStage] = useState(direct ? 'form' : 'choice') // choice | form | upload | reading | review
   const [category, setCategory] = useState(asset?.category || initialCategory || null)
+  useEffect(() => { onCategoryChange?.(category) }, [category, onCategoryChange])
   const [form, setForm] = useState(() => {
     const f = assetToForm(asset)
     if (!asset && initialCategory) f.subtype = defaultSubtype(initialCategory)

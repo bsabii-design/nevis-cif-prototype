@@ -405,7 +405,7 @@ function CategoryBubbles({ categories, selected, locked, onToggle }) {
 
 export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   onAddAsset, onAddLiability, onEditAsset, onRemoveAsset, onEditLiability, onRemoveLiability,
-  onAnswerNone, panelOpen }) {
+  onAnswerNone, panelOpen, panelTarget }) {
   const { assets, liabilities, liabilitiesExplicitlyNone: none } = profile
 
   const liabsWithRecords = new Set(liabilities.map((l) => l.category))
@@ -455,11 +455,11 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
                 const subtotal = known.reduce((s, a) => s + usdOf(a.value, a.currency), 0)
                 return (
                   <section className="group" key={cat.key}>
-                    <div className="group-head">
+                    <div className={'group-head' + (panelTarget && !panelTarget.id && panelTarget.category === cat.key ? ' group-head-active' : '')}>
                       <h3 className="group-name">{cat.label}</h3>
                       <button className="group-plus"
                         aria-label={GROUP_ADD_LABEL[cat.key]} title={GROUP_ADD_LABEL[cat.key]}
-                        onClick={() => onAddAsset(cat.key)}>
+                        onClick={(e) => { e.currentTarget.blur(); onAddAsset(cat.key) }}>
                         <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true">
                           <line x1="7" y1="2" x2="7" y2="12" /><line x1="2" y1="7" x2="12" y2="7" />
                         </svg>
@@ -468,7 +468,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
                     </div>
                     <div className="group-rows">
                       {items.map((a) => (
-                        <AssetRow key={a.id} asset={a}
+                        <AssetRow key={a.id} asset={a} active={panelTarget?.id === a.id}
                           onEdit={() => onEditAsset(a)} onRemove={() => onRemoveAsset(a)} />
                       ))}
                     </div>
@@ -502,7 +502,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
                 const items = liabilities.filter((l) => l.category === cat.key)
                 return (
                   <section className="group" key={cat.key}>
-                    <div className="group-head">
+                    <div className={'group-head' + (panelTarget && !panelTarget.id && panelTarget.category === cat.key ? ' group-head-active' : '')}>
                       <h3 className="group-name">{cat.group}</h3>
                     </div>
                     {items.map((l) => (

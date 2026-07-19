@@ -41,6 +41,7 @@ export default function App() {
   const [leaveDialog, setLeaveDialog] = useState(null)   // {kind, to}
   const [objectModal, setObjectModal] = useState(null)   // liabilities: {category, id|null}
   const [assetPanel, setAssetPanel] = useState(null)     // side panel: {category|null, id|null}
+  const [panelCat, setPanelCat] = useState(null)         // category the open panel is targeting (live)
   const [selectedCats, setSelectedCats] = useState(() => state?.selectedCats ?? { assets: [], liabilities: [] })
   const [removeDialog, setRemoveDialog] = useState(null) // {kind, item}
   const [shareDialog, setShareDialog] = useState(false)
@@ -102,6 +103,7 @@ export default function App() {
 
   /* Opening a different asset while the panel holds unsaved data asks first. */
   const openAssetPanel = (next) => {
+    setPanelCat(next?.category ?? null)
     if (assetPanel && guardRef.current) {
       setLeaveDialog({ kind: guardRef.current.kind, panelTo: next })
       return
@@ -239,6 +241,7 @@ export default function App() {
                 onRemoveLiability={(l) => setRemoveDialog({ kind: 'liability', item: l })}
                 onAnswerNone={answerNoLiabilities}
                 panelOpen={!!assetPanel}
+                panelTarget={assetPanel ? { category: panelCat, id: assetPanel.id } : null}
               />
             )}
             {FOOTER_NAV[r.name] && (
@@ -256,6 +259,7 @@ export default function App() {
             <AssetPanel
               key={assetPanel.id ?? assetPanel.category ?? 'new'}
               category={assetPanel.category}
+              onCategoryChange={setPanelCat}
               asset={assetPanel.id ? profile.assets.find((a) => a.id === assetPanel.id) : null}
               onCommitAsset={commitAsset}
               onCommitAccounts={commitExtracted}

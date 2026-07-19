@@ -247,6 +247,10 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .group-head:hover .group-plus, .group-head:focus-within .group-plus, .group-plus:focus-visible { opacity: 1; }
 .group-plus:hover { background: var(--bg-secondary-hover); color: var(--content-primary); }
+.group-plus:focus:not(:focus-visible) { outline: none; }
+/* Subject of the open panel is marked in the list: band for add, row for edit */
+.group-head-active { background: var(--bg-secondary-hover); }
+.arow-active, .arow-active:hover { background: var(--bg-ghost-hover); }
 
 /* Flat single-line rows on the page background, hairline-divided.
    Table-like columns so the eye scans straight down: primary | nickname | value. */

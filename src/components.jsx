@@ -171,11 +171,11 @@ const missingValueLabel = (a) =>
       : 'Value not added'
 
 /* One shared row for every saved asset type. Letter avatar when the row has an institution. */
-export function AssetRow({ asset, onEdit, onRemove }) {
+export function AssetRow({ asset, onEdit, onRemove, active }) {
   const cur = asset.currency ?? 'USD'
   const { primary, primaryType, primaryInst, secondary, secondaryInst } = assetRowText(asset)
   return (
-    <div className="arow" onClick={onEdit} role="button" tabIndex={0}
+    <div className={'arow' + (active ? ' arow-active' : '')} onClick={onEdit} role="button" tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit() }
       }}>
