@@ -121,12 +121,12 @@ const TrashIcon = () => (
 
 const stripAcct = (t) => (t || '').replace(/ account$/, '')
 
-/* Institution name with its letter avatar inline, per mock (16px dot before the name). */
+/* Institution name with its letter avatar inline, same 20px size as the combobox list. */
 function Inst({ name }) {
   const av = institutionAvatar(name)
   return (
     <span className="inst">
-      {av && <span className="avatar avatar-xs" style={{ background: av.color }} aria-hidden="true">{av.letter}</span>}
+      {av && <span className="avatar avatar-sm" style={{ background: av.color }} aria-hidden="true">{av.letter}</span>}
       {name}
     </span>
   )
