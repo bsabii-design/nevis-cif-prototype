@@ -161,7 +161,6 @@ const missingValueLabel = (a) =>
 export function AssetRow({ asset, onEdit, onRemove }) {
   const cur = asset.currency ?? 'USD'
   const { primary, secondary } = assetRowText(asset)
-  const removeLabel = `Remove ${assetTitle(asset)}`
   return (
     <div className="arow" onClick={onEdit} role="button" tabIndex={0}
       onKeyDown={(e) => {
@@ -171,21 +170,15 @@ export function AssetRow({ asset, onEdit, onRemove }) {
         <div className="arow-primary">{primary}</div>
         {secondary && <div className="arow-secondary">{secondary}</div>}
       </div>
-      <div className="arow-right">
-        <div className="arow-value">
-          {asset.value == null ? (
-            <span className="value-missing-text">{missingValueLabel(asset)}</span>
-          ) : (
-            <div className="value-wrap">
-              <span className="value-text">{fmtMoney(asset.value, cur)}</span>
-              {cur !== 'USD' && <span className="value-approx">≈ {fmtUSD(usdOf(asset.value, cur))}</span>}
-            </div>
-          )}
-        </div>
-        <button className="arow-remove" aria-label={removeLabel} title={removeLabel}
-          onClick={(e) => { e.stopPropagation(); onRemove() }}>
-          <TrashIcon />
-        </button>
+      <div className="arow-value">
+        {asset.value == null ? (
+          <span className="value-missing-text">{missingValueLabel(asset)}</span>
+        ) : (
+          <div className="value-wrap">
+            <span className="value-text">{fmtMoney(asset.value, cur)}</span>
+            {cur !== 'USD' && <span className="value-approx">≈ {fmtUSD(usdOf(asset.value, cur))}</span>}
+          </div>
+        )}
       </div>
     </div>
   )
