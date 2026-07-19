@@ -3,7 +3,7 @@ import {
   ASSET_CATEGORIES, assetCategory, assetSubtitle, assetTitle, computeSummary,
   fmtMoney, fmtUSD, hasForeignValues, institutionAvatar, liabilitySubtitle, liabilityTitle, usdOf,
 } from './model.js'
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { useCountUp } from './hooks.js'
 
 /* ---------------- Top bar + sidebar (layout per Figma mock) ---------------- */
@@ -85,20 +85,32 @@ export function Sidebar({ activeKey, onNav, clientName }) {
 export function FinancialSummary({ profile }) {
   const s = computeSummary(profile)
   const shown = useCountUp(s.nw)
+  // The stats read as the equation behind the figure when both sides are real money.
+  const equation = s.rows?.length === 2 && s.rows.every((r) => /^\$/.test(r.value))
   return (
     <section className="summary-card">
-      <span className="nw-label">Estimated net worth</span>
+      <span className="nw-label">
+        <span className="nw-label-term">
+          Estimated net worth
+          <span className="nw-tip" role="tooltip">
+            Based on the values you've entered. A rough picture is enough for your first conversation.
+          </span>
+        </span>
+      </span>
       <div className={'nw-figure' + (s.nw == null ? ' nw-figure-empty' : '')}>
         {s.nw == null ? '—' : fmtUSD(shown)}
       </div>
       {s.line && <span className="nw-line">{s.line}</span>}
       {s.rows && (
         <div className="summary-stats">
-          {s.rows.map((r) => (
-            <div className="summary-stat" key={r.label}>
-              <span className="summary-stat-label">{r.label}</span>
-              <span className={'summary-stat-value' + (/^[$€£C]|^\d|^—/.test(r.value) ? '' : ' breakdown-val-muted')}>{r.value}</span>
-            </div>
+          {s.rows.map((r, i) => (
+            <Fragment key={r.label}>
+              {i > 0 && equation && <span className="summary-op" aria-hidden="true">−</span>}
+              <div className="summary-stat">
+                <span className="summary-stat-label">{r.label}</span>
+                <span className={'summary-stat-value' + (/^[$€£C]|^\d|^—/.test(r.value) ? '' : ' breakdown-val-muted')}>{r.value}</span>
+              </div>
+            </Fragment>
           ))}
           {hasForeignValues(profile) && <span className="panel-note">Includes values converted to USD.</span>}
         </div>

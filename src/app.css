@@ -232,6 +232,7 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Hover swaps the subtotal for the add button in the same spot (Notion-style). */
 .group-subtotal {
   font: var(--text-body-md); color: var(--content-tertiary);
+  font-variant-numeric: tabular-nums;
   pointer-events: none; /* sits above the absolute plus in paint order — must not eat its clicks */
   transition: opacity var(--duration-fast) var(--ease);
 }
@@ -277,7 +278,7 @@ input, select, textarea { font: inherit; color: inherit; }
   font: var(--text-body-md); color: var(--content-secondary);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.arow-value { grid-column: 3; justify-self: end; text-align: right; white-space: nowrap; }
+.arow-value { grid-column: 3; justify-self: end; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 .card {
   position: relative;
@@ -416,10 +417,31 @@ input, select, textarea { font: inherit; color: inherit; }
   background: var(--bg-surface);
   border-radius: var(--radius-12);
 }
-.summary-stats { display: flex; gap: var(--space-20); margin-top: 22px; }
+.summary-stats { display: flex; align-items: center; gap: var(--space-16); margin-top: 22px; }
 .summary-stat { display: flex; flex-direction: column; }
 .summary-stat-label { font: var(--text-body-sm); color: var(--content-tertiary); }
-.summary-stat-value { font: var(--text-body-sm); color: var(--content-primary); }
+.summary-stat-value { font: var(--text-body-sm); color: var(--content-primary); font-variant-numeric: tabular-nums; }
+/* The minus between the two stats: the figure's formula made visible. */
+.summary-op { font: var(--text-body-md); color: var(--content-tertiary); align-self: flex-end; }
+
+/* "Estimated" explains itself on hover — quiet dotted underline + tooltip. */
+.nw-label-term {
+  position: relative;
+  border-bottom: 1px dotted var(--content-tertiary);
+  cursor: default;
+}
+.nw-tip {
+  position: absolute; top: calc(100% + var(--space-8)); left: 0;
+  z-index: 8;
+  width: 260px;
+  padding: var(--space-8) var(--space-12);
+  font: var(--text-body-sm); color: var(--content-inverse);
+  background: var(--bg-primary);
+  border-radius: var(--radius-8);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease);
+}
+.nw-label-term:hover .nw-tip { opacity: 1; }
 
 /* Category bubbles (multi-select) */
 .cat-select { display: flex; flex-direction: column; gap: var(--space-8); margin-bottom: var(--space-8); }
