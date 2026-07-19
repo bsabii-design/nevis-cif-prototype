@@ -1,7 +1,7 @@
 /* Screens: Welcome, Personal, Work & income, Goals, Net worth. */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
-  ASSET_CATEGORIES, EMPLOYMENT_STATUSES, LIABILITY_CATEGORIES,
+  ASSET_CATEGORIES, EMPLOYMENT_STATUSES, LIABILITY_CATEGORIES, computeSummary,
   fmtMoney, fmtUSD, missingPersonalFields, requiredComplete, usdOf,
 } from './model.js'
 import { parseGoals } from './parse.js'
@@ -423,6 +423,23 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   onAnswerNone, panelOpen, panelTarget }) {
   const { assets, liabilities, liabilitiesExplicitlyNone: none } = profile
 
+  /* Collapsing header: when the summary card scrolls out of view, a compact
+     net-worth figure fades into the sticky toolbar so the counter stays visible. */
+  const cardRef = useRef(null)
+  const [compact, setCompact] = useState(false)
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([e]) => setCompact(!e.isIntersecting),
+      { rootMargin: '-57px 0px 0px 0px' }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+  const nw = computeSummary(profile).nw
+  const compactNW = nw == null ? '—' : fmtUSD(nw)
+
   const liabsWithRecords = new Set(liabilities.map((l) => l.category))
   const effLiabs = new Set([...selectedCats.liabilities, ...liabsWithRecords])
 
@@ -433,19 +450,19 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   return (
     <div className="screen">
       <div className="narrow-col">
-      <div className="nw-header">
-        <div className="nw-header-top">
-          <div className="title-block">
-            <h1 className="page-title">Net worth</h1>
-            <p className="page-copy">
-              Add anything you own or owe to build a clearer financial picture.<br />
-              You can update it anytime.
-            </p>
-          </div>
-
-          <FinancialSummary profile={profile} />
+      <div className="nw-header-top" ref={cardRef}>
+        <div className="title-block">
+          <h1 className="page-title">Net worth</h1>
+          <p className="page-copy">
+            Add anything you own or owe to build a clearer financial picture.<br />
+            You can update it anytime.
+          </p>
         </div>
 
+        <FinancialSummary profile={profile} />
+      </div>
+
+      <div className="nw-header">
         <div className="nw-divider" />
 
         <div className="nw-toolbar">
@@ -461,9 +478,14 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
               Liabilities
             </button>
           </div>
-          {tab === 'assets' && (
-            <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
-          )}
+          <div className="nw-toolbar-right">
+            <span className={'nw-compact' + (compact ? ' nw-compact-on' : '')} aria-hidden={!compact}>
+              {compactNW}
+            </span>
+            {tab === 'assets' && (
+              <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
+            )}
+          </div>
         </div>
       </div>
 

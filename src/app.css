@@ -368,22 +368,27 @@ input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------------- Net worth ---------------- */
 
-/* Sticky header: title + summary + tabs stay pinned; the asset list scrolls under.
-   The 20px above the title lives inside the sticky region (padding), and a matching
-   negative margin cancels the page's top padding — so the header is pinned from the
-   very first pixel and there is no little pre-pin scroll. */
+/* Collapsing header: title + summary card scroll away; only the divider +
+   toolbar stick. When the card leaves the viewport, a compact net-worth
+   figure fades into the toolbar so the counter never disappears. */
+.nw-header-top { display: flex; flex-direction: column; gap: var(--space-20); }
 .nw-header {
   position: sticky; top: 57px; z-index: 4;
-  display: flex; flex-direction: column; gap: var(--space-20);
+  display: flex; flex-direction: column; gap: var(--space-16);
   background: var(--bg-page);
-  margin-top: calc(-1 * var(--space-20));
-  padding-top: var(--space-20);
+  padding: var(--space-2) 0 var(--space-4);
 }
-.nw-header-top { display: flex; flex-direction: column; gap: var(--space-20); }
 .nw-divider { height: var(--border-w); background: var(--border-subtle); }
 .nw-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); }
-/* A soft fade below the header so scrolling rows dissolve into it instead of
-   showing a hard band edge. Tall and gentle enough that a whole group band fades. */
+.nw-toolbar-right { display: flex; align-items: center; gap: var(--space-16); }
+.nw-compact {
+  font: 500 16px/20px var(--font-serif);
+  font-variant-numeric: tabular-nums;
+  opacity: 0; transform: translateY(2px);
+  transition: opacity var(--duration-fast) var(--ease), transform var(--duration-fast) var(--ease);
+}
+.nw-compact-on { opacity: 1; transform: none; }
+/* A soft fade below the toolbar so scrolling rows dissolve into it. */
 .nw-header::after {
   content: '';
   position: absolute; top: 100%; left: 0; right: 0;
