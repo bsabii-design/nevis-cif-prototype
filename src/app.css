@@ -228,10 +228,10 @@ input, select, textarea { font: inherit; color: inherit; }
   background: var(--bg-secondary);
   border-radius: var(--radius-8);
 }
-.group-name { font: var(--text-label-sm); flex: 1; min-width: 0; }
+.group-name { font: var(--text-label-md); flex: 1; min-width: 0; }
 /* Hover swaps the subtotal for the add button in the same spot (Notion-style). */
 .group-subtotal {
-  font: var(--text-body-sm); color: var(--content-tertiary);
+  font: var(--text-body-md); color: var(--content-tertiary);
   pointer-events: none; /* sits above the absolute plus in paint order — must not eat its clicks */
   transition: opacity var(--duration-fast) var(--ease);
 }
