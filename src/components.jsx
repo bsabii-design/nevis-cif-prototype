@@ -52,7 +52,7 @@ export function TopBar({ saved, showNav = true, shared, onShare }) {
             Saved
           </span>
           {showNav && (shared ? <CollabAvatar /> : (
-            <button className="btn btn-secondary" onClick={onShare}>Share</button>
+            <button className="btn btn-primary" onClick={onShare}>Share with Sarah</button>
           ))}
         </div>
       </div>
@@ -69,7 +69,9 @@ export function Sidebar({ activeKey, onNav, clientName, sections }) {
             className={'side-link' + (s.key === activeKey ? ' side-link-active' : '')}
             onClick={() => onNav(s.key)}>
             {s.label}
-            {sections?.[s.key] && <span className="side-dot" aria-label="Answered" />}
+            {sections && !sections[s.key] && (
+              <span className="side-dot" title="Nothing here yet" aria-label="Nothing here yet" />
+            )}
           </button>
         ))}
       </div>

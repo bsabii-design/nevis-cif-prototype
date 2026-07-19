@@ -175,12 +175,12 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .self-start { align-self: flex-start; }
 
-/* Demo harness controls: fixed in the centre of the bottom bar, out of the page flow */
+/* Demo harness controls: centered in the top bar, out of the page flow */
 .footer {
-  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-  z-index: 6;
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+  z-index: 11;
   display: flex; justify-content: center; align-items: center; gap: var(--space-8);
-  height: 65px;
+  height: 57px;
 }
 .footer-link { font: var(--text-body-sm); color: var(--content-tertiary); transition: color var(--duration-fast) var(--ease); }
 .footer-link:hover { color: var(--content-secondary); }
