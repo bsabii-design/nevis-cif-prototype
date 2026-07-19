@@ -391,7 +391,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 
 /* Pill tabs (Figma 34:2579): active = white on hairline border, inactive = transparent */
-.nw-tabs { display: flex; gap: var(--space-8); }
+.nw-tabs { display: flex; gap: var(--space-4); }
 .nw-pill {
   height: var(--control-h);
   padding: 0 var(--space-12);
