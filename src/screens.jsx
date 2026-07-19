@@ -7,6 +7,7 @@ import {
 import { parseGoals } from './parse.js'
 import { DateInput, Field, MoneyInput, PhoneInput, RadioRow, TextInput } from './ui.jsx'
 import { AssetRow, FinancialSummary, LiabilityRow } from './components.jsx'
+import { useCountUp } from './hooks.js'
 
 /* ---------------- Welcome (spec §7) ---------------- */
 
@@ -449,7 +450,8 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
     return () => obs.disconnect()
   }, [])
   const nw = computeSummary(profile).nw
-  const compactNW = nw == null ? '—' : fmtUSD(nw)
+  const shownNW = useCountUp(nw)
+  const compactNW = nw == null ? '—' : fmtUSD(shownNW)
 
   /* Only categories that contain saved records appear on the page. */
   const assetGroups = ASSET_CATEGORIES.filter((c) => assets.some((a) => a.category === c.key))
@@ -470,7 +472,12 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
         <FinancialSummary profile={profile} />
       </div>
 
-      <div className="nw-header">
+      <div className={'nw-header' + (compact ? ' nw-header-compact' : '')}>
+        <div className="nw-compact-bar" aria-hidden={!compact}>
+          <span className="nw-compact-label">Estimated net worth</span>
+          <span className="nw-compact-fig">{compactNW}</span>
+        </div>
+
         <div className="nw-divider" />
 
         <div className="nw-toolbar">
@@ -487,9 +494,6 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
             </button>
           </div>
           <div className="nw-toolbar-right">
-            <span className={'nw-compact' + (compact ? ' nw-compact-on' : '')} aria-hidden={!compact}>
-              {compactNW}
-            </span>
             {tab === 'assets' ? (
               <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
             ) : (

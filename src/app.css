@@ -423,13 +423,17 @@ input, select, textarea { font: inherit; color: inherit; }
 .nw-divider { height: var(--border-w); background: var(--border-subtle); }
 .nw-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); }
 .nw-toolbar-right { display: flex; align-items: center; gap: var(--space-16); }
-.nw-compact {
-  font: 500 16px/20px var(--font-serif);
-  font-variant-numeric: tabular-nums;
-  opacity: 0; transform: translateY(2px);
-  transition: opacity var(--duration-fast) var(--ease), transform var(--duration-fast) var(--ease);
+/* Collapsed summary: the card's essence (label + serif figure) as a slim bar
+   that slides in where the card was, keeping the live counter at the top. */
+.nw-compact-bar {
+  display: flex; align-items: baseline; gap: var(--space-12);
+  max-height: 0; opacity: 0; overflow: hidden;
+  transition: max-height var(--duration-normal) var(--ease),
+    opacity var(--duration-fast) var(--ease);
 }
-.nw-compact-on { opacity: 1; transform: none; }
+.nw-header-compact .nw-compact-bar { max-height: 44px; opacity: 1; }
+.nw-compact-label { font: var(--text-body-sm); color: var(--content-secondary); }
+.nw-compact-fig { font: 500 24px/32px var(--font-serif); font-variant-numeric: tabular-nums; }
 /* A soft fade below the toolbar so scrolling rows dissolve into it. */
 .nw-header::after {
   content: '';
@@ -457,14 +461,17 @@ input, select, textarea { font: inherit; color: inherit; }
   background: var(--bg-surface);
 }
 
-/* Financial summary card at the top of the content column */
+/* Financial summary card: serif figure on the left, the equation on the right,
+   balanced across the width instead of everything crammed left. */
 .summary-card {
-  display: flex; flex-direction: column; gap: var(--space-2);
-  padding: var(--space-16);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-24);
+  padding: var(--space-24);
   background: var(--bg-surface);
   border-radius: var(--radius-12);
 }
-.summary-stats { display: flex; align-items: center; gap: var(--space-16); margin-top: 22px; }
+.summary-main { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.summary-side { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-8); }
+.summary-stats { display: flex; align-items: center; gap: var(--space-16); }
 .summary-stat { display: flex; flex-direction: column; }
 .summary-stat-label { font: var(--text-body-sm); color: var(--content-tertiary); }
 .summary-stat-value { font: var(--text-body-sm); color: var(--content-primary); font-variant-numeric: tabular-nums; }
