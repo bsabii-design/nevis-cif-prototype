@@ -50,6 +50,7 @@ export default function App() {
   const [toast, setToast] = useState(null)
   const saved = useSavedFlash(tick)
   const guardRef = useRef(null)
+  const panelKeyRef = useRef(0)   // bumps on every (re)open so the panel remounts fresh
   const toastTimer = useRef(null)
   const touch = () => setTick((t) => t + 1)
 
@@ -104,12 +105,13 @@ export default function App() {
 
   /* Opening a different asset while the panel holds unsaved data asks first. */
   const openAssetPanel = (next) => {
-    setPanelCat(next?.category ?? null)
+    // panelCat follows the panel's own category (via onCategoryChange), so a
+    // cancelled switch keeps the correct highlight instead of a stale one.
     if (assetPanel && guardRef.current) {
       setLeaveDialog({ kind: guardRef.current.kind, panelTo: next })
       return
     }
-    setAssetPanel(next)
+    setAssetPanel({ ...next, k: ++panelKeyRef.current })
   }
 
   /* ---- financial objects: explicit commits ---- */
@@ -259,7 +261,7 @@ export default function App() {
           </main>
           {assetPanel && r.name === 'networth' && (
             <AssetPanel
-              key={assetPanel.id ?? assetPanel.category ?? 'new'}
+              key={assetPanel.k}
               category={assetPanel.category}
               onCategoryChange={setPanelCat}
               asset={assetPanel.id ? profile.assets.find((a) => a.id === assetPanel.id) : null}
@@ -317,7 +319,7 @@ export default function App() {
             if (leaveDialog.panelTo !== undefined) {
               guardRef.current = null
               setLeaveDialog(null)
-              setAssetPanel(leaveDialog.panelTo)
+              setAssetPanel({ ...leaveDialog.panelTo, k: ++panelKeyRef.current })
             } else {
               forceNavigate(leaveDialog.to)
             }
