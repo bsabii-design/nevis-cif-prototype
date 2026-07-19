@@ -300,6 +300,19 @@ function AssetFields({ category, form, set, errors = {} }) {
 
 const emptyAssetForm = () => assetToForm(null)
 
+/* One-line examples that help a non-expert see where their thing belongs. */
+const CATEGORY_EXAMPLES = {
+  cash: 'Checking, savings, CDs',
+  investment: 'Brokerage, managed, trust accounts',
+  retirement: '401(k), IRA, pension',
+  realestate: 'Home, rental property, land',
+  business: 'Ownership stakes, partnerships',
+  insurance: 'Whole life, annuities',
+  crypto: 'Coins, wallets, exchange accounts',
+  collectibles: 'Art, watches, wine, vehicles',
+  other: 'Anything else of value',
+}
+
 export function AssetPanel({ category: initialCategory, asset, onCommitAsset, onCommitAccounts, onClose, onRemove, setGuard, onCategoryChange }) {
   const direct = !!(asset || initialCategory)
   const [stage, setStage] = useState(direct ? 'form' : 'choice') // choice | form | upload | reading | review
@@ -420,15 +433,17 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
       <div className="panel-body">
         {stage === 'choice' && (
           <>
-            <button className="upload-row" onClick={() => setStage('upload')}>
-              <span className="upload-row-title">Upload a statement</span>
-              <span className="upload-row-copy">We'll extract accounts and values from a recent statement.</span>
+            <button className="upload-hero" onClick={() => setStage('upload')}>
+              <span className="upload-hero-title">Drop in any statement</span>
+              <span className="upload-hero-copy">Nevis reads it and adds your accounts and balances for you.</span>
+              <span className="upload-hero-hint">PDF or a photo · Statements stay private to you and Sarah</span>
             </button>
             <div className="or-row" role="separator">Or add manually</div>
             <div className="panel-types">
               {ASSET_CATEGORIES.map((c) => (
-                <button key={c.key} className="panel-type" onClick={() => pickCategory(c.key)}>
-                  {c.single}
+                <button key={c.key} className="panel-tile" onClick={() => pickCategory(c.key)}>
+                  <span className="panel-tile-name">{c.single}</span>
+                  <span className="panel-tile-eg">{CATEGORY_EXAMPLES[c.key]}</span>
                 </button>
               ))}
             </div>
