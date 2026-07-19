@@ -622,19 +622,25 @@ input, select, textarea { font: inherit; color: inherit; }
 .lab-row-label { font: var(--text-label-md); }
 .lab-row-desc { font: var(--text-body-sm); color: var(--content-tertiary); }
 
-/* C: filled input — grey fill at rest, soft lift on focus (no hard border) */
-.input-filled {
-  background: var(--bg-secondary);
+/* Filled input — grey fill at rest, lifts to a clean white field on focus.
+   Applied per-field via .input-filled (lab) or scoped via .form-filled (forms).
+   background-color (not the shorthand) keeps the native select's arrow image. */
+.input-filled,
+.form-filled .input {
+  background-color: var(--bg-secondary);
   border-color: transparent;
   transition: background-color var(--duration-fast) var(--ease),
-    border-color var(--duration-fast) var(--ease),
-    box-shadow var(--duration-fast) var(--ease);
+    border-color var(--duration-fast) var(--ease);
 }
-.input-filled:hover { background: var(--bg-secondary-hover); border-color: transparent; }
-.input-filled:focus {
-  background: var(--bg-surface);
+.input-filled:hover,
+.form-filled .input:hover { background-color: var(--bg-secondary-hover); border-color: transparent; }
+.input-filled:focus,
+.form-filled .input:focus {
+  background-color: var(--bg-surface);
   border-color: var(--border-selected);
 }
+/* Keep the missing-field red border visible over the fill. */
+.form-filled .field-missing .input { border-color: var(--color-red-bright); }
 
 /* Institution autocomplete */
 .combo { position: relative; }
@@ -720,6 +726,11 @@ input, select, textarea { font: inherit; color: inherit; }
 
 .form-section { display: flex; flex-direction: column; gap: var(--space-12); margin-top: var(--space-16); }
 .form-section-title { font: var(--text-label-lg); margin-bottom: var(--space-4); }
+/* Short "why" under a section title; sits tight to the title, normal gap to the first field. */
+.form-section-copy {
+  font: var(--text-body-sm); color: var(--content-secondary);
+  margin-top: calc(-1 * var(--space-12));
+}
 .form-section-head { display: flex; align-items: baseline; justify-content: space-between; }
 .form-subsection {
   display: flex; flex-direction: column; gap: var(--space-12);

@@ -212,18 +212,20 @@ export const isValidDate = (s) => {
 
 /* 5-digit ZIP or ZIP+4, stored as text. */
 export const isValidUSZip = (z) => /^\d{5}(-\d{4})?$/.test((z || '').trim())
+export const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((e || '').trim())
 
+/* Required = only what identifies the client and prepares the advisor:
+   name, email, DOB, residency (country + state), citizenship.
+   Street/city/ZIP are KYC-level detail — optional, gathered later. */
 export const missingPersonalFields = (p) => {
   const r = p.personal.primaryResidence
   return {
     firstName: !p.personal.legalFirstName?.trim(),
     lastName: !p.personal.legalLastName?.trim(),
+    email: !isValidEmail(p.personal.email),
     dateOfBirth: !isValidDate(p.personal.dateOfBirth),
     country: !r.country?.trim(),
-    street: !r.street?.trim(),
-    city: !r.city?.trim(),
     state: !r.state?.trim(),
-    zip: !isValidUSZip(r.zip),
     citizenship: !p.personal.citizenships.some((c) => c.trim()),
   }
 }

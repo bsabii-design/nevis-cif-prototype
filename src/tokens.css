@@ -28,6 +28,11 @@
   --color-blue-bright: #1080b4;  /* single restrained accent */
   --color-green-bright:#4caf50;
 
+  /* Validation / danger — muted brick red that sits with the beige palette */
+  --color-red-soft:   rgba(163, 52, 43, 0.08);
+  --color-red-bright: #b2392f;   /* borders, icons */
+  --color-red-strong: #932e25;   /* error text (AA on beige) */
+
   /* ---- Color · semantic (use these in components) ---- */
   --content-primary:   var(--color-black);
   --content-secondary: var(--color-black-a64);

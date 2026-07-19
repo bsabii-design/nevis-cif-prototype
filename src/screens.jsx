@@ -34,29 +34,31 @@ export function Welcome({ onStart }) {
 
 /* ---------------- Personal information (spec §9) ---------------- */
 
-function ResidenceFields({ residence, onChange, required, errors = {}, onBlurField }) {
+/* `primary` marks the residence whose country + state drive tax residency
+   (the only required parts); street/city/ZIP stay optional. */
+function ResidenceFields({ residence, onChange, primary, errors = {}, onBlurField }) {
   const set = (k, v) => onChange({ ...residence, [k]: v })
   const blur = (k) => () => onBlurField?.(k)
   return (
     <div className="residence-grid">
-      <Field label="Country" required={required} error={errors.country}>
+      <Field label="Country" required={primary} error={errors.country}>
         <TextInput value={residence.country} onChange={(v) => set('country', v)} onBlur={blur('country')} />
       </Field>
-      <Field label="Street address" required={required} error={errors.street}>
-        <TextInput value={residence.street} onChange={(v) => set('street', v)} onBlur={blur('street')} />
+      <Field label="Street address">
+        <TextInput value={residence.street} onChange={(v) => set('street', v)} />
       </Field>
-      <Field label="Apartment, suite, unit, etc." helper="Optional">
+      <Field label="Apartment, suite, unit, etc.">
         <TextInput value={residence.apartment} onChange={(v) => set('apartment', v)} />
       </Field>
       <div className="addr-row">
-        <Field label="City" required={required} error={errors.city}>
-          <TextInput value={residence.city} onChange={(v) => set('city', v)} onBlur={blur('city')} />
+        <Field label="City">
+          <TextInput value={residence.city} onChange={(v) => set('city', v)} />
         </Field>
-        <Field label="State" required={required} error={errors.state}>
+        <Field label="State" required={primary} error={errors.state}>
           <TextInput value={residence.state} onChange={(v) => set('state', v)} onBlur={blur('state')} />
         </Field>
-        <Field label="ZIP code" required={required} error={errors.zip}>
-          <TextInput value={residence.zip} onChange={(v) => set('zip', v)} inputMode="numeric" onBlur={blur('zip')} />
+        <Field label="ZIP code">
+          <TextInput value={residence.zip} onChange={(v) => set('zip', v)} inputMode="numeric" />
         </Field>
       </div>
     </div>
@@ -78,9 +80,9 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
     missing.dateOfBirth && (flag || touched.dateOfBirth)
       ? (p.dateOfBirth?.trim() ? 'Enter a valid date in MM/DD/YYYY format.' : 'Required')
       : null
-  const zipError = () =>
-    missing.zip && (flag || touched.zip)
-      ? (p.primaryResidence.zip?.trim() ? 'Enter a valid ZIP code.' : 'Required')
+  const emailError = () =>
+    missing.email && (flag || touched.email)
+      ? (p.email?.trim() ? 'Enter a valid email address.' : 'Required')
       : null
 
   useEffect(() => {
@@ -99,7 +101,7 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
         <p className="page-copy">Please review your details and add anything missing.</p>
       </div>
 
-      <div className="focus-form">
+      <div className="focus-form form-filled">
         {/* ---- Legal identity ---- */}
         <div className="form-section">
           <h2 className="form-section-title">Legal identity</h2>
@@ -112,7 +114,7 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
             </Field>
           </div>
           <div className="field-half">
-            <Field label="Middle name" helper="Optional">
+            <Field label="Middle name">
               <TextInput value={p.middleName} onChange={(v) => set('middleName', v)} />
             </Field>
           </div>
@@ -122,21 +124,33 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
           </Field>
         </div>
 
+        {/* ---- Contact ---- */}
+        <div className="form-section">
+          <h2 className="form-section-title">Contact</h2>
+          <p className="form-section-copy">So your advisor can reach you and send your summary.</p>
+          <Field label="Email" required error={emailError()}>
+            <TextInput value={p.email} type="email" onChange={(v) => set('email', v)} onBlur={() => markTouched('email')} />
+          </Field>
+          <div className="field-half">
+            <Field label="Phone">
+              <PhoneInput value={p.phone} onChange={(v) => set('phone', v)} />
+            </Field>
+          </div>
+        </div>
+
         {/* ---- Residential address ---- */}
         <div className="form-section">
           <h2 className="form-section-title">Residential address</h2>
-          <ResidenceFields required residence={p.primaryResidence}
-            errors={{
-              country: err('country'), street: err('street'), city: err('city'),
-              state: err('state', 'Select a state.'), zip: zipError(),
-            }}
+          <p className="form-section-copy">Your primary home — this sets your tax residency.</p>
+          <ResidenceFields primary residence={p.primaryResidence}
+            errors={{ country: err('country'), state: err('state', 'Select a state.') }}
             onBlurField={(k) => markTouched(k)}
             onChange={(r) => set('primaryResidence', r)} />
 
           {p.additionalResidences.map((r, i) => (
             <div className="form-subsection" key={i}>
               <div className="form-section-head">
-                <h3 className="form-subsection-title">Additional residential address</h3>
+                <h3 className="form-subsection-title">Additional residence</h3>
                 <button className="link-danger"
                   onClick={() => set('additionalResidences', p.additionalResidences.filter((_, j) => j !== i))}>
                   Remove
@@ -148,13 +162,14 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
           ))}
           <button className="link-add"
             onClick={() => set('additionalResidences', [...p.additionalResidences, { country: '', street: '', apartment: '', city: '', state: '', zip: '' }])}>
-            + Add another residential address
+            + Add address
           </button>
         </div>
 
         {/* ---- Citizenship ---- */}
         <div className="form-section">
           <h2 className="form-section-title">Citizenship</h2>
+          <p className="form-section-copy">For tax and residency context.</p>
           <Field label="Country of citizenship" required error={err('citizenship')}>
             <TextInput value={p.citizenships[0] || ''} placeholder="United States"
               onChange={(v) => set('citizenships', p.citizenships.map((x, j) => j === 0 ? v : x))}
@@ -173,19 +188,8 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
             </div>
           ))}
           <button className="link-add" onClick={() => set('citizenships', [...p.citizenships, ''])}>
-            + Add another citizenship
+            + Add citizenship
           </button>
-        </div>
-
-        {/* ---- Contact ---- */}
-        <div className="form-section">
-          <h2 className="form-section-title">Contact</h2>
-          <Field label="Email">
-            <TextInput value={p.email} onChange={(v) => set('email', v)} />
-          </Field>
-          <Field label="Phone" helper="Optional">
-            <PhoneInput value={p.phone} onChange={(v) => set('phone', v)} />
-          </Field>
         </div>
       </div>
 
