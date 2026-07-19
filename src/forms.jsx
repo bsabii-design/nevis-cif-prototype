@@ -4,7 +4,7 @@ import {
   ASSET_CATEGORIES, BANKS, CASH_BANK_TYPES, COLLECTIBLE_TYPES, CRYPTO_PLATFORMS,
   INSURANCE_PROVIDERS, INSURANCE_TYPES, INVESTMENT_FIRMS, INVESTMENT_TYPES, PROPERTY_TYPES,
   RETIREMENT_GROUPS, RETIREMENT_PLANS, RETIREMENT_PROVIDERS, RETIREMENT_TYPES,
-  assetCategory, liabilityCategory, uid,
+  LIABILITY_CATEGORIES, assetCategory, liabilityCategory, uid,
 } from './model.js'
 import { extractedAccounts, MOCK_STATEMENT_NAME } from './parse.js'
 import { Dialog, Field, GroupedSelect, InstitutionCombobox, MoneyInput, Select, TextInput } from './ui.jsx'
@@ -22,22 +22,6 @@ function MoneyField({ label, amount, currency, onAmount, onCurrency }) {
 }
 
 /* ---------------- Modal shell (spec §8): overlays Net worth, blocks background ---------------- */
-
-function ModalShell({ title, onRequestClose, children }) {
-  useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && onRequestClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onRequestClose])
-  return (
-    <div className="dialog-overlay" onMouseDown={(e) => e.target === e.currentTarget && onRequestClose()}>
-      <div className="modal" role="dialog" aria-modal="true" aria-label={title}>
-        <h2 className="dialog-title">{title}</h2>
-        {children}
-      </div>
-    </div>
-  )
-}
 
 /* ---------------- Asset fields (shared by the side panel) ---------------- */
 
@@ -547,7 +531,16 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
 
 const SUBTYPE_OPTIONS = [...INVESTMENT_TYPES.filter((t) => t !== 'Other'), ...RETIREMENT_TYPES]
 
-/* ---------------- Liability modal ---------------- */
+/* ---------------- Liability side panel (same shell as assets) ---------------- */
+
+const LIABILITY_EXAMPLES = {
+  mortgage: 'Home loan',
+  'personal-loan': 'Car, student, personal',
+  'business-loan': 'Business borrowing',
+  'credit-line': 'HELOC, other credit lines',
+  'credit-card': 'Outstanding balances',
+  other: 'Anything else you owe',
+}
 
 const liabilityToForm = (l) => ({
   name: l?.name || '',
@@ -557,24 +550,40 @@ const liabilityToForm = (l) => ({
   currency: l?.currency || 'USD',
 })
 
-export function LiabilityModal({ category, liability, onCommit, onClose }) {
-  const catKey = liability?.category || category
-  const cat = liabilityCategory(catKey)
+export function LiabilityPanel({ category: initialCategory, liability, onCommit, onClose, onRemove, setGuard, onCategoryChange }) {
+  const direct = !!(liability || initialCategory)
+  const [stage, setStage] = useState(direct ? 'form' : 'choice') // choice | form
+  const [category, setCategory] = useState(liability?.category || initialCategory || null)
+  useEffect(() => { onCategoryChange?.(category) }, [category, onCategoryChange])
   const [form, setForm] = useState(() => liabilityToForm(liability))
   const initialRef = useRef(JSON.stringify(liabilityToForm(liability)))
-  const [confirmLeave, setConfirmLeave] = useState(false)
+  const [confirmLeave, setConfirmLeave] = useState(null) // {run}
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
-  const dirty = liability
+  const formDirty = liability
     ? JSON.stringify(form) !== initialRef.current
     : !!(form.name || form.lender || form.outstandingBalance != null || form.interestRate !== '')
+  const dirty = stage === 'form' && formDirty
 
-  const requestClose = () => (dirty ? setConfirmLeave(true) : onClose())
+  useEffect(() => {
+    setGuard(dirty ? { kind: liability ? 'liability-edit' : 'liability' } : null)
+    return () => setGuard(null)
+  }, [dirty, liability, setGuard])
+
+  const guarded = (run) => (dirty ? setConfirmLeave({ run }) : run())
+  const requestClose = () => guarded(onClose)
+  const backToChoice = () => guarded(() => {
+    setStage('choice'); setCategory(null); setForm(liabilityToForm(null))
+  })
+
+  const pickCategory = (key) => { setCategory(key); setStage('form') }
+  const cat = category ? liabilityCategory(category) : null
+  const title = stage === 'choice' ? 'Add liabilities' : liability ? `Edit ${cat.label.toLowerCase()}` : cat.formTitle
 
   const commit = () => {
     onCommit({
       id: liability?.id ?? uid(),
-      category: catKey,
+      category,
       name: form.name.trim(),
       lender: form.lender.trim(),
       currency: form.currency,
@@ -584,33 +593,63 @@ export function LiabilityModal({ category, liability, onCommit, onClose }) {
   }
 
   return (
-    <ModalShell title={liability ? `Edit ${cat.label.toLowerCase()}` : cat.formTitle} onRequestClose={requestClose}>
-      <div className="focus-form">
-        <Field label="Name">
-          <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder={cat.label} />
-        </Field>
-        <Field label="Lender">
-          <InstitutionCombobox value={form.lender} onChange={(v) => set('lender', v)}
-            placeholder="Chase, Wells Fargo…" />
-        </Field>
-        <MoneyField label="Outstanding balance" amount={form.outstandingBalance} currency={form.currency}
-          onAmount={(v) => set('outstandingBalance', v)} onCurrency={(c) => set('currency', c)} />
-        <Field label="Interest rate">
-          <div className="currency rate-field">
-            <input className="input currency-input" placeholder="4.25" inputMode="decimal"
-              value={form.interestRate}
-              onChange={(e) => set('interestRate', e.target.value.replace(/[^0-9.]/g, '').slice(0, 5))} />
-            <span className="currency-suffix">%</span>
-          </div>
-        </Field>
+    <aside className="shell-panel" aria-label={title}>
+      <div className="panel-head">
+        <div className="panel-head-titles">
+          {!direct && stage === 'form' && (
+            <button className="panel-back" onClick={backToChoice}>Back to Add liabilities</button>
+          )}
+          <h2 className="panel-title">{title}</h2>
+        </div>
+        <button className="menu-trigger" aria-label="Close" onClick={requestClose}>✕</button>
       </div>
 
-      <div className="dialog-actions">
-        <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
-        <button className="btn btn-primary" onClick={commit}>
-          {liability ? 'Save changes' : 'Add liability'}
-        </button>
+      <div className="panel-body">
+        {stage === 'choice' && (
+          <div className="panel-types">
+            {LIABILITY_CATEGORIES.map((c) => (
+              <button key={c.key} className="panel-tile" onClick={() => pickCategory(c.key)}>
+                <span className="panel-tile-name">{c.label}</span>
+                <span className="panel-tile-eg">{LIABILITY_EXAMPLES[c.key]}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {stage === 'form' && (
+          <div className="focus-form">
+            <Field label="Name">
+              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder={cat.label} />
+            </Field>
+            <Field label="Lender">
+              <InstitutionCombobox value={form.lender} onChange={(v) => set('lender', v)}
+                placeholder="Chase, Wells Fargo…" />
+            </Field>
+            <MoneyField label="Outstanding balance" amount={form.outstandingBalance} currency={form.currency}
+              onAmount={(v) => set('outstandingBalance', v)} onCurrency={(c) => set('currency', c)} />
+            <Field label="Interest rate">
+              <div className="currency rate-field">
+                <input className="input currency-input" placeholder="4.25" inputMode="decimal"
+                  value={form.interestRate}
+                  onChange={(e) => set('interestRate', e.target.value.replace(/[^0-9.]/g, '').slice(0, 5))} />
+                <span className="currency-suffix">%</span>
+              </div>
+            </Field>
+          </div>
+        )}
       </div>
+
+      {stage === 'form' && (
+        <div className="panel-foot">
+          {liability && onRemove && (
+            <button className="btn btn-ghost btn-remove panel-foot-remove" onClick={onRemove}>Remove</button>
+          )}
+          <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={commit}>
+            {liability ? 'Save changes' : 'Add liability'}
+          </button>
+        </div>
+      )}
 
       {confirmLeave && (
         <Dialog
@@ -619,10 +658,10 @@ export function LiabilityModal({ category, liability, onCommit, onClose }) {
           cancelLabel="Keep editing"
           confirmLabel="Leave"
           danger
-          onCancel={() => setConfirmLeave(false)}
-          onConfirm={onClose}
+          onCancel={() => setConfirmLeave(null)}
+          onConfirm={() => { const run = confirmLeave.run; setConfirmLeave(null); run() }}
         />
       )}
-    </ModalShell>
+    </aside>
   )
 }

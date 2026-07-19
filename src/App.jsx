@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { assetTitle, blankProfile, loadState, requiredComplete, saveState, sectionState, seedProfile } from './model.js'
 import { Dialog } from './ui.jsx'
 import { Sidebar, TopBar } from './components.jsx'
-import { AssetPanel, LiabilityModal } from './forms.jsx'
+import { AssetPanel, LiabilityPanel } from './forms.jsx'
 import { Goals, NetWorth, Personal, Welcome, Work } from './screens.jsx'
 import { InputLab } from './inputlab.jsx'
 import { useSavedFlash } from './hooks.js'
@@ -10,6 +10,8 @@ import { useSavedFlash } from './hooks.js'
 const LEAVE_COPY = {
   asset: { title: 'Leave without adding this asset?', body: 'Your entries will be lost.' },
   'asset-edit': { title: 'Leave without saving changes?', body: 'Your changes will be lost.' },
+  liability: { title: 'Leave without adding this liability?', body: 'Your entries will be lost.' },
+  'liability-edit': { title: 'Leave without saving changes?', body: 'Your changes will be lost.' },
   extract: { title: 'Leave without adding these accounts?', body: 'Your changes will be lost.', stay: 'Keep reviewing' },
 }
 
@@ -40,7 +42,6 @@ export default function App() {
   })
   const [tick, setTick] = useState(0)
   const [leaveDialog, setLeaveDialog] = useState(null)   // {kind, to}
-  const [objectModal, setObjectModal] = useState(null)   // liabilities: {category, id|null}
   const [assetPanel, setAssetPanel] = useState(null)     // side panel: {category|null, id|null}
   const [panelCat, setPanelCat] = useState(null)         // category the open panel is targeting (live)
   const [selectedCats, setSelectedCats] = useState(() => state?.selectedCats ?? { assets: [], liabilities: [] })
@@ -137,7 +138,8 @@ export default function App() {
         : [...p.liabilities, liability],
     }))
     touch()
-    setObjectModal(null)
+    guardRef.current = null
+    setAssetPanel(null)
   }
 
   const commitExtracted = (accounts) => {
@@ -165,6 +167,7 @@ export default function App() {
       if (assetPanel?.id === item.id) { guardRef.current = null; setAssetPanel(null) }
     } else {
       setProfile((p) => ({ ...p, liabilities: p.liabilities.filter((l) => l.id !== item.id) }))
+      if (assetPanel?.id === item.id) { guardRef.current = null; setAssetPanel(null) }
     }
     setRemoveDialog(null)
     touch()
@@ -195,7 +198,7 @@ export default function App() {
     setSeenWelcome(!welcome)
     setLeaveDialog(null); setRemoveDialog(null); setShareDialog(false)
     setShareAttempted(false); setToast(null)
-    setObjectModal(null); setAssetPanel(null); setSelectedCats({ assets: [], liabilities: [] })
+    setAssetPanel(null); setSelectedCats({ assets: [], liabilities: [] })
     forceNavigate(to)
     touch()
   }
@@ -238,10 +241,10 @@ export default function App() {
                 selectedCats={selectedCats}
                 onToggleCat={toggleCat}
                 onAddAsset={(category) => openAssetPanel({ category, id: null })}
-                onAddLiability={(category) => setObjectModal({ kind: 'liability', category, id: null })}
+                onAddLiability={(category) => openAssetPanel({ kind: 'liability', category, id: null })}
                 onEditAsset={(a) => openAssetPanel({ category: a.category, id: a.id })}
                 onRemoveAsset={(a) => setRemoveDialog({ kind: 'asset', item: a })}
-                onEditLiability={(l) => setObjectModal({ kind: 'liability', category: l.category, id: l.id })}
+                onEditLiability={(l) => openAssetPanel({ kind: 'liability', category: l.category, id: l.id })}
                 onRemoveLiability={(l) => setRemoveDialog({ kind: 'liability', item: l })}
                 onAnswerNone={answerNoLiabilities}
                 onDeferAssets={() => { setProfile((p) => ({ ...p, assetsDeferred: true })); touch() }}
@@ -260,7 +263,21 @@ export default function App() {
               </div>
             )}
           </main>
-          {assetPanel && r.name === 'networth' && (
+          {assetPanel && r.name === 'networth' && (assetPanel.kind === 'liability' ? (
+            <LiabilityPanel
+              key={assetPanel.k}
+              category={assetPanel.category}
+              onCategoryChange={setPanelCat}
+              liability={assetPanel.id ? profile.liabilities.find((l) => l.id === assetPanel.id) : null}
+              onCommit={commitLiability}
+              onRemove={assetPanel.id ? () => {
+                const item = profile.liabilities.find((l) => l.id === assetPanel.id)
+                if (item) setRemoveDialog({ kind: 'liability', item })
+              } : undefined}
+              onClose={() => { guardRef.current = null; setAssetPanel(null) }}
+              setGuard={setGuard}
+            />
+          ) : (
             <AssetPanel
               key={assetPanel.k}
               category={assetPanel.category}
@@ -275,7 +292,7 @@ export default function App() {
               onClose={() => { guardRef.current = null; setAssetPanel(null) }}
               setGuard={setGuard}
             />
-          )}
+          ))}
         </div>
 
       </div>
@@ -287,13 +304,6 @@ export default function App() {
         <span className="footer-sep">·</span>
         <button className="footer-link" onClick={() => setRoute({ name: 'inputlab' })}>Input lab</button>
       </footer>
-
-      {objectModal?.kind === 'liability' && (
-        <LiabilityModal
-          category={objectModal.category}
-          liability={objectModal.id ? profile.liabilities.find((l) => l.id === objectModal.id) : null}
-          onCommit={commitLiability}
-          onClose={() => setObjectModal(null)}
         />
       )}
 

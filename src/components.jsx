@@ -1,7 +1,7 @@
 /* Domain components: shell, summary, cards, category grid. */
 import {
   ASSET_CATEGORIES, assetCategory, assetSubtitle, assetTitle, computeSummary,
-  fmtMoney, fmtUSD, hasForeignValues, institutionAvatar, liabilitySubtitle, liabilityTitle, usdOf,
+  fmtMoney, fmtUSD, hasForeignValues, institutionAvatar, liabilityCategory, usdOf,
 } from './model.js'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { useCountUp } from './hooks.js'
@@ -122,15 +122,6 @@ export function FinancialSummary({ profile }) {
 
 /* ---------------- Cards ---------------- */
 
-const TrashIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" aria-hidden="true">
-    <path d="M2.5 4h11" />
-    <path d="M5.5 4V2.8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V4" />
-    <path d="M3.8 4l.6 9a1.2 1.2 0 0 0 1.2 1.1h4.8a1.2 1.2 0 0 0 1.2-1.1l.6-9" />
-    <line x1="6.4" y1="7" x2="6.4" y2="11.5" />
-    <line x1="9.6" y1="7" x2="9.6" y2="11.5" />
-  </svg>
-)
 
 const stripAcct = (t) => (t || '').replace(/ account$/, '')
 
@@ -217,30 +208,33 @@ export function AssetRow({ asset, onEdit, onRemove, active }) {
   )
 }
 
-export function LiabilityCard({ liability, onEdit, onRemove }) {
+/* Liability as the same flat row: "Category · [avatar] Lender", nickname/rate muted, balance right. */
+export function LiabilityRow({ liability, onEdit, active }) {
   const cur = liability.currency ?? 'USD'
+  const cat = liabilityCategory(liability.category)
+  const meta = [
+    liability.name || null,
+    liability.interestRate != null && liability.interestRate !== '' ? `${liability.interestRate}% interest` : null,
+  ].filter(Boolean).join(' · ')
   return (
-    <div className="card card-clickable" onClick={onEdit} role="button" tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && onEdit()}>
-      <div className="card-left">
-        <div className="card-info">
-          <div className="card-title">{liabilityTitle(liability)}</div>
-          {liabilitySubtitle(liability) && <div className="card-subtitle">{liabilitySubtitle(liability)}</div>}
-        </div>
+    <div className={'arow' + (active ? ' arow-active' : '')} onClick={onEdit} role="button" tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit() }
+      }}>
+      <div className="arow-primary">
+        <span className={liability.lender ? 'arow-type' : undefined}>{cat?.label || 'Liability'}</span>
+        {liability.lender && <Inst name={liability.lender} />}
       </div>
-      <div className="card-right">
+      {meta && <div className="arow-secondary">{meta}</div>}
+      <div className="arow-value">
         {liability.outstandingBalance == null ? (
-          <span className="value-missing-text">Balance not added</span>
+          <span className="value-missing-text" title="Balance not added" aria-label="Balance not added">—</span>
         ) : (
           <div className="value-wrap">
             <span className="value-text">{fmtMoney(liability.outstandingBalance, cur)}</span>
             {cur !== 'USD' && <span className="value-approx">≈ {fmtUSD(usdOf(liability.outstandingBalance, cur))}</span>}
           </div>
         )}
-        <button className="card-remove" aria-label="Remove liability"
-          onClick={(e) => { e.stopPropagation(); onRemove() }}>
-          <TrashIcon />
-        </button>
       </div>
     </div>
   )

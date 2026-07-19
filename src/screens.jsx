@@ -6,7 +6,7 @@ import {
 } from './model.js'
 import { parseGoals } from './parse.js'
 import { DateInput, Field, MoneyInput, PhoneInput, RadioRow, TextInput } from './ui.jsx'
-import { AssetRow, FinancialSummary, LiabilityCard } from './components.jsx'
+import { AssetRow, FinancialSummary, LiabilityRow } from './components.jsx'
 
 /* ---------------- Welcome (spec §7) ---------------- */
 
@@ -428,27 +428,6 @@ const GROUP_ADD_LABEL = {
   other: 'Add other asset',
 }
 
-function CategoryBubbles({ categories, selected, locked, onToggle }) {
-  return (
-    <div className="bubbles">
-      {categories.map((c) => {
-        const on = selected.has(c.key)
-        return (
-          <button
-            key={c.key}
-            role="checkbox"
-            aria-checked={on}
-            className={'bubble' + (on ? ' bubble-on' : '')}
-            title={locked.has(c.key) ? 'Remove its records first to hide this category' : undefined}
-            onClick={() => onToggle(c.key)}
-          >
-            {c.label}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
 
 export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   onAddAsset, onAddLiability, onEditAsset, onRemoveAsset, onEditLiability, onRemoveLiability,
@@ -472,12 +451,9 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   const nw = computeSummary(profile).nw
   const compactNW = nw == null ? '—' : fmtUSD(nw)
 
-  const liabsWithRecords = new Set(liabilities.map((l) => l.category))
-  const effLiabs = new Set([...selectedCats.liabilities, ...liabsWithRecords])
-
-  /* Only categories that contain saved assets appear on the page. */
+  /* Only categories that contain saved records appear on the page. */
   const assetGroups = ASSET_CATEGORIES.filter((c) => assets.some((a) => a.category === c.key))
-  const liabGroups = LIABILITY_CATEGORIES.filter((c) => effLiabs.has(c.key))
+  const liabGroups = LIABILITY_CATEGORIES.filter((c) => liabilities.some((l) => l.category === c.key))
 
   return (
     <div className="screen">
@@ -514,8 +490,10 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
             <span className={'nw-compact' + (compact ? ' nw-compact-on' : '')} aria-hidden={!compact}>
               {compactNW}
             </span>
-            {tab === 'assets' && (
+            {tab === 'assets' ? (
               <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
+            ) : (
+              <button className="btn btn-primary" onClick={() => onAddLiability(null)}>Add liabilities</button>
             )}
           </div>
         </div>
@@ -573,47 +551,52 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
 
           {tab === 'liabilities' && (
             <>
-              <div className="cat-select">
-                <h2 className="nw-empty-title">What do you owe?</h2>
-                <p className="select-hint">Select all that apply</p>
-                <CategoryBubbles
-                  categories={LIABILITY_CATEGORIES}
-                  selected={effLiabs}
-                  locked={liabsWithRecords}
-                  onToggle={(k) => onToggleCat('liabilities', k)}
-                />
-              </div>
+              {liabilities.length === 0 && !none && (
+                <div className="nw-empty">
+                  <h2 className="nw-empty-title">What do you owe?</h2>
+                  <p className="page-copy">
+                    Mortgages, loans, credit lines — anything you owe.<br />
+                    This completes the picture: net worth is what you own minus what you owe.
+                  </p>
+                  <button className="link-quiet" onClick={onAnswerNone}>
+                    I don't have any liabilities
+                  </button>
+                </div>
+              )}
 
               {none && liabilities.length === 0 && (
                 <p className="owe-none">
                   No liabilities — you've told us you don't currently have any.
-                  Select a category above if that changes.
+                  Add one if that changes.
                 </p>
               )}
 
               {liabGroups.map((cat) => {
                 const items = liabilities.filter((l) => l.category === cat.key)
+                const known = items.filter((l) => l.outstandingBalance != null)
+                const subtotal = known.reduce((s, l) => s + usdOf(l.outstandingBalance, l.currency), 0)
                 return (
                   <section className="group" key={cat.key}>
                     <div className={'group-head' + (panelTarget && !panelTarget.id && panelTarget.category === cat.key ? ' group-head-active' : '')}>
                       <h3 className="group-name">{cat.group}</h3>
+                      <button className="group-plus"
+                        aria-label={`Add ${cat.add}`} title={`Add ${cat.add}`}
+                        onClick={(e) => { e.currentTarget.blur(); onAddLiability(cat.key) }}>
+                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true">
+                          <line x1="7" y1="2" x2="7" y2="12" /><line x1="2" y1="7" x2="12" y2="7" />
+                        </svg>
+                      </button>
+                      <span className="group-subtotal">{known.length ? fmtUSD(subtotal) : '—'}</span>
                     </div>
-                    {items.map((l) => (
-                      <LiabilityCard key={l.id} liability={l}
-                        onEdit={() => onEditLiability(l)} onRemove={() => onRemoveLiability(l)} />
-                    ))}
-                    <button className="link-add" onClick={() => onAddLiability(cat.key)}>
-                      + Add
-                    </button>
+                    <div className="group-rows">
+                      {items.map((l) => (
+                        <LiabilityRow key={l.id} liability={l} active={panelTarget?.id === l.id}
+                          onEdit={() => onEditLiability(l)} />
+                      ))}
+                    </div>
                   </section>
                 )
               })}
-
-              {liabilities.length === 0 && !none && (
-                <button className="btn btn-secondary owe-none-btn" onClick={onAnswerNone}>
-                  I don't have any liabilities
-                </button>
-              )}
             </>
           )}
       </div>
