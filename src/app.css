@@ -269,7 +269,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .arow:hover { background: var(--bg-ghost-hover); }
 /* Single line; the type stays whole, the institution truncates from the end first. */
 .arow-primary {
-  font: var(--text-label-md); min-width: 0;
+  font: var(--text-body-md); min-width: 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .arow-secondary {
