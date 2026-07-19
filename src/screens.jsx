@@ -105,7 +105,7 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
         {/* ---- Legal identity ---- */}
         <div className="form-section">
           <h2 className="form-section-title">Legal identity</h2>
-          <div className="name-row">
+          <div className="field-pair">
             <Field label="Legal first name" required error={err('firstName')}>
               <TextInput value={p.legalFirstName} onChange={(v) => set('legalFirstName', v)} onBlur={() => markTouched('firstName')} />
             </Field>
@@ -113,25 +113,25 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
               <TextInput value={p.legalLastName} onChange={(v) => set('legalLastName', v)} onBlur={() => markTouched('lastName')} />
             </Field>
           </div>
-          <div className="field-half">
+          <div className="field-pair">
             <Field label="Middle name">
               <TextInput value={p.middleName} onChange={(v) => set('middleName', v)} />
             </Field>
+            <Field label="Date of birth" required error={dobError()}>
+              <DateInput value={p.dateOfBirth}
+                onChange={(v) => set('dateOfBirth', v)} onBlur={() => markTouched('dateOfBirth')} />
+            </Field>
           </div>
-          <Field label="Date of birth" required error={dobError()}>
-            <DateInput className="input-compact" value={p.dateOfBirth}
-              onChange={(v) => set('dateOfBirth', v)} onBlur={() => markTouched('dateOfBirth')} />
-          </Field>
         </div>
 
         {/* ---- Contact ---- */}
         <div className="form-section">
           <h2 className="form-section-title">Contact</h2>
           <p className="form-section-copy">So your advisor can reach you and send your summary.</p>
-          <Field label="Email" required error={emailError()}>
-            <TextInput value={p.email} type="email" onChange={(v) => set('email', v)} onBlur={() => markTouched('email')} />
-          </Field>
-          <div className="field-half">
+          <div className="field-pair">
+            <Field label="Email" required error={emailError()}>
+              <TextInput value={p.email} type="email" onChange={(v) => set('email', v)} onBlur={() => markTouched('email')} />
+            </Field>
             <Field label="Phone">
               <PhoneInput value={p.phone} onChange={(v) => set('phone', v)} />
             </Field>

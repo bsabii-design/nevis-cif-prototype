@@ -744,6 +744,9 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Legal identity: equal-width first/last name; compact middle + DOB */
 .name-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-12); }
 @media (max-width: 720px) { .name-row { grid-template-columns: 1fr; } }
+/* Balanced two-up rows so no field is left as a lonely half-width stub. */
+.field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-12); align-items: start; }
+@media (max-width: 720px) { .field-pair { grid-template-columns: 1fr; } }
 .field-half { max-width: calc(50% - var(--space-8)); }
 .input-compact { max-width: 200px; }
 
