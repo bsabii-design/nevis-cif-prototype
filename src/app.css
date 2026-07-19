@@ -587,25 +587,38 @@ input, select, textarea { font: inherit; color: inherit; }
   background: linear-gradient(to top, var(--color-beige), var(--color-beige-0));
   pointer-events: none;
 }
-/* Choice list (Linear-style): flat rows, hairline dividers, neat chevron.
-   Name + one-line examples so a non-expert knows where things belong. */
-.panel-choice { display: flex; flex-direction: column; margin: 0 calc(-1 * var(--space-8)); }
+/* Choice list (Linear-style): flat rows edge-to-edge, straight hairline
+   dividers, neat chevron. Name + one-line examples so a non-expert knows
+   where things belong. */
+.panel-choice { display: flex; flex-direction: column; margin: 0 calc(-1 * var(--space-16)); }
 .panel-choice-row {
   display: flex; align-items: center; gap: var(--space-12);
   width: 100%; text-align: left;
-  padding: var(--space-12) var(--space-8);
-  border-radius: var(--radius-8);
+  padding: var(--space-12) var(--space-16);
   transition: background-color var(--duration-fast) var(--ease);
 }
-.panel-choice-row + .panel-choice-row { box-shadow: 0 -1px 0 var(--border-subtle); }
-.panel-choice-row:hover { background: var(--bg-secondary); box-shadow: none; }
-.panel-choice-row:hover + .panel-choice-row { box-shadow: none; }
+.panel-choice-row + .panel-choice-row { border-top: var(--border-w) solid var(--border-subtle); }
+.panel-choice-row:hover { background: var(--bg-secondary); }
 .panel-choice-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .panel-choice-name { font: var(--text-label-md); }
 .panel-choice-eg { font: var(--text-body-sm); color: var(--content-tertiary); }
 .panel-choice-chevron { flex: none; color: var(--content-tertiary); }
-/* Upload: the smart path, a compact row set apart below the categories. */
-.panel-upload { margin-top: var(--space-8); box-shadow: 0 -1px 0 var(--border-subtle); }
+
+/* Compact upload drop zone: dashed border reads as "drop a file here",
+   click opens the picker, drop reads it directly — no separate stage. */
+.panel-upload {
+  display: flex; align-items: center; gap: var(--space-12);
+  width: 100%; text-align: left; cursor: pointer;
+  padding: var(--space-12);
+  border: var(--border-w) dashed var(--border-default);
+  border-radius: var(--radius-8);
+  transition: border-color var(--duration-fast) var(--ease), background-color var(--duration-fast) var(--ease);
+}
+.panel-upload:hover, .panel-upload.is-drag { border-color: var(--border-selected); background: var(--bg-secondary); }
+.panel-upload-icon { flex: none; color: var(--content-secondary); }
+.panel-upload-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.panel-upload-name { font: var(--text-label-md); }
+.panel-upload-eg { font: var(--text-body-sm); color: var(--content-tertiary); }
 .nw-block { display: flex; flex-direction: column; gap: var(--space-8); align-items: flex-start; }
 .nw-label { font: var(--text-body-sm); color: var(--content-secondary); }
 .nw-figure { font: 500 40px/44px var(--font-serif); font-variant-numeric: tabular-nums; }

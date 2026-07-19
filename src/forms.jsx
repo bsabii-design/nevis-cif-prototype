@@ -292,6 +292,14 @@ const ChevronRight = () => (
   </svg>
 )
 
+const UploadIcon = () => (
+  <svg className="panel-upload-icon" width="18" height="18" viewBox="0 0 20 20" fill="none"
+    stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M10 13V4M6.5 7.5 10 4l3.5 3.5" />
+    <path d="M4 13v2.5A1.5 1.5 0 0 0 5.5 17h9a1.5 1.5 0 0 0 1.5-1.5V13" />
+  </svg>
+)
+
 const CATEGORY_EXAMPLES = {
   cash: 'Checking, savings, CDs',
   investment: 'Brokerage, managed, trust accounts',
@@ -435,30 +443,17 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
                 </button>
               ))}
             </div>
-            <button className="panel-choice-row panel-upload" onClick={() => setStage('upload')}>
-              <span className="panel-choice-main">
-                <span className="panel-choice-name">Upload a statement</span>
-                <span className="panel-choice-eg">Nevis adds your accounts for you · PDF or a photo</span>
-              </span>
-              <ChevronRight />
-            </button>
-          </>
-        )}
-
-        {stage === 'upload' && (
-          <>
-            <div
-              className="upload-zone"
-              role="button" tabIndex={0}
+            <div className="panel-upload" role="button" tabIndex={0}
               onClick={() => fileRef.current?.click()}
-              onKeyDown={(e) => e.key === 'Enter' && fileRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => { e.preventDefault(); startReading() }}
-            >
-              <span className="upload-title">Drag and drop a file here</span>
-              <span className="upload-or">or</span>
-              <span className="btn btn-secondary">Choose a file</span>
-              <span className="upload-hint">PDF, JPG or PNG</span>
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileRef.current?.click() } }}
+              onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('is-drag') }}
+              onDragLeave={(e) => e.currentTarget.classList.remove('is-drag')}
+              onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('is-drag'); startReading() }}>
+              <UploadIcon />
+              <span className="panel-upload-main">
+                <span className="panel-upload-name">Drop in a statement</span>
+                <span className="panel-upload-eg">Nevis adds your accounts · PDF or a photo</span>
+              </span>
             </div>
             <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" hidden onChange={startReading} />
           </>
