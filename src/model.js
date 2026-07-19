@@ -107,13 +107,14 @@ export const INSTITUTIONS = [
 
 const AVATAR_COLORS = ['#455285', '#68457A', '#346C83', '#596625', '#AD5507', '#8F2F28']
 
+/* Every institution gets an avatar, including free-text entries.
+   Color is a deterministic hash of the name: one institution, one color, everywhere. */
 export const institutionAvatar = (name) => {
-  if (!name) return null
-  const match = INSTITUTIONS.find((n) => n.toLowerCase() === name.trim().toLowerCase())
-  if (!match) return null
+  const n = (name || '').trim()
+  if (!n) return null
   let h = 0
-  for (const c of match) h = (h * 31 + c.charCodeAt(0)) % 997
-  return { letter: match[0].toUpperCase(), color: AVATAR_COLORS[h % AVATAR_COLORS.length] }
+  for (const c of n) h = (h * 31 + c.charCodeAt(0)) % 997
+  return { letter: n[0].toUpperCase(), color: AVATAR_COLORS[h % AVATAR_COLORS.length] }
 }
 
 /* ---------------- Card presentation ---------------- */
