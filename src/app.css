@@ -559,17 +559,21 @@ input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------------- Inputs ---------------- */
 
+/* Filled input is the product default: grey fill at rest, lifts to a clean
+   white field with a crisp border on focus. background-color (not the
+   shorthand) preserves the native select's arrow image. */
 .input {
   height: var(--control-h);
   width: 100%;
   padding: 0 var(--space-12);
-  background: var(--bg-surface);
-  border: var(--border-w) solid var(--border-default);
+  background-color: var(--bg-secondary);
+  border: var(--border-w) solid transparent;
   border-radius: var(--radius-8);
-  transition: border-color var(--duration-fast) var(--ease);
+  transition: background-color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease);
 }
-.input:hover { border-color: var(--border-hovered); }
-.input:focus { outline: none; border-color: var(--border-selected); }
+.input:hover { background-color: var(--bg-secondary-hover); }
+.input:focus { outline: none; background-color: var(--bg-surface); border-color: var(--border-selected); }
 .input::placeholder { color: var(--content-tertiary); }
 .select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--content-secondary) 50%), linear-gradient(135deg, var(--content-secondary) 50%, transparent 50%); background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
 
@@ -622,25 +626,8 @@ input, select, textarea { font: inherit; color: inherit; }
 .lab-row-label { font: var(--text-label-md); }
 .lab-row-desc { font: var(--text-body-sm); color: var(--content-tertiary); }
 
-/* Filled input — grey fill at rest, lifts to a clean white field on focus.
-   Applied per-field via .input-filled (lab) or scoped via .form-filled (forms).
-   background-color (not the shorthand) keeps the native select's arrow image. */
-.input-filled,
-.form-filled .input {
-  background-color: var(--bg-secondary);
-  border-color: transparent;
-  transition: background-color var(--duration-fast) var(--ease),
-    border-color var(--duration-fast) var(--ease);
-}
-.input-filled:hover,
-.form-filled .input:hover { background-color: var(--bg-secondary-hover); border-color: transparent; }
-.input-filled:focus,
-.form-filled .input:focus {
-  background-color: var(--bg-surface);
-  border-color: var(--border-selected);
-}
-/* Keep the missing-field red border visible over the fill. */
-.form-filled .field-missing .input { border-color: var(--color-red-bright); }
+/* Filled is now the base .input style (see the Inputs section); the lab's
+   .input-filled class is a no-op kept only so the sandbox markup still renders. */
 
 /* Institution autocomplete */
 .combo { position: relative; }
