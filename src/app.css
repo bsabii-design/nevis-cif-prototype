@@ -235,12 +235,13 @@ input, select, textarea { font: inherit; color: inherit; }
   transition: opacity var(--duration-fast) var(--ease);
 }
 .group-head:hover .group-subtotal, .group-head:focus-within .group-subtotal { opacity: 0; }
+/* 20px button = 8px clearance on every side of the 36px band */
 .group-plus {
   position: absolute; right: var(--space-8); top: 50%; transform: translateY(-50%);
-  width: 28px; height: 28px;
+  width: 20px; height: 20px;
   display: flex; align-items: center; justify-content: center;
   color: var(--content-secondary);
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-4);
   opacity: 0;
   transition: opacity var(--duration-fast) var(--ease), background-color var(--duration-fast) var(--ease);
 }
