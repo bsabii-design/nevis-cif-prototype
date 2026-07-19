@@ -731,6 +731,20 @@ input, select, textarea { font: inherit; color: inherit; }
   font: var(--text-body-sm); color: var(--content-secondary);
   margin-top: calc(-1 * var(--space-12));
 }
+/* Section header with an add "+" on the right (replaces the long "+ Add …" link). */
+.form-section-header {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-12);
+  margin-bottom: var(--space-4);
+}
+.form-section-header .form-section-title { margin-bottom: 0; }
+.section-add {
+  flex: none; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--content-secondary);
+  border-radius: var(--radius-8);
+  transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+}
+.section-add:hover { background: var(--bg-secondary); color: var(--content-primary); }
 .form-section-head { display: flex; align-items: baseline; justify-content: space-between; }
 .form-subsection {
   display: flex; flex-direction: column; gap: var(--space-12);

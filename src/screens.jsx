@@ -34,6 +34,12 @@ export function Welcome({ onStart }) {
 
 /* ---------------- Personal information (spec §9) ---------------- */
 
+const PlusIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true">
+    <line x1="7" y1="2" x2="7" y2="12" /><line x1="2" y1="7" x2="12" y2="7" />
+  </svg>
+)
+
 /* `primary` marks the residence whose country + state drive tax residency
    (the only required parts); street/city/ZIP stay optional. */
 function ResidenceFields({ residence, onChange, primary, errors = {}, onBlurField }) {
@@ -140,7 +146,13 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
 
         {/* ---- Residential address ---- */}
         <div className="form-section">
-          <h2 className="form-section-title">Residential address</h2>
+          <div className="form-section-header">
+            <h2 className="form-section-title">Residential address</h2>
+            <button className="section-add" aria-label="Add another residence"
+              onClick={() => set('additionalResidences', [...p.additionalResidences, { country: '', street: '', apartment: '', city: '', state: '', zip: '' }])}>
+              <PlusIcon />
+            </button>
+          </div>
           <p className="form-section-copy">Your primary home — this sets your tax residency.</p>
           <ResidenceFields primary residence={p.primaryResidence}
             errors={{ country: err('country'), state: err('state', 'Select a state.') }}
@@ -160,15 +172,17 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
                 onChange={(nr) => set('additionalResidences', p.additionalResidences.map((x, j) => j === i ? nr : x))} />
             </div>
           ))}
-          <button className="link-add"
-            onClick={() => set('additionalResidences', [...p.additionalResidences, { country: '', street: '', apartment: '', city: '', state: '', zip: '' }])}>
-            + Add address
-          </button>
         </div>
 
         {/* ---- Citizenship ---- */}
         <div className="form-section">
-          <h2 className="form-section-title">Citizenship</h2>
+          <div className="form-section-header">
+            <h2 className="form-section-title">Citizenship</h2>
+            <button className="section-add" aria-label="Add another citizenship"
+              onClick={() => set('citizenships', [...p.citizenships, ''])}>
+              <PlusIcon />
+            </button>
+          </div>
           <p className="form-section-copy">For tax and residency context.</p>
           <Field label="Country of citizenship" required error={err('citizenship')}>
             <TextInput value={p.citizenships[0] || ''} placeholder="United States"
@@ -187,9 +201,6 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
               </button>
             </div>
           ))}
-          <button className="link-add" onClick={() => set('citizenships', [...p.citizenships, ''])}>
-            + Add citizenship
-          </button>
         </div>
       </div>
 
