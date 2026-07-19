@@ -265,7 +265,6 @@ input, select, textarea { font: inherit; color: inherit; }
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease);
 }
-.arow + .arow { border-top: var(--border-w) solid var(--border-subtle); }
 .arow:hover { background: var(--bg-ghost-hover); }
 /* Single line; the type stays whole, the institution truncates from the end first. */
 .arow-primary {
@@ -367,22 +366,27 @@ input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------------- Net worth ---------------- */
 
-/* Sticky header: title + summary + tabs stay pinned; the asset list scrolls under. */
+/* Sticky header: title + summary + tabs stay pinned; the asset list scrolls under.
+   The 20px above the title lives inside the sticky region (padding), and a matching
+   negative margin cancels the page's top padding — so the header is pinned from the
+   very first pixel and there is no little pre-pin scroll. */
 .nw-header {
   position: sticky; top: 57px; z-index: 4;
   display: flex; flex-direction: column; gap: var(--space-20);
   background: var(--bg-page);
-  padding-top: var(--space-4);
+  margin-top: calc(-1 * var(--space-20));
+  padding-top: var(--space-20);
 }
 .nw-header-top { display: flex; flex-direction: column; gap: var(--space-20); }
 .nw-divider { height: var(--border-w); background: var(--border-default); }
 .nw-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); }
-/* A soft fade below the header so scrolling rows slip under it gently. */
+/* A soft fade below the header so scrolling rows dissolve into it instead of
+   showing a hard band edge. Tall and gentle enough that a whole group band fades. */
 .nw-header::after {
   content: '';
   position: absolute; top: 100%; left: 0; right: 0;
-  height: var(--space-16);
-  background: linear-gradient(to bottom, var(--color-beige), var(--color-beige-0));
+  height: var(--space-24);
+  background: linear-gradient(to bottom, var(--color-beige) 0%, var(--color-beige-80) 40%, var(--color-beige-0) 100%);
   pointer-events: none;
 }
 
