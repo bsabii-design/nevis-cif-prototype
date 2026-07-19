@@ -136,6 +136,22 @@ input, select, textarea { font: inherit; color: inherit; }
 .link-quiet { font: var(--text-body-sm); color: var(--content-tertiary); text-align: left; transition: color var(--duration-fast) var(--ease); }
 .link-quiet:hover { color: var(--content-primary); }
 
+/* Share checklist: profile state as a mirror at the moment of sharing */
+.share-dialog { min-width: 380px; }
+.share-checklist {
+  display: flex; flex-direction: column;
+  margin: var(--space-16) 0 var(--space-4);
+  border-top: var(--border-w) solid var(--border-subtle);
+}
+.share-check-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-16);
+  padding: var(--space-8) 0;
+  border-bottom: var(--border-w) solid var(--border-subtle);
+}
+.share-check-label { font: var(--text-label-md); flex: none; }
+.share-check-state { font: var(--text-body-sm); color: var(--content-secondary); text-align: right; }
+.share-check-muted { color: var(--content-tertiary); }
+
 .page {
   flex: 1; min-width: 0;
   /* Content column sits on the grid: left edge at 25vw + 15px of the
@@ -200,6 +216,22 @@ input, select, textarea { font: inherit; color: inherit; }
   margin-top: var(--space-4);
 }
 .link-quiet:hover { color: var(--content-primary); }
+
+/* Share checklist: profile state as a mirror at the moment of sharing */
+.share-dialog { min-width: 380px; }
+.share-checklist {
+  display: flex; flex-direction: column;
+  margin: var(--space-16) 0 var(--space-4);
+  border-top: var(--border-w) solid var(--border-subtle);
+}
+.share-check-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-16);
+  padding: var(--space-8) 0;
+  border-bottom: var(--border-w) solid var(--border-subtle);
+}
+.share-check-label { font: var(--text-label-md); flex: none; }
+.share-check-state { font: var(--text-body-sm); color: var(--content-secondary); text-align: right; }
+.share-check-muted { color: var(--content-tertiary); }
 .link-danger { font: var(--text-body-sm); color: var(--content-secondary); }
 .link-danger:hover { color: var(--color-red-bright); }
 

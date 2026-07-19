@@ -29,6 +29,57 @@ const FOOTER_NAV = {
 
 const MAIN_SECTIONS = ['personal', 'work', 'goals', 'networth']
 
+/* Share moment = a mirror, not a gate: the person sees exactly what state
+   the profile is in before handing it over. Nothing here blocks sharing. */
+function ShareDialog({ profile, onCancel, onConfirm }) {
+  const goals = profile.goals.length
+  const assets = profile.assets.length
+  const liabs = profile.liabilities.length
+  const rows = [
+    { label: 'Personal', state: 'Complete' },
+    {
+      label: 'Occupation & income',
+      state: sectionState(profile).work ? 'Added' : 'Not filled in yet',
+      muted: !sectionState(profile).work,
+    },
+    {
+      label: 'Goals',
+      state: goals ? `${goals} goal${goals > 1 ? 's' : ''}` : profile.goalsDeferred ? 'You chose to explore these together' : 'Not filled in yet',
+      muted: !goals && !profile.goalsDeferred,
+    },
+    {
+      label: 'Net worth',
+      state: [
+        assets ? `${assets} asset${assets > 1 ? 's' : ''}` : profile.assetsDeferred ? 'assets together with Sarah' : 'no assets yet',
+        liabs ? `${liabs} liabilit${liabs > 1 ? 'ies' : 'y'}` : profile.liabilitiesExplicitlyNone ? 'no liabilities' : 'liabilities not answered yet',
+      ].join(' · '),
+      muted: !assets && !profile.assetsDeferred,
+    },
+  ]
+  return (
+    <div className="dialog-overlay" onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
+      <div className="dialog share-dialog" role="alertdialog" aria-modal="true" aria-label="Share with Sarah">
+        <h3 className="dialog-title">Share with Sarah</h3>
+        <p className="dialog-body">
+          Sarah will see your profile as it is now — and any updates you make later.
+        </p>
+        <div className="share-checklist">
+          {rows.map((r) => (
+            <div className="share-check-row" key={r.label}>
+              <span className="share-check-label">{r.label}</span>
+              <span className={'share-check-state' + (r.muted ? ' share-check-muted' : '')}>{r.state}</span>
+            </div>
+          ))}
+        </div>
+        <div className="dialog-actions">
+          <button className="btn btn-secondary" onClick={onCancel}>Keep filling in</button>
+          <button className="btn btn-primary" onClick={onConfirm}>Share</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [state] = useState(() => loadState())
   const [profile, setProfile] = useState(() => state?.profile ?? seedProfile())
@@ -260,6 +311,9 @@ export default function App() {
                 {FOOTER_NAV[r.name].next && (
                   <button className="btn btn-secondary ml-auto" onClick={() => goSection(FOOTER_NAV[r.name].next)}>Continue</button>
                 )}
+                {r.name === 'networth' && !profile.shared && (
+                  <button className="btn btn-primary ml-auto" onClick={requestShare}>Share with Sarah</button>
+                )}
               </div>
             )}
           </main>
@@ -308,14 +362,7 @@ export default function App() {
       )}
 
       {shareDialog && (
-        <Dialog
-          title="Share with Sarah?"
-          body="Sarah will be able to view everything you've added so far and any updates you make later."
-          cancelLabel="Cancel"
-          confirmLabel="Share"
-          onCancel={() => setShareDialog(false)}
-          onConfirm={confirmShare}
-        />
+        <ShareDialog profile={profile} onCancel={() => setShareDialog(false)} onConfirm={confirmShare} />
       )}
 
       {leaveDialog && (
