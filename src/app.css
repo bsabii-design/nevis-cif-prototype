@@ -252,7 +252,7 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Subject of the open panel is marked in the list: band for add, row for edit */
 .group-head-active { background: var(--bg-secondary-hover); }
 /* Selected (its Edit panel is open): a touch darker than hover so it clearly persists. */
-.arow-active, .arow-active:hover { background: var(--bg-secondary-hover); }
+.arow-active, .arow-active:hover { background: var(--bg-selected); }
 
 /* Flat single-line rows on the page background, hairline-divided.
    Table-like columns so the eye scans straight down: primary | nickname | value. */
@@ -379,7 +379,7 @@ input, select, textarea { font: inherit; color: inherit; }
   padding-top: var(--space-20);
 }
 .nw-header-top { display: flex; flex-direction: column; gap: var(--space-20); }
-.nw-divider { height: var(--border-w); background: var(--border-default); }
+.nw-divider { height: var(--border-w); background: var(--border-subtle); }
 .nw-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); }
 /* A soft fade below the header so scrolling rows dissolve into it instead of
    showing a hard band edge. Tall and gentle enough that a whole group band fades. */

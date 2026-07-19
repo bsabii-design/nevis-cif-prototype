@@ -14,6 +14,7 @@
   --color-beige-0: rgba(247, 246, 240, 0);
 
   --color-black-a4:  rgba(20, 20, 19, 0.04);
+  --color-black-a6:  rgba(20, 20, 19, 0.06);
   --color-black-a8:  rgba(20, 20, 19, 0.08);
   --color-black-a12: rgba(20, 20, 19, 0.12);
   --color-black-a16: rgba(20, 20, 19, 0.16);
@@ -43,10 +44,11 @@
   --bg-secondary:       var(--color-black-a4);
   --bg-secondary-hover: var(--color-black-a8);
   --bg-ghost-hover:     var(--color-black-a4);
+  --bg-selected:        var(--color-black-a6);
   --bg-overlay:         var(--color-beige-80);
 
   --border-default:  var(--color-black-a16);
-  --border-subtle:   rgba(20, 20, 19, 0.06); /* structural hairlines per mock */
+  --border-subtle:   var(--color-black-a6); /* structural hairlines per mock */
   --border-hovered:  var(--color-black-a24);
   --border-selected: var(--color-black);
 
