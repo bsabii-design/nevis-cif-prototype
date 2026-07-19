@@ -218,8 +218,15 @@ input, select, textarea { font: inherit; color: inherit; }
 /* ---------------- Cards ---------------- */
 
 .groups { display: flex; flex-direction: column; gap: 28px; }
-.group { display: flex; flex-direction: column; gap: var(--space-8); }
-.group-head { display: flex; align-items: center; gap: var(--space-8); margin-bottom: var(--space-4); }
+.group { display: flex; flex-direction: column; gap: var(--space-4); }
+/* Header band: name + subtotal on a muted strip, rows flat below (Linear-style). */
+.group-head {
+  display: flex; align-items: center; gap: var(--space-8);
+  height: 36px;
+  padding: 0 var(--space-12);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-8);
+}
 .group-name { font: var(--text-label-sm); flex: 1; min-width: 0; }
 .group-subtotal { font: var(--text-body-sm); color: var(--content-tertiary); }
 /* Reserved add slot: subtotal never moves when the plus appears */
@@ -232,34 +239,27 @@ input, select, textarea { font: inherit; color: inherit; }
   transition: opacity var(--duration-fast) var(--ease), background-color var(--duration-fast) var(--ease);
 }
 .group-head:hover .group-plus, .group-head:focus-within .group-plus, .group-plus:focus-visible { opacity: 1; }
-.group-plus:hover { background: var(--bg-secondary); color: var(--content-primary); }
+.group-plus:hover { background: var(--bg-secondary-hover); color: var(--content-primary); }
 
-/* One shared container per category; rows divided, not floating cards */
-.group-box {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-12);
-}
+/* Flat single-line rows on the page background, hairline-divided */
 .arow {
   display: flex; align-items: center; gap: var(--space-12);
-  height: 60px;
+  height: 44px;
   padding: 0 var(--space-12);
+  border-radius: var(--radius-8);
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease);
 }
 .arow + .arow { border-top: var(--border-w) solid var(--border-subtle); }
-.arow:first-child { border-radius: var(--radius-12) var(--radius-12) 0 0; }
-.arow:last-child { border-radius: 0 0 var(--radius-12) var(--radius-12); }
-.arow:only-child { border-radius: var(--radius-12); }
 .arow:hover { background: var(--bg-ghost-hover); }
-.arow-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-4); }
-.arow-primary {
-  font: var(--text-label-md);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
+.arow-text { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-16); }
+.arow-primary { flex: none; font: var(--text-label-md); }
 .arow-secondary {
+  flex: 0 1 auto; min-width: 0;
   font: var(--text-body-sm); color: var(--content-secondary);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.arow-secondary .inst { vertical-align: text-bottom; }
 .arow-value { flex: none; text-align: right; white-space: nowrap; }
 
 .card {
@@ -310,7 +310,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .avatar-sm { width: 18px; height: 18px; font: 500 9px/1 var(--font-sans); }
 /* Institution inline in a row line: avatar 4px before the name (mock 34:2557). */
 .inst { display: inline-flex; align-items: center; gap: var(--space-4); min-width: 0; }
-.arow-primary, .arow-secondary { display: flex; align-items: center; gap: var(--space-8); min-width: 0; }
+.arow-primary { display: flex; align-items: center; gap: var(--space-8); }
 .arow-sep { flex: none; }
 
 /* ---------------- Overflow menu ---------------- */

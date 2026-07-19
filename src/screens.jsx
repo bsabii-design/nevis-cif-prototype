@@ -457,7 +457,6 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
                   <section className="group" key={cat.key}>
                     <div className="group-head">
                       <h3 className="group-name">{cat.label}</h3>
-                      <span className="group-subtotal">{known.length ? fmtUSD(subtotal) : '—'}</span>
                       <button className="group-plus"
                         aria-label={GROUP_ADD_LABEL[cat.key]} title={GROUP_ADD_LABEL[cat.key]}
                         onClick={() => onAddAsset(cat.key)}>
@@ -465,8 +464,9 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
                           <line x1="7" y1="2" x2="7" y2="12" /><line x1="2" y1="7" x2="12" y2="7" />
                         </svg>
                       </button>
+                      <span className="group-subtotal">{known.length ? fmtUSD(subtotal) : '—'}</span>
                     </div>
-                    <div className="group-box">
+                    <div className="group-rows">
                       {items.map((a) => (
                         <AssetRow key={a.id} asset={a}
                           onEdit={() => onEditAsset(a)} onRemove={() => onRemoveAsset(a)} />
