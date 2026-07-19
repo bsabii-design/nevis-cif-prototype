@@ -257,7 +257,7 @@ input, select, textarea { font: inherit; color: inherit; }
    Table-like columns so the eye scans straight down: primary | nickname | value. */
 .arow {
   display: grid;
-  grid-template-columns: minmax(0, 240px) minmax(0, 1fr) max-content;
+  grid-template-columns: minmax(0, 256px) minmax(0, 1fr) max-content;
   align-items: center; column-gap: var(--space-16);
   height: 44px;
   padding: 0 var(--space-12);
@@ -267,13 +267,16 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .arow + .arow { border-top: var(--border-w) solid var(--border-subtle); }
 .arow:hover { background: var(--bg-ghost-hover); }
-.arow-primary { font: var(--text-label-md); overflow: hidden; }
+/* Single line; the type stays whole, the institution truncates from the end first. */
+.arow-primary {
+  font: var(--text-label-md); min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .arow-secondary {
   grid-column: 2; min-width: 0;
   font: var(--text-body-sm); color: var(--content-secondary);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.arow-secondary .inst { vertical-align: text-bottom; }
 .arow-value { grid-column: 3; justify-self: end; text-align: right; white-space: nowrap; }
 
 .card {
@@ -323,9 +326,10 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .avatar-sm { width: 18px; height: 18px; font: 500 9px/1 var(--font-sans); }
 /* Institution inline in a row line: avatar 4px before the name (mock 34:2557). */
-.inst { display: inline-flex; align-items: center; gap: var(--space-4); min-width: 0; }
-.arow-primary { display: flex; align-items: center; gap: var(--space-8); }
-.arow-sep { flex: none; }
+/* Inline so the parent's ellipsis can truncate the institution name as ordinary text. */
+.inst { white-space: nowrap; }
+.inst .avatar { display: inline-flex; vertical-align: middle; margin-right: var(--space-4); }
+.arow-sep { margin: 0 var(--space-8); color: var(--content-tertiary); }
 
 /* ---------------- Overflow menu ---------------- */
 
