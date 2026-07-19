@@ -845,6 +845,19 @@ input, select, textarea { font: inherit; color: inherit; }
 /* ---------------- Goals ---------------- */
 
 .goals-question { font: var(--text-heading-sm); }
+/* Goal starters: quiet pills that seed the textarea. */
+.goal-chips { display: flex; flex-wrap: wrap; gap: var(--space-8); }
+.goal-chip {
+  height: var(--control-h);
+  padding: 0 var(--space-12);
+  display: inline-flex; align-items: center;
+  font: var(--text-label-md); color: var(--content-secondary);
+  background: var(--bg-surface);
+  border: var(--border-w) solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  transition: border-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+}
+.goal-chip:hover { border-color: var(--border-hovered); color: var(--content-primary); }
 .goals-textarea { height: auto; padding: var(--space-12); line-height: 20px; resize: vertical; }
 .goals-actions { display: flex; justify-content: space-between; gap: var(--space-12); }
 .editor-card { flex-direction: column; align-items: stretch; gap: var(--space-16); cursor: default; }

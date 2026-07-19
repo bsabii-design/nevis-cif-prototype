@@ -314,11 +314,27 @@ function GoalCard({ goal, onChange, onRemove }) {
   )
 }
 
+/* Chip accelerators: one click seeds the sentence, the person tunes it. */
+const GOAL_CHIPS = [
+  { label: 'Retire early', seed: "I'd like to retire early" },
+  { label: 'Buy a home', seed: "I want to buy a home" },
+  { label: "Kids' education", seed: "I'd like to help pay for my children's education" },
+  { label: 'Sell my business', seed: "I plan to sell my business" },
+  { label: 'Leave a legacy', seed: "I want to leave a legacy for my family" },
+  { label: 'A big purchase', seed: "I'm planning a big purchase" },
+]
+
 export function Goals({ profile, onChange, onNav }) {
   const [text, setText] = useState('')
   const [creating, setCreating] = useState(false)
   const goals = profile.goals
   const setGoals = (g) => onChange({ ...profile, goals: g })
+  const addSeed = (seed) =>
+    setText((t) => {
+      const base = t.trim()
+      if (base.toLowerCase().includes(seed.toLowerCase())) return t
+      return base ? base.replace(/\.?\s*$/, '. ') + seed : seed
+    })
 
   const create = () => {
     if (!text.trim()) return
@@ -344,9 +360,16 @@ export function Goals({ profile, onChange, onNav }) {
             </p>
           )}
           <p className="page-copy">
-            Describe what you're planning in your own words.<br />
-            We'll help turn it into a clear set of goals.
+            Describe what you're planning in your own words — or start from one of these.<br />
+            We'll turn it into a clear set of goals you can refine.
           </p>
+          <div className="goal-chips">
+            {GOAL_CHIPS.map((c) => (
+              <button key={c.label} className="goal-chip" onClick={() => addSeed(c.seed)}>
+                {c.label}
+              </button>
+            ))}
+          </div>
           <textarea
             className="input goals-textarea"
             rows={4}
@@ -368,6 +391,7 @@ export function Goals({ profile, onChange, onNav }) {
         </>
       ) : (
         <>
+          <p className="page-copy">These shape the strategy Sarah prepares for your meeting. Edit anything — rough is fine.</p>
           <div className="groups">
             <div className="group">
               {goals.map((g) => (
