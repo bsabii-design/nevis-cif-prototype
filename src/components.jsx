@@ -157,15 +157,21 @@ const missingValueLabel = (a) =>
       ? (a.subtype === 'Pension' ? 'Value not added' : 'Balance not added')
       : 'Value not added'
 
-/* One shared row for every saved asset type. No icons, avatars or logos. */
+/* One shared row for every saved asset type. Letter avatar when the row has an institution. */
 export function AssetRow({ asset, onEdit, onRemove }) {
   const cur = asset.currency ?? 'USD'
   const { primary, secondary } = assetRowText(asset)
+  const avatar = institutionAvatar(asset.institutionOrProvider)
   return (
     <div className="arow" onClick={onEdit} role="button" tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit() }
       }}>
+      {avatar && (
+        <span className="avatar" style={{ background: avatar.color }} aria-hidden="true">
+          {avatar.letter}
+        </span>
+      )}
       <div className="arow-text">
         <div className="arow-primary">{primary}</div>
         {secondary && <div className="arow-secondary">{secondary}</div>}
