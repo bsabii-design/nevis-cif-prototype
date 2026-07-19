@@ -4,6 +4,7 @@ import { Dialog } from './ui.jsx'
 import { Sidebar, TopBar } from './components.jsx'
 import { AssetPanel, LiabilityModal } from './forms.jsx'
 import { Goals, NetWorth, Personal, Welcome, Work } from './screens.jsx'
+import { InputLab } from './inputlab.jsx'
 import { useSavedFlash } from './hooks.js'
 
 const LEAVE_COPY = {
@@ -226,6 +227,7 @@ export default function App() {
             )}
             {r.name === 'work' && <Work profile={profile} onChange={updateProfile} onNav={goSection} />}
             {r.name === 'goals' && <Goals profile={profile} onChange={updateProfile} onNav={goSection} />}
+            {r.name === 'inputlab' && <InputLab />}
             {r.name === 'networth' && (
               <NetWorth
                 profile={profile}
@@ -279,6 +281,8 @@ export default function App() {
         <button className="footer-link" onClick={resetDemo}>Reset demo</button>
         <span className="footer-sep">·</span>
         <button className="footer-link" onClick={blankStart}>Blank start</button>
+        <span className="footer-sep">·</span>
+        <button className="footer-link" onClick={() => setRoute({ name: 'inputlab' })}>Input lab</button>
       </footer>
 
       {objectModal?.kind === 'liability' && (

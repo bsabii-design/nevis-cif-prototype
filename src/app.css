@@ -592,6 +592,51 @@ input, select, textarea { font: inherit; color: inherit; }
 .money { display: grid; grid-template-columns: 76px 1fr; gap: var(--space-8); }
 .money-cur { padding-right: var(--space-24); }
 
+/* ---------------- Input lab (exploration branch) ---------------- */
+
+.lab { max-width: 720px; gap: var(--space-48); }
+.lab-variant { display: flex; flex-direction: column; gap: var(--space-16); }
+.lab-variant-head { display: flex; gap: var(--space-12); align-items: flex-start; }
+.lab-variant-tag {
+  flex: none; width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  font: var(--text-label-sm); color: var(--content-inverse);
+  background: var(--content-primary); border-radius: var(--radius-full);
+}
+.lab-variant-title { font: var(--text-heading-sm); }
+.lab-variant-note { font: var(--text-body-sm); color: var(--content-secondary); margin-top: var(--space-2); }
+
+/* A & C: top-aligned stack */
+.lab-stack { display: flex; flex-direction: column; gap: var(--space-16); max-width: 420px; }
+.lab-field { display: flex; flex-direction: column; gap: var(--space-4); }
+
+/* B: settings-style rows */
+.lab-rows { border-top: var(--border-w) solid var(--border-subtle); }
+.lab-row {
+  display: grid; grid-template-columns: 1fr minmax(0, 300px);
+  align-items: start; gap: var(--space-24);
+  padding: var(--space-16) 0;
+  border-bottom: var(--border-w) solid var(--border-subtle);
+}
+.lab-row-head { display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-8); }
+.lab-row-label { font: var(--text-label-md); }
+.lab-row-desc { font: var(--text-body-sm); color: var(--content-tertiary); }
+
+/* C: filled input — grey fill at rest, soft lift on focus (no hard border) */
+.input-filled {
+  background: var(--bg-secondary);
+  border-color: transparent;
+  transition: background-color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease);
+}
+.input-filled:hover { background: var(--bg-secondary-hover); border-color: transparent; }
+.input-filled:focus {
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+  box-shadow: 0 0 0 3px var(--color-black-a6);
+}
+
 /* Institution autocomplete */
 .combo { position: relative; }
 .combo-avatar { position: absolute; left: var(--space-8); top: 50%; transform: translateY(-50%); pointer-events: none; }
