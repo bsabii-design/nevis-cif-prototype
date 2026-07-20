@@ -161,7 +161,7 @@ export const computeSummary = (profile) => {
   const totalLiabs = knownLiabs.reduce((s, l) => s + usdOf(l.outstandingBalance, l.currency), 0)
   const unknownLiabs = liabilities.length - knownLiabs.length
 
-  const assetsRow = { label: 'Total assets', value: assets.length === 0 ? 'None added' : knownAssets.length === 0 ? '—' : fmtCompact(totalAssets) }
+  const assetsRow = { label: 'Total assets', value: assets.length === 0 ? 'None added' : knownAssets.length === 0 ? '—' : fmtUSD(totalAssets) }
   const excludesLine = unknownAssets > 0
     ? `Excludes ${unknownAssets} asset${unknownAssets > 1 ? 's' : ''} without a value`
     : null
@@ -190,7 +190,7 @@ export const computeSummary = (profile) => {
   }
 
   // Liabilities resolved (explicitly none, or all balances known)
-  const liabsRow = { label: 'Total liabilities', value: fmtCompact(totalLiabs) }
+  const liabsRow = { label: 'Total liabilities', value: fmtUSD(totalLiabs) }
 
   // State F — liabilities resolved but no assets added
   if (assets.length === 0) {
