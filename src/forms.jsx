@@ -653,7 +653,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
             </>
           ) : (
             <>
-              <button className="btn btn-tertiary" onClick={requestClose}>Cancel</button>
+              <button className="btn btn-tertiary" onClick={direct ? requestClose : backToChoice}>Cancel</button>
               {stage === 'form' ? (
                 <button className="btn btn-primary" onClick={commitForm}>
                   {category === 'cash'
@@ -853,7 +853,7 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
             <button className="btn btn-secondary" onClick={onClose}>Done</button>
           ) : (
             <>
-              <button className="btn btn-tertiary" onClick={requestClose}>Cancel</button>
+              <button className="btn btn-tertiary" onClick={direct ? requestClose : backToChoice}>Cancel</button>
               <button className="btn btn-primary" onClick={commit}>Add liability</button>
             </>
           )}
