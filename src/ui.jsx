@@ -30,7 +30,7 @@ export function Select({ value, onChange, options, placeholder }) {
 }
 
 /* Compact currency select + amount, thousands separators as you type. */
-export function MoneyInput({ amount, currency = 'USD', onAmount, onCurrency, autoFocus }) {
+export function MoneyInput({ amount, currency = 'USD', onAmount, onCurrency, autoFocus, placeholder = 'Estimated amount' }) {
   const [text, setText] = useState(amount == null ? '' : amount.toLocaleString('en-US'))
   const inputRef = useRef(null)
   const caretDigits = useRef(null)
@@ -66,7 +66,7 @@ export function MoneyInput({ amount, currency = 'USD', onAmount, onCurrency, aut
         onChange={(e) => onCurrency(e.target.value)}>
         {CURRENCIES.map((c) => <option key={c}>{c}</option>)}
       </select>
-      <input ref={inputRef} className="input" value={text} inputMode="numeric" autoFocus={autoFocus} onChange={handleChange} />
+      <input ref={inputRef} className="input" value={text} placeholder={placeholder} inputMode="numeric" autoFocus={autoFocus} onChange={handleChange} />
     </div>
   )
 }
