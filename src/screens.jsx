@@ -323,8 +323,7 @@ function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
         </Field>
       </div>
       <div className="editor-actions">
-        <button className="btn btn-ghost btn-remove" onClick={onRemove}>Remove</button>
-        <span className="editor-actions-spacer" />
+        <button className="btn btn-tertiary" onClick={onRemove}>Remove</button>
         <button className="btn btn-secondary" onClick={onClose}>Done</button>
       </div>
     </div>

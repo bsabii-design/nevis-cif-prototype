@@ -215,8 +215,6 @@ input, select, textarea { font: inherit; color: inherit; }
 .btn-tertiary { color: var(--content-secondary); }
 .btn-tertiary:hover { background: var(--bg-ghost-hover); color: var(--content-primary); }
 .btn-tertiary:active { background: var(--bg-secondary-hover); }
-.btn-remove { color: var(--content-secondary); }
-.btn-remove:hover { color: var(--color-red-bright); background: var(--color-red-soft); }
 
 .link { font: var(--text-label-md); color: var(--content-accent); transition: color var(--duration-fast) var(--ease); }
 .link:hover { color: var(--content-primary); }
@@ -1004,8 +1002,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .goals-actions { display: flex; justify-content: space-between; gap: var(--space-12); }
 .editor-card { flex-direction: column; align-items: stretch; gap: var(--space-16); cursor: default; }
 .editor-wide { grid-column: 1 / -1; }
-.editor-actions { display: flex; align-items: center; gap: var(--space-12); }
-.editor-actions-spacer { flex: 1; }
+.editor-actions { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-8); }
 
 /* ---------------- Upload & extraction ---------------- */
 
