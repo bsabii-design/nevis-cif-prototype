@@ -197,7 +197,7 @@ export const institutionAvatar = (name) => {
   return {
     letter: n[0].toUpperCase(),
     color: AVATAR_COLORS[h % AVATAR_COLORS.length],
-    logo: slug ? `/logos/${slug}.png` : null,
+    logo: slug ? (globalThis.__NEVIS_LOGOS__?.[slug] || `/logos/${slug}.png`) : null, // single-file build injects data URIs
   }
 }
 
