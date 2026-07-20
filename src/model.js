@@ -162,49 +162,34 @@ export const computeSummary = (profile) => {
   const totalLiabs = knownLiabs.reduce((s, l) => s + usdOf(l.outstandingBalance, l.currency), 0)
   const unknownLiabs = liabilities.length - knownLiabs.length
 
-  const assetsRow = { label: 'Total assets', value: assets.length === 0 ? 'None added' : knownAssets.length === 0 ? '—' : fmtUSD(totalAssets) }
+  /* Totals show the state of the data, never status words:
+     no data → '—' · truly zero → $0 · data → the sum. */
+  const assetsRow = { label: 'Total assets', value: knownAssets.length === 0 ? '—' : fmtUSD(totalAssets) }
+  const liabsUnanswered = liabilities.length === 0 && !none
+  const liabsRow = {
+    label: 'Total liabilities',
+    value: liabsUnanswered || unknownLiabs > 0 ? '—' : fmtUSD(totalLiabs),
+  }
+  const rows = [assetsRow, liabsRow]
   const excludesLine = unknownAssets > 0
     ? `Excludes ${unknownAssets} asset${unknownAssets > 1 ? 's' : ''} without a value`
     : null
 
-  // State A — nothing added at all
-  if (assets.length === 0 && liabilities.length === 0 && !none) {
-    return { rows: null, nw: null, line: 'Add assets and liabilities to build your financial picture' }
-  }
-
-  // State D — at least one liability balance is unknown: blocks calculation
-  if (unknownLiabs > 0) {
-    return {
-      rows: [assetsRow, { label: 'Total liabilities', value: 'Incomplete' }],
-      nw: null,
-      line: `Add ${unknownLiabs} missing balance${unknownLiabs > 1 ? 's' : ''} to calculate`,
-    }
-  }
-
-  // Liabilities unanswered (none added, no explicit answer) — State B
-  if (liabilities.length === 0 && !none) {
-    return {
-      rows: [assetsRow, { label: 'Total liabilities', value: 'Not added yet' }],
-      nw: null,
-      line: 'Add liabilities to complete your financial picture',
-    }
-  }
-
-  // Liabilities resolved (explicitly none, or all balances known)
-  const liabsRow = { label: 'Total liabilities', value: fmtUSD(totalLiabs) }
-
-  // State F — liabilities resolved but no assets added
+  /* The line under the figure explains why there is no result — one reason
+     at a time, in the order the client will fix things. */
   if (assets.length === 0) {
-    return { rows: [assetsRow, liabsRow], nw: null, line: 'Add assets to build your financial picture' }
+    return { rows, nw: null, line: 'Add at least one asset to calculate your net worth.' }
   }
-
-  // State C (no known asset values) — never show $0 net worth
   if (knownAssets.length === 0) {
-    return { rows: [assetsRow, liabsRow], nw: null, line: 'Add an asset value to calculate' }
+    return { rows, nw: null, line: 'Add an asset value to calculate your net worth.' }
   }
-
-  // States C / E — calculable
-  return { rows: [assetsRow, liabsRow], nw: totalAssets - totalLiabs, line: excludesLine }
+  if (unknownLiabs > 0) {
+    return { rows, nw: null, line: `Add ${unknownLiabs} missing balance${unknownLiabs > 1 ? 's' : ''} to calculate your net worth.` }
+  }
+  if (liabsUnanswered) {
+    return { rows, nw: null, line: 'Add liabilities to calculate your net worth.' }
+  }
+  return { rows, nw: totalAssets - totalLiabs, line: excludesLine }
 }
 
 export const hasForeignValues = (profile) =>

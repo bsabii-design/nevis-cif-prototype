@@ -132,6 +132,8 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Assets empty state + deferral note */
 .nw-empty { display: flex; flex-direction: column; gap: var(--space-8); align-items: flex-start; padding: var(--space-8) 0 var(--space-16); }
 .nw-empty-title { font: var(--text-heading-sm); }
+.nw-empty-cta { margin-top: var(--space-8); }
+.nw-pill-count { margin-left: var(--space-8); font: var(--text-body-sm); color: var(--content-tertiary); }
 .nw-deferred-note { font: var(--text-body-sm); color: var(--content-secondary); }
 .link-quiet { font: var(--text-body-sm); color: var(--content-tertiary); text-align: left; transition: color var(--duration-fast) var(--ease); }
 .link-quiet:hover { color: var(--content-primary); }

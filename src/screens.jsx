@@ -485,18 +485,19 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
             <button role="tab" aria-selected={tab === 'assets'}
               className={'nw-pill' + (tab === 'assets' ? ' nw-pill-active' : '')}
               onClick={() => onTab('assets')}>
-              Assets
+              Assets{assets.length > 0 && <span className="nw-pill-count">{assets.length}</span>}
             </button>
             <button role="tab" aria-selected={tab === 'liabilities'}
               className={'nw-pill' + (tab === 'liabilities' ? ' nw-pill-active' : '')}
               onClick={() => onTab('liabilities')}>
-              Liabilities
+              Liabilities{liabilities.length > 0 && <span className="nw-pill-count">{liabilities.length}</span>}
             </button>
           </div>
           <div className="nw-toolbar-right">
-            {tab === 'assets' ? (
+            {tab === 'assets' && assets.length > 0 && (
               <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
-            ) : (
+            )}
+            {tab === 'liabilities' && liabilities.length > 0 && (
               <button className="btn btn-primary" onClick={() => onAddLiability(null)}>Add liabilities</button>
             )}
           </div>
@@ -508,11 +509,9 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
             <>
               {assets.length === 0 && (
                 <div className="nw-empty">
-                  <h2 className="nw-empty-title">Start your financial picture</h2>
-                  <p className="page-copy">
-                    Add accounts, property, and anything else you own.<br />
-                    Your net worth builds as you go — rough estimates are fine.
-                  </p>
+                  <h2 className="nw-empty-title">No assets added yet</h2>
+                  <p className="page-copy">Add accounts, property, investments, or anything else you own.</p>
+                  <button className="btn btn-primary nw-empty-cta" onClick={() => onAddAsset(null)}>Add assets</button>
                 </div>
               )}
               {assetGroups.map((cat) => {
@@ -548,11 +547,9 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
             <>
               {liabilities.length === 0 && !none && (
                 <div className="nw-empty">
-                  <h2 className="nw-empty-title">What do you owe?</h2>
-                  <p className="page-copy">
-                    Mortgages, loans, credit lines — anything you owe.<br />
-                    This completes the picture: net worth is what you own minus what you owe.
-                  </p>
+                  <h2 className="nw-empty-title">No liabilities added yet</h2>
+                  <p className="page-copy">Add mortgages, loans, credit balances, or anything else you owe.</p>
+                  <button className="btn btn-primary nw-empty-cta" onClick={() => onAddLiability(null)}>Add liabilities</button>
                   <button className="link-quiet" onClick={onAnswerNone}>
                     I don't have any liabilities
                   </button>
