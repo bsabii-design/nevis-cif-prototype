@@ -6,7 +6,7 @@ import {
   RETIREMENT_GROUPS, RETIREMENT_PLANS, RETIREMENT_PROVIDERS, RETIREMENT_TYPES,
   LIABILITY_CATEGORIES, assetCategory, liabilityCategory, uid,
 } from './model.js'
-import { extractedAccounts, MOCK_STATEMENT_NAME } from './parse.js'
+import { extractedAccounts, MOCK_STATEMENT_NAME, parseAccountsText } from './parse.js'
 import { Dialog, Field, GroupedSelect, InstitutionCombobox, MoneyInput, Select, TextInput } from './ui.jsx'
 
 function MoneyField({ label, amount, currency, onAmount, onCurrency }) {
@@ -327,6 +327,9 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
   const [edited, setEdited] = useState(false)
   const [confirmLeave, setConfirmLeave] = useState(null) // {run}
   const [attempted, setAttempted] = useState(false)
+  const [uploadOpen, setUploadOpen] = useState(false)
+  const [uploadText, setUploadText] = useState('')
+  const [readingLabel, setReadingLabel] = useState('')
   const fileRef = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -384,12 +387,27 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
   }
 
   const startReading = () => {
+    setReadingLabel(`Reading ${MOCK_STATEMENT_NAME}`)
     setStage('reading')
     setTimeout(() => {
       setAccounts(extractedAccounts())
       setEdited(false)
       setStage('review')
     }, 1500)
+  }
+
+  const submitDescription = () => {
+    const t = uploadText.trim()
+    if (!t) return
+    setReadingLabel('Creating your accounts…')
+    setStage('reading')
+    setTimeout(() => {
+      const parsed = parseAccountsText(t)
+      setAccounts(parsed)
+      setEdited(false)
+      setUploadText('')
+      setStage('review')
+    }, 1200)
   }
 
   const setAccount = (id, k, v) => {
@@ -459,19 +477,53 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
                 </button>
               ))}
             </div>
-            <div className="upload-card" role="button" tabIndex={0}
-              onClick={() => fileRef.current?.click()}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileRef.current?.click() } }}
+            <div className={'upload-card' + (uploadOpen ? ' upload-card-open' : '')} role="button" tabIndex={0}
+              onClick={() => !uploadOpen && setUploadOpen(true)}
+              onKeyDown={(e) => { if (!uploadOpen && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setUploadOpen(true) } }}
               onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('is-drag') }}
               onDragLeave={(e) => e.currentTarget.classList.remove('is-drag')}
               onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('is-drag'); startReading() }}>
-              <span className="upload-orb"><UploadIcon /></span>
-              <span className="upload-card-title">Drop statements here</span>
-              <ol className="upload-steps">
-                <li><span className="upload-step-n">1</span>Drop one or more PDFs or photos</li>
-                <li><span className="upload-step-n">2</span>Nevis extracts accounts and balances</li>
-                <li><span className="upload-step-n">3</span>You review before anything is added</li>
-              </ol>
+              {!uploadOpen ? (
+                <>
+                  <span className="upload-orb"><UploadIcon /></span>
+                  <span className="upload-card-title">Add statements — or just describe your accounts</span>
+                  <span className="upload-card-sub">Nevis turns either into your financial picture.</span>
+                </>
+              ) : (
+                <>
+                  <div className="upload-composer">
+                    <textarea
+                      className="input upload-desc"
+                      rows={3}
+                      autoFocus
+                      placeholder={'For example: Fidelity brokerage around $1.2M, Chase checking $40K, and a Vanguard Roth IRA about $250K.'}
+                      value={uploadText}
+                      onChange={(e) => setUploadText(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitDescription() } }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <button
+                      className={'upload-send' + (uploadText.trim() ? ' upload-send-on' : '')}
+                      aria-label="Create accounts from your description"
+                      onClick={(e) => { e.stopPropagation(); submitDescription() }}>
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="upload-actions" onClick={(e) => e.stopPropagation()}>
+                    <button className="btn btn-secondary upload-add-btn" onClick={() => fileRef.current?.click()}>
+                      <UploadIcon /> Add statements
+                    </button>
+                    <span className="upload-hint">or drop files here</span>
+                  </div>
+                  <ol className="upload-steps">
+                    <li><span className="upload-step-n">1</span>Drop statements — or write it your way</li>
+                    <li><span className="upload-step-n">2</span>Nevis extracts accounts and balances</li>
+                    <li><span className="upload-step-n">3</span>You review before anything is added</li>
+                  </ol>
+                </>
+              )}
             </div>
             <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" hidden onChange={startReading} />
           </>
@@ -480,7 +532,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
         {stage === 'reading' && (
           <div className="reading">
             <span className="spinner" aria-hidden="true" />
-            <span className="reading-text">Reading {MOCK_STATEMENT_NAME}</span>
+            <span className="reading-text">{readingLabel || `Reading ${MOCK_STATEMENT_NAME}`}</span>
           </div>
         )}
 
@@ -558,7 +610,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
   )
 }
 
-const SUBTYPE_OPTIONS = [...INVESTMENT_TYPES.filter((t) => t !== 'Other'), ...RETIREMENT_TYPES]
+const SUBTYPE_OPTIONS = [...CASH_BANK_TYPES, ...INVESTMENT_TYPES.filter((t) => t !== 'Other'), ...RETIREMENT_TYPES]
 
 /* ---------------- Liability side panel (same shell as assets) ---------------- */
 

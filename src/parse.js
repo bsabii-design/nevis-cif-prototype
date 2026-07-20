@@ -1,5 +1,5 @@
 /* Mocked AI: goals text → goal cards, statement → extracted accounts. */
-import { uid } from './model.js'
+import { BANKS, INSTITUTIONS, INVESTMENT_FIRMS, RETIREMENT_PROVIDERS, uid } from './model.js'
 
 /* ---------------- Goals parsing (spec §11) ---------------- */
 
@@ -84,3 +84,51 @@ export const extractedAccounts = () => [
   { id: uid(), title: 'Fidelity Brokerage Account', institution: 'Fidelity', accountType: 'Brokerage account', category: 'investment', value: 1240500, currency: 'USD' },
   { id: uid(), title: 'Traditional IRA', institution: 'Fidelity', accountType: 'Traditional IRA', category: 'retirement', value: 480200, currency: 'USD' },
 ]
+
+/* ---------------- Describe-your-accounts parsing (mock) ----------------
+   "Fidelity brokerage around $1.2M, Chase checking $40K and a Vanguard
+   Roth IRA about $250K" -> extracted accounts for the same review stage. */
+
+const ALL_INSTITUTIONS = [...new Set([...BANKS, ...INVESTMENT_FIRMS, ...RETIREMENT_PROVIDERS, ...INSTITUTIONS])]
+
+const TYPE_PATTERNS = [
+  [/roth\s*ira/i, 'Roth IRA'], [/traditional\s*ira/i, 'Traditional IRA'],
+  [/sep\s*ira/i, 'SEP IRA'], [/\bira\b/i, 'Traditional IRA'],
+  [/40[13]\s*\(?k\)?/i, '401(k)'], [/403\s*\(?b\)?/i, '403(b)'], [/457/i, '457(b)'],
+  [/pension/i, 'Pension'],
+  [/brokerage/i, 'Brokerage account'], [/managed/i, 'Managed account'], [/trust/i, 'Trust account'],
+  [/checking/i, 'Checking'], [/savings/i, 'Savings'], [/money\s*market/i, 'Money market'],
+  [/\bcds?\b|certificate/i, 'Certificate of deposit'],
+]
+
+const extractAccountAmount = (clause) => {
+  const masked = clause.replace(/40[13]\s*\(?[kb]\)?|457\s*\(?b\)?/gi, ' ')
+  const m = masked.replace(/,/g, '').match(/\$?\s*(\d+(?:\.\d+)?)\s*(m|million|k|thousand)?\b/i)
+  if (!m) return null
+  if (!/[$km]|million|thousand/i.test(m[0]) && Number(m[1]) < 1000) return null
+  let n = parseFloat(m[1])
+  const suf = (m[2] || '').toLowerCase()
+  if (suf.startsWith('m')) n *= 1e6
+  else if (suf) n *= 1e3
+  return Math.round(n)
+}
+
+export const parseAccountsText = (text) => {
+  const clauses = text.split(/,\s*(?:and\s+)?|\s+and\s+|\.\s+|;\s*/i).map((c) => c.trim()).filter(Boolean)
+  const accounts = []
+  for (const clause of clauses) {
+    const inst = ALL_INSTITUTIONS.find((n) => clause.toLowerCase().includes(n.toLowerCase())) || ''
+    const type = (TYPE_PATTERNS.find(([re]) => re.test(clause)) || [])[1] || ''
+    const value = extractAccountAmount(clause)
+    if (!inst && !type && value == null) continue
+    accounts.push({
+      id: uid(),
+      title: [inst, type.replace(/ account$/i, '')].filter(Boolean).join(' ') || 'Account',
+      institution: inst,
+      accountType: type || 'Brokerage account',
+      value,
+      currency: 'USD',
+    })
+  }
+  return accounts
+}

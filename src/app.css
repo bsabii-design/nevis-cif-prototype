@@ -637,7 +637,29 @@ input, select, textarea { font: inherit; color: inherit; }
   border-radius: var(--radius-full);
 }
 .upload-orb .panel-upload-icon { color: var(--content-inverse); }
-.upload-card-title { font: var(--text-label-lg); }
+.upload-card-title { font: var(--text-label-lg); text-align: center; }
+.upload-card-sub { font: var(--text-body-sm); color: var(--content-tertiary); }
+.upload-card-open { cursor: default; align-items: stretch; }
+.upload-composer { position: relative; }
+.upload-desc {
+  display: block;
+  min-height: 84px; /* .input's fixed control height is declared later; min-height outranks it */
+  padding: var(--space-8) var(--space-48) var(--space-8) var(--space-12);
+  background-color: var(--bg-tint);
+  line-height: 20px; resize: none;
+}
+.upload-send {
+  position: absolute; right: 8px; bottom: 8px;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--content-tertiary);
+  border-radius: var(--radius-full);
+  transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+}
+.upload-send-on { background: var(--bg-primary); color: var(--content-inverse); }
+.upload-actions { display: flex; align-items: center; gap: var(--space-8); }
+.upload-add-btn { gap: var(--space-8); }
+.upload-hint { font: var(--text-body-sm); color: var(--content-tertiary); }
 .upload-steps {
   list-style: none; margin: var(--space-4) 0 0;
   display: flex; flex-direction: column; gap: var(--space-8);
