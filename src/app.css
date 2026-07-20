@@ -913,10 +913,14 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .goal-note { font: var(--text-body-sm); color: var(--content-tertiary); }
 
-/* Composer sticks above the bottom nav so it never scrolls out of reach
-   when the goal list grows; a soft fade lets rows slip under it. */
+/* Chat-style layout: the goal list grows from the top, the composer is
+   anchored at the bottom of the content area at any list length; when the
+   list outgrows the screen it stays pinned above the bottom nav (sticky)
+   and rows dissolve under the fade. */
+.goals-screen .narrow-col { flex: 1; }
 .goal-compose {
   display: flex; flex-direction: column; gap: var(--space-8);
+  margin-top: auto;
   position: sticky; bottom: 56px; z-index: 3;
   background: var(--bg-page);
   padding-top: var(--space-4);

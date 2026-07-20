@@ -342,7 +342,7 @@ export function Goals({ profile, onChange }) {
 
   const empty = goals.length === 0
   return (
-    <div className="screen">
+    <div className="screen goals-screen">
       <div className="narrow-col">
       <div className="title-block">
         <h1 className="page-title">Your goals</h1>
