@@ -203,7 +203,7 @@ export default function App() {
           category: ['Checking', 'Savings', 'Money market', 'Certificate of deposit'].includes(a.accountType) ? 'cash'
             : a.accountType.includes('IRA') || ['401(k)', '403(b)', '457(b)', 'Pension'].includes(a.accountType) ? 'retirement'
             : 'investment',
-          subtype: a.accountType, name: a.title,
+          subtype: a.accountType, name: (a.nickname || '').trim() || a.title,
           institutionOrProvider: a.institution, address: '',
           currency: a.currency, value: a.value ?? null,
         })),

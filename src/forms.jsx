@@ -5,6 +5,7 @@ import {
   INSURANCE_PROVIDERS, INSURANCE_TYPES, INVESTMENT_FIRMS, INVESTMENT_TYPES, PROPERTY_TYPES,
   RETIREMENT_GROUPS, RETIREMENT_PLANS, RETIREMENT_PROVIDERS, RETIREMENT_TYPES,
   LIABILITY_CATEGORIES, assetCategory, liabilityCategory, uid, CRYPTO_ASSETS, CARD_ISSUERS,
+  fmtMoney, institutionAvatar,
 } from './model.js'
 import { extractedAccounts, MOCK_STATEMENT_NAME, parseAccountsText } from './parse.js'
 import { Dialog, Field, GroupedSelect, InstitutionCombobox, MoneyInput, Select, TextInput, SearchableSelect } from './ui.jsx'
@@ -334,6 +335,9 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
   const [attempted, setAttempted] = useState(false)
   const [uploadText, setUploadText] = useState('')
   const [readingLabel, setReadingLabel] = useState('')
+  const [skipped, setSkipped] = useState([])          // extracted ids excluded from commit
+  const [editingId, setEditingId] = useState(null)    // review drill-in
+  const editSnapshot = useRef(null)
   const fileRef = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -380,7 +384,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
   const requestClose = () => guarded(onClose)
   const backToChoice = () => guarded(() => {
     setStage('choice'); setCategory(null); setForm(emptyAssetForm())
-    setAccounts([]); setEdited(false)
+    setAccounts([]); setEdited(false); setSkipped([]); setEditingId(null)
   })
 
   const pickCategory = (key) => {
@@ -422,6 +426,28 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
     setEdited(true)
     setAccounts((list) => list.filter((a) => a.id !== id))
   }
+  const toggleSkip = (id) => {
+    setEdited(true)
+    setSkipped((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]))
+  }
+  const openEdit = (id) => {
+    editSnapshot.current = JSON.stringify(accounts.find((a) => a.id === id))
+    setEditingId(id)
+  }
+  const closeEdit = (keep) => {
+    if (!keep && editSnapshot.current) {
+      const prev = JSON.parse(editSnapshot.current)
+      setAccounts((list) => list.map((a) => (a.id === prev.id ? prev : a)))
+    }
+    setEditingId(null)
+  }
+  const editingAccount = editingId ? accounts.find((a) => a.id === editingId) : null
+  const activeAccounts = accounts.filter((a) => !skipped.includes(a.id))
+  /* "Edit investment account" — category label from the extracted type. */
+  const extractCatLabel = (t) =>
+    ['Checking', 'Savings', 'Money market', 'Certificate of deposit'].includes(t) ? 'bank'
+      : t.includes('IRA') || ['401(k)', '403(b)', '457(b)', 'Pension'].includes(t) ? 'retirement'
+      : 'investment'
 
   const cat = category ? assetCategory(category) : null
 
@@ -446,7 +472,9 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
   const title =
     stage === 'choice' ? 'Add assets' :
     stage === 'upload' || stage === 'reading' ? 'Upload a statement' :
-    stage === 'review' ? `We found ${accounts.length} account${accounts.length === 1 ? '' : 's'}` :
+    stage === 'review' ? (editingAccount
+      ? `Edit ${extractCatLabel(editingAccount.accountType)} account`
+      : `We found ${accounts.length} account${accounts.length === 1 ? '' : 's'}`) :
     asset ? editTitle() : cat.formTitle
 
   const confirmCopy = stage === 'review'
@@ -460,10 +488,17 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
       <div className="panel-head">
         <div className="panel-head-titles">
           {!direct && stage !== 'choice' && (
-            <button className="panel-back" onClick={backToChoice}>Back to Add assets</button>
+            stage === 'review'
+              ? <button className="panel-back" onClick={() => (editingAccount ? closeEdit(true) : backToChoice())}>← Back</button>
+              : <button className="panel-back" onClick={backToChoice}>Back to Add assets</button>
           )}
           <h2 className="panel-title">{title}</h2>
           {stage === 'choice' && <p className="panel-sub">Choose an asset type to add.</p>}
+          {stage === 'review' && (
+            <p className="panel-sub">
+              {editingAccount ? 'Review this account before adding it.' : 'Review and edit anything before adding them.'}
+            </p>
+          )}
         </div>
         <button className="menu-trigger" aria-label="Close" onClick={requestClose}>✕</button>
       </div>
@@ -532,29 +567,68 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
           </div>
         )}
 
-        {stage === 'review' && (
-          <>
-            <p className="page-copy">Review the details before adding them to your profile.</p>
-            {accounts.map((a) => (
-              <div className="extract-card" key={a.id}>
-                <div className="extract-head">
-                  <span className="extract-title">{a.title}</span>
-                  <button className="link-danger" onClick={() => removeAccount(a.id)}>Remove account</button>
+        {stage === 'review' && !editingAccount && (
+          <div className="xcards">
+            {accounts.map((a) => {
+              const off = skipped.includes(a.id)
+              const av = institutionAvatar(a.institution)
+              return (
+                <div key={a.id} className={'xcard' + (off ? ' xcard-off' : '')}
+                  role="button" tabIndex={0}
+                  onClick={() => !off && openEdit(a.id)}
+                  onKeyDown={(e) => { if (!off && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openEdit(a.id) } }}>
+                  <div className="xcard-title">
+                    <span>{a.accountType.replace(/ account$/i, '')}</span>
+                    {a.institution && (
+                      <span className="xcard-inst">
+                        <span className="xcard-dot" aria-hidden="true">·</span>
+                        {av && (av.logo
+                          ? <img className="avatar avatar-sm avatar-logo" src={av.logo} alt="" aria-hidden="true" />
+                          : <span className="avatar avatar-sm" style={{ background: av.color }} aria-hidden="true">{av.letter}</span>)}
+                        {a.institution}
+                      </span>
+                    )}
+                  </div>
+                  {a.source && (
+                    <div className="xcard-src">
+                      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M8 1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4z" /><path d="M8 1v3h3" />
+                      </svg>
+                      <span className="xcard-src-name">{a.source}</span>
+                    </div>
+                  )}
+                  <div className="xcard-row">
+                    <span className="xcard-amount">{a.value == null ? '—' : fmtMoney(a.value, a.currency)}</span>
+                    <button className="xcard-skip" onClick={(e) => { e.stopPropagation(); toggleSkip(a.id) }}>
+                      {off ? 'Undo' : 'Skip'}
+                    </button>
+                  </div>
                 </div>
-                <Field label="Institution">
-                  <InstitutionCombobox value={a.institution} onChange={(v) => setAccount(a.id, 'institution', v)} />
-                </Field>
-                <Field label="Account type">
-                  <Select value={a.accountType} onChange={(v) => setAccount(a.id, 'accountType', v)} options={SUBTYPE_OPTIONS} />
-                </Field>
-                <Field label="Current value">
-                  <MoneyInput amount={a.value} currency={a.currency}
-                    onAmount={(v) => setAccount(a.id, 'value', v)}
-                    onCurrency={(c) => setAccount(a.id, 'currency', c)} />
-                </Field>
-              </div>
-            ))}
-          </>
+              )
+            })}
+          </div>
+        )}
+
+        {stage === 'review' && editingAccount && (
+          <div className="focus-form">
+            <Field label="Institution" required>
+              <InstitutionCombobox value={editingAccount.institution}
+                onChange={(v) => setAccount(editingAccount.id, 'institution', v)} />
+            </Field>
+            <Field label="Account type" required>
+              <Select value={editingAccount.accountType}
+                onChange={(v) => setAccount(editingAccount.id, 'accountType', v)} options={SUBTYPE_OPTIONS} />
+            </Field>
+            <Field label="Account nickname">
+              <TextInput value={editingAccount.nickname || ''} placeholder="Fidelity brokerage"
+                onChange={(v) => setAccount(editingAccount.id, 'nickname', v)} />
+            </Field>
+            <Field label="Current value">
+              <MoneyInput amount={editingAccount.value} currency={editingAccount.currency}
+                onAmount={(v) => setAccount(editingAccount.id, 'value', v)}
+                onCurrency={(c) => setAccount(editingAccount.id, 'currency', c)} />
+            </Field>
+          </div>
         )}
 
         {stage === 'form' && (
@@ -572,6 +646,11 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
           )}
           {stage === 'form' && asset ? (
             <button className="btn btn-secondary" onClick={onClose}>Done</button>
+          ) : stage === 'review' && editingAccount ? (
+            <>
+              <button className="btn btn-tertiary" onClick={() => closeEdit(false)}>Cancel</button>
+              <button className="btn btn-secondary" onClick={() => closeEdit(true)}>Done</button>
+            </>
           ) : (
             <>
               <button className="btn btn-tertiary" onClick={requestClose}>Cancel</button>
@@ -582,8 +661,9 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
                     : cat.cta}
                 </button>
               ) : (
-                <button className="btn btn-primary" onClick={() => onCommitAccounts(accounts)}>
-                  Add {accounts.length} account{accounts.length === 1 ? '' : 's'}
+                <button className="btn btn-primary" disabled={activeAccounts.length === 0}
+                  onClick={() => activeAccounts.length && onCommitAccounts(activeAccounts)}>
+                  Add {activeAccounts.length} account{activeAccounts.length === 1 ? '' : 's'}
                 </button>
               )}
             </>

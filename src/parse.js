@@ -81,8 +81,8 @@ export const parseGoals = (text) => {
 export const MOCK_STATEMENT_NAME = 'Fidelity_statement.pdf'
 
 export const extractedAccounts = () => [
-  { id: uid(), title: 'Fidelity Brokerage Account', institution: 'Fidelity', accountType: 'Brokerage account', category: 'investment', value: 1240500, currency: 'USD' },
-  { id: uid(), title: 'Traditional IRA', institution: 'Fidelity', accountType: 'Traditional IRA', category: 'retirement', value: 480200, currency: 'USD' },
+  { id: uid(), title: 'Fidelity Brokerage', institution: 'Fidelity', accountType: 'Brokerage account', category: 'investment', value: 1240500, currency: 'USD', source: 'Fidelity_Brokerage_Statement_May_2026.pdf' },
+  { id: uid(), title: 'Vanguard Traditional IRA', institution: 'Vanguard', accountType: 'Traditional IRA', category: 'retirement', value: 480200, currency: 'USD', source: 'Vanguard_Traditional_IRA_Q1_2026.pdf' },
 ]
 
 /* ---------------- Describe-your-accounts parsing (mock) ----------------
@@ -138,6 +138,7 @@ export const parseAccountsText = (text) => {
       accountType: type || 'Brokerage account',
       value,
       currency: 'USD',
+      source: 'From your description',
     })
   }
   return accounts
