@@ -156,11 +156,14 @@ input, select, textarea { font: inherit; color: inherit; }
 
 .page {
   flex: 1; min-width: 0;
-  /* Reading column centered in whatever space the shell leaves it —
-     between sidebar and panel when the panel is open (per Figma Desktop-41). */
+  /* Figma Desktop-41 grid: the panel zone is ALWAYS reserved, so the reading
+     column is centered in the fixed area between sidebar and panel and never
+     shifts. When the panel is closed, .page is the shell's last child and
+     keeps the zone empty via margin. */
   padding: var(--space-16) var(--space-24) 0;
   display: flex; flex-direction: column; align-items: center;
 }
+.page:last-child { margin-right: var(--panel-w); }
 .page-centered { align-items: center; padding-left: var(--space-24); }
 .screen { flex: 1; display: flex; flex-direction: column; gap: var(--space-24); width: 100%; max-width: var(--content-col); padding-bottom: var(--space-48); }
 .narrow-col { max-width: none; }
