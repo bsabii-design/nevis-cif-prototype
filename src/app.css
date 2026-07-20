@@ -211,9 +211,11 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Solid destructive — lives only in confirmation dialogs. */
 .btn-danger { background: var(--color-red); color: var(--content-inverse); }
 .btn-danger:hover { background: var(--color-red-80); }
-/* Tertiary text action (panel Remove): quiet until hovered, never red in place. */
+/* Tertiary text action (Cancel, Remove): text only — no shape at rest OR on
+   hover, so it can never be mistaken for a secondary button. Hover darkens
+   the text; a brief 6% flash marks the press. */
 .btn-tertiary { color: var(--content-secondary); }
-.btn-tertiary:hover { background: var(--bg-ghost-hover); color: var(--content-primary); }
+.btn-tertiary:hover { color: var(--content-primary); }
 .btn-tertiary:active { background: var(--bg-secondary-hover); }
 
 .link { font: var(--text-label-md); color: var(--content-accent); transition: color var(--duration-fast) var(--ease); }
