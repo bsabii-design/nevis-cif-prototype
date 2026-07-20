@@ -8,15 +8,23 @@ const THIS_YEAR = new Date().getFullYear()
 
 const sentenceCase = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s)
 
+/* People sometimes type in ALL CAPS — never render it back at them. */
+const normalizeCase = (s) => {
+  const letters = s.replace(/[^a-zA-Z]/g, '')
+  return letters.length >= 4 && letters === letters.toUpperCase() ? s.toLowerCase() : s
+}
+
 const cleanTitle = (clause) =>
   sentenceCase(
-    clause
-      .replace(/^(i['’]d like to|i['’]d love to|i want to|i hope to|i plan to|we['’]d like to|we want to|and|also)\s+/i, '')
-      .replace(/\s+for (?:about|around)?\s*\$?\d[\w,.]*/i, '')
-      .replace(/\s+in about .*$/i, '')
-      .replace(/\s+(?:by|in)\s+\d{4}.*$/i, '')
-      .replace(/[.?!]\s*$/, '')
-      .trim()
+    normalizeCase(
+      clause
+        .replace(/^(i['’]d like to|i['’]d love to|i want to|i hope to|i plan to|we['’]d like to|we want to|and|also)\s+/i, '')
+        .replace(/\s+for (?:about|around)?\s*\$?\d[\w,.]*/i, '')
+        .replace(/\s+in about .*$/i, '')
+        .replace(/\s+(?:by|in)\s+\d{4}.*$/i, '')
+        .replace(/[.?!]\s*$/, '')
+        .trim()
+    )
   )
 
 const extractYear = (clause) => {

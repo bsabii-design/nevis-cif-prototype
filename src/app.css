@@ -913,7 +913,34 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .goal-note { font: var(--text-body-sm); color: var(--content-tertiary); }
 
-.goal-compose { display: flex; flex-direction: column; gap: var(--space-12); }
+/* Composer sticks above the bottom nav so it never scrolls out of reach
+   when the goal list grows; a soft fade lets rows slip under it. */
+.goal-compose {
+  display: flex; flex-direction: column; gap: var(--space-8);
+  position: sticky; bottom: 56px; z-index: 3;
+  background: var(--bg-page);
+  padding-top: var(--space-4);
+}
+.goal-compose::before {
+  content: '';
+  position: absolute; bottom: 100%; left: 0; right: 0;
+  height: var(--space-16);
+  background: linear-gradient(to top, var(--color-beige), var(--color-beige-0));
+  pointer-events: none;
+}
+.goal-composer { position: relative; }
+.goal-composer .goals-textarea { padding-right: var(--space-48); }
+/* GPT-style send: quiet until there is something to send */
+.composer-send {
+  position: absolute; right: 10px; bottom: 10px;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--content-tertiary);
+  border-radius: var(--radius-full);
+  transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+}
+.composer-send-on { background: var(--bg-primary); color: var(--content-inverse); }
+.composer-send-on:hover { background: var(--bg-primary-hover); }
 .self-end { align-self: flex-end; }
 .goals-textarea { height: auto; padding: var(--space-12); line-height: 20px; resize: vertical; }
 .goals-actions { display: flex; justify-content: space-between; gap: var(--space-12); }

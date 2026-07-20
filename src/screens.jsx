@@ -278,19 +278,19 @@ const GOAL_TRIES = [
   { label: 'Leave a legacy', seed: 'I want to leave a legacy for my family' },
 ]
 
-/* Resting rows never show absence; the editor offers optional detail. */
-function GoalRow({ goal, onChange, onRemove }) {
-  const [editing, setEditing] = useState(!goal.title)
+/* Resting rows never show absence; the editor offers optional detail.
+   One goal open at a time — the list stays compact (accordion, parent-owned). */
+function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
   const set = (k, v) => onChange({ ...goal, [k]: v })
 
   if (!editing) {
     const meta = [goal.horizon, goal.targetAmount != null ? fmtMoney(goal.targetAmount, goal.currency) : null]
       .filter(Boolean).join(' · ')
     return (
-      <div className="goal-row" onClick={() => setEditing(true)} role="button" tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEditing(true) } }}>
+      <div className="goal-row" onClick={onOpen} role="button" tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() } }}>
         <span className="goal-row-title">{goal.title}</span>
-        {meta ? <span className="goal-row-meta">{meta}</span> : <span className="goal-row-hint">When?</span>}
+        {meta ? <span className="goal-row-meta">{meta}</span> : <span className="goal-row-hint">Add timing</span>}
       </div>
     )
   }
@@ -298,7 +298,7 @@ function GoalRow({ goal, onChange, onRemove }) {
     <div className="goal-editor">
       <Field label="Goal">
         <TextInput value={goal.title} onChange={(v) => set('title', v)}
-          placeholder="What would you like to achieve?" autoFocus={!goal.title} />
+          placeholder="What would you like to achieve?" />
       </Field>
       <Field label="When">
         <RadioRow name="When" options={HORIZONS} value={goal.horizon || ''}
@@ -308,11 +308,10 @@ function GoalRow({ goal, onChange, onRemove }) {
         <MoneyInput amount={goal.targetAmount} currency={goal.currency}
           onAmount={(v) => set('targetAmount', v)} onCurrency={(c) => set('currency', c)} />
       </Field>
-      {goal.note && <p className="goal-note">You wrote: “{goal.note}”</p>}
       <div className="editor-actions">
         <button className="btn btn-ghost btn-remove" onClick={onRemove}>Remove</button>
         <span className="editor-actions-spacer" />
-        <button className="btn btn-secondary" onClick={() => setEditing(false)}>Done</button>
+        <button className="btn btn-secondary" onClick={onClose}>Done</button>
       </div>
     </div>
   )
@@ -321,6 +320,7 @@ function GoalRow({ goal, onChange, onRemove }) {
 export function Goals({ profile, onChange }) {
   const [text, setText] = useState('')
   const [creating, setCreating] = useState(false)
+  const [editingId, setEditingId] = useState(null)
   const goals = profile.goals
   const setGoals = (g) => onChange({ ...profile, goals: g })
   const addSeed = (seed) =>
@@ -357,22 +357,44 @@ export function Goals({ profile, onChange }) {
         <div className="goal-rows">
           {goals.map((g) => (
             <GoalRow key={g.id} goal={g}
+              editing={editingId === g.id}
+              onOpen={() => setEditingId(g.id)}
+              onClose={() => setEditingId(null)}
               onChange={(ng) => setGoals(goals.map((x) => (x.id === g.id ? ng : x)))}
-              onRemove={() => setGoals(goals.filter((x) => x.id !== g.id))} />
+              onRemove={() => { setGoals(goals.filter((x) => x.id !== g.id)); if (editingId === g.id) setEditingId(null) }} />
           ))}
         </div>
       )}
 
       <div className="goal-compose">
-        <textarea
-          className="input goals-textarea"
-          rows={empty ? 4 : 2}
-          placeholder={empty
-            ? "For example: I'd like to sell my business in about ten years, move closer to the coast and help pay for my children's college."
-            : 'Add another goal in your own words…'}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
+        <div className="goal-composer">
+          <textarea
+            className="input goals-textarea"
+            rows={empty ? 4 : 2}
+            placeholder={empty
+              ? "For example: I'd like to sell my business in about ten years, move closer to the coast and help pay for my children's college."
+              : 'Add another goal in your own words…'}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); create() }
+            }}
+          />
+          <button
+            className={'composer-send' + (text.trim() && !creating ? ' composer-send-on' : '')}
+            aria-label="Turn your words into goals"
+            title="Turn your words into goals"
+            disabled={creating}
+            onClick={create}>
+            {creating ? (
+              <span className="spinner" aria-hidden="true" />
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" />
+              </svg>
+            )}
+          </button>
+        </div>
         <p className="goal-try">
           Try one of these:{' '}
           {GOAL_TRIES.map((c, i) => (
@@ -382,11 +404,6 @@ export function Goals({ profile, onChange }) {
             </Fragment>
           ))}
         </p>
-        {creating ? (
-          <div className="reading"><span className="spinner" aria-hidden="true" /><span className="reading-text">Creating your goals…</span></div>
-        ) : (
-          <button className="btn btn-primary self-end" onClick={create}>Create goals</button>
-        )}
       </div>
 
       </div>
