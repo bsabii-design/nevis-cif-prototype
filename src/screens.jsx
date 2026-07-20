@@ -269,14 +269,19 @@ export function Work({ profile, onChange, onNav }) {
 
 const HORIZONS = ['Within 5 years', '5–10 years', '10+ years', 'Not sure yet']
 
-/* Quiet inline examples — hints to start from, not choice controls. */
-const GOAL_TRIES = [
-  { label: 'Retire early', seed: "I'd like to retire early" },
-  { label: 'Buy a home', seed: 'I want to buy a home' },
-  { label: "Kids' education", seed: "I'd like to help pay for my children's education" },
-  { label: 'Sell my business', seed: 'I plan to sell my business' },
-  { label: 'Leave a legacy', seed: 'I want to leave a legacy for my family' },
+/* The standard goal taxonomy — one tap creates the goal, no AI in the way.
+   ~8 presets cover most real cases; "Other…" catches the rest in the
+   client's own words. */
+const GOAL_PRESETS = [
+  'Retire early', 'Buy a home', "Kids' education", 'Sell my business',
+  'Leave a legacy', 'Charitable giving', 'A big purchase', 'Care for my parents',
 ]
+
+const CheckIcon = () => (
+  <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M1.5 5.5 4 8l4.5-6" />
+  </svg>
+)
 
 /* Resting rows never show absence; the editor offers optional detail.
    One goal open at a time — the list stays compact (accordion, parent-owned). */
@@ -323,42 +328,62 @@ function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
 }
 
 export function Goals({ profile, onChange }) {
-  const [text, setText] = useState('')
-  const [creating, setCreating] = useState(false)
+  const [other, setOther] = useState('')
   const [editingId, setEditingId] = useState(null)
   const goals = profile.goals
   const setGoals = (g) => onChange({ ...profile, goals: g })
-  const addSeed = (seed) =>
-    setText((t) => {
-      const base = t.trim()
-      if (base.toLowerCase().includes(seed.toLowerCase())) return t
-      return base ? base.replace(/\.?\s*$/, '. ') + seed : seed
-    })
 
-  const create = () => {
-    if (!text.trim()) return
-    setCreating(true)
-    setTimeout(() => {
-      setGoals([...goals, ...parseGoals(text)])
-      setText('')
-      setCreating(false)
-    }, 1200)
+  const presetGoal = (label) => goals.find((g) => g.preset === label)
+  const togglePreset = (label) => {
+    const g = presetGoal(label)
+    if (g) {
+      setGoals(goals.filter((x) => x.id !== g.id))
+      if (editingId === g.id) setEditingId(null)
+    } else {
+      setGoals([...goals, { id: Date.now(), title: label, horizon: null, targetAmount: null, currency: 'USD', preset: label, note: '' }])
+    }
+  }
+  const addOther = () => {
+    const t = other.trim()
+    if (!t) return
+    setGoals([...goals, ...parseGoals(t)])
+    setOther('')
   }
 
-  const empty = goals.length === 0
   return (
-    <div className="screen goals-screen">
+    <div className="screen">
       <div className="narrow-col">
       <div className="title-block">
         <h1 className="page-title">Your goals</h1>
         <p className="page-copy">
-          {empty
-            ? 'What would you like your wealth to help you achieve? Describe it in your own words — rough is fine.'
-            : 'These shape the strategy Sarah prepares for your meeting. Edit anything — rough is fine.'}
+          What would you like your wealth to help you achieve? Select all that apply — rough is fine.
         </p>
       </div>
 
-      {!empty && (
+      <div className="goal-picker">
+        {GOAL_PRESETS.map((label) => {
+          const on = !!presetGoal(label)
+          return (
+            <button key={label} className={'goal-pick' + (on ? ' goal-pick-on' : '')}
+              role="checkbox" aria-checked={on} onClick={() => togglePreset(label)}>
+              <span className="goal-check">{on && <CheckIcon />}</span>
+              {label}
+            </button>
+          )
+        })}
+        <span className={'goal-pick goal-other' + (other ? ' goal-pick-on' : '')}>
+          <input
+            className="goal-other-input"
+            value={other}
+            placeholder="Other…"
+            onChange={(e) => setOther(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addOther() } }}
+            onBlur={addOther}
+          />
+        </span>
+      </div>
+
+      {goals.length > 0 && (
         <div className="goal-rows">
           {goals.map((g) => (
             <GoalRow key={g.id} goal={g}
@@ -370,46 +395,6 @@ export function Goals({ profile, onChange }) {
           ))}
         </div>
       )}
-
-      <div className="goal-compose">
-        <div className="goal-composer">
-          <textarea
-            className="input goals-textarea"
-            rows={empty ? 4 : 2}
-            placeholder={empty
-              ? "For example: I'd like to sell my business in about ten years, move closer to the coast and help pay for my children's college."
-              : 'Add another goal in your own words…'}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); create() }
-            }}
-          />
-          <button
-            className={'composer-send' + (text.trim() && !creating ? ' composer-send-on' : '')}
-            aria-label="Turn your words into goals"
-            title="Turn your words into goals"
-            disabled={creating}
-            onClick={create}>
-            {creating ? (
-              <span className="spinner" aria-hidden="true" />
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" />
-              </svg>
-            )}
-          </button>
-        </div>
-        <p className="goal-try">
-          Try one of these:{' '}
-          {GOAL_TRIES.map((c, i) => (
-            <Fragment key={c.label}>
-              {i > 0 && <span className="goal-try-sep"> · </span>}
-              <button className="goal-try-btn" onClick={() => addSeed(c.seed)}>{c.label}</button>
-            </Fragment>
-          ))}
-        </p>
-      </div>
 
       </div>
     </div>

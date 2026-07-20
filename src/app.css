@@ -877,16 +877,6 @@ input, select, textarea { font: inherit; color: inherit; }
 /* ---------------- Goals ---------------- */
 
 .goals-question { font: var(--text-heading-sm); }
-/* Goal examples: quiet dotted text links under the textarea — hints, not controls */
-.goal-try { font: var(--text-body-sm); color: var(--content-tertiary); }
-.goal-try-btn {
-  font: var(--text-body-sm); color: var(--content-secondary);
-  border-bottom: 1px dotted var(--content-tertiary);
-  transition: color var(--duration-fast) var(--ease);
-}
-.goal-try-btn:hover { color: var(--content-primary); }
-.goal-try-sep { color: var(--content-tertiary); }
-
 /* Goal rows: the same flat list language as assets */
 .goal-rows { display: flex; flex-direction: column; }
 .goal-row {
@@ -913,38 +903,36 @@ input, select, textarea { font: inherit; color: inherit; }
 .goal-add-amount:hover { color: var(--content-primary); }
 .goal-note { font: var(--text-body-sm); color: var(--content-tertiary); }
 
-/* Chat-style layout: the goal list grows from the top, the composer is
-   anchored at the bottom of the content area at any list length; when the
-   list outgrows the screen it stays pinned above the bottom nav (sticky)
-   and rows dissolve under the fade. */
-.goals-screen .narrow-col { flex: 1; }
-.goal-compose {
-  display: flex; flex-direction: column; gap: var(--space-8);
-  margin-top: auto;
-  position: sticky; bottom: 56px; z-index: 3;
-  background: var(--bg-page);
-  padding-top: var(--space-4);
-}
-.goal-compose::before {
-  content: '';
-  position: absolute; bottom: 100%; left: 0; right: 0;
-  height: var(--space-16);
-  background: linear-gradient(to top, var(--color-beige), var(--color-beige-0));
-  pointer-events: none;
-}
-.goal-composer { position: relative; }
-.goal-composer .goals-textarea { padding-right: var(--space-48); }
-/* GPT-style send: quiet until there is something to send */
-.composer-send {
-  position: absolute; right: 10px; bottom: 10px;
-  width: 32px; height: 32px;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--content-tertiary);
+/* Goal picker: multi-select pills with a small checkbox; active = white,
+   inactive = outlined — same language as the Assets/Liabilities tabs. */
+.goal-picker { display: flex; flex-wrap: wrap; gap: var(--space-8); }
+.goal-pick {
+  display: inline-flex; align-items: center; gap: var(--space-8);
+  height: var(--control-h);
+  padding: 0 var(--space-12);
+  font: var(--text-label-md); color: var(--content-secondary);
+  border: var(--border-w) solid var(--border-subtle);
   border-radius: var(--radius-full);
   transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
-.composer-send-on { background: var(--bg-primary); color: var(--content-inverse); }
-.composer-send-on:hover { background: var(--bg-primary-hover); }
+.goal-pick:hover { color: var(--content-primary); background: var(--bg-ghost-hover); }
+.goal-pick-on, .goal-pick-on:hover { background: var(--bg-surface); color: var(--content-primary); }
+.goal-check {
+  flex: none; width: 14px; height: 14px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--content-inverse);
+  border: var(--border-w) solid var(--border-hovered);
+  border-radius: var(--radius-4);
+}
+.goal-pick-on .goal-check { background: var(--content-primary); border-color: var(--content-primary); }
+.goal-other { padding: 0; }
+.goal-other-input {
+  width: 120px; height: 100%;
+  padding: 0 var(--space-12);
+  font: var(--text-label-md); color: var(--content-primary);
+  background: transparent; border: none; outline: none;
+}
+.goal-other-input::placeholder { color: var(--content-tertiary); }
 .self-end { align-self: flex-end; }
 .goals-textarea { height: auto; padding: var(--space-12); line-height: 20px; resize: vertical; }
 .goals-actions { display: flex; justify-content: space-between; gap: var(--space-12); }
