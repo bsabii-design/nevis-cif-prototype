@@ -17,14 +17,6 @@ const NAV_KEY_FOR_ROUTE = {
   personal: 'personal', work: 'work', goals: 'goals', networth: 'networth',
 }
 
-/* Sequential bottom navigation per section. */
-const FOOTER_NAV = {
-  personal: { next: 'work' },
-  work: { back: 'personal', next: 'goals' },
-  goals: { back: 'work', next: 'networth' },
-  networth: { back: 'goals' },
-}
-
 const MAIN_SECTIONS = ['personal', 'work', 'goals', 'networth']
 
 /* Share moment = a mirror, not a gate: the person sees exactly what state
@@ -312,16 +304,6 @@ export default function App() {
                 panelOpen={!!assetPanel}
                 panelTarget={assetPanel ? { category: panelCat, id: assetPanel.id } : null}
               />
-            )}
-            {FOOTER_NAV[r.name] && (
-              <div className="content-footer">
-                {FOOTER_NAV[r.name].back && (
-                  <button className="btn btn-secondary" onClick={() => goSection(FOOTER_NAV[r.name].back)}>Back</button>
-                )}
-                {FOOTER_NAV[r.name].next && (
-                  <button className="btn btn-secondary ml-auto" onClick={() => goSection(FOOTER_NAV[r.name].next)}>Continue</button>
-                )}
-              </div>
             )}
           </main>
           {assetPanel && r.name === 'networth' && (assetPanel.kind === 'liability' ? (

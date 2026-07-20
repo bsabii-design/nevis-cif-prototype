@@ -931,25 +931,6 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Narrow form column inside a full-width screen */
 .narrow-col { max-width: 556px; display: flex; flex-direction: column; gap: var(--space-24); }
 
-/* Bottom navigation: pinned, aligned to the content column, no divider (mock).
-   A soft fade above lets scrolling cards slip underneath gently. */
-.content-footer {
-  position: sticky; bottom: 0; z-index: 5;
-  width: 100%; max-width: 572px;
-  margin-top: auto;
-  padding: var(--space-12) 0;
-  background: var(--bg-page);
-  display: flex; justify-content: space-between; gap: var(--space-12);
-}
-.content-footer::before {
-  content: '';
-  position: absolute; bottom: 100%; left: 0; right: 0;
-  height: var(--space-24);
-  background: linear-gradient(to top, var(--color-beige), var(--color-beige-0));
-  pointer-events: none;
-}
-.ml-auto { margin-left: auto; }
-
 /* ---------------- Goals ---------------- */
 
 .goals-question { font: var(--text-heading-sm); }
