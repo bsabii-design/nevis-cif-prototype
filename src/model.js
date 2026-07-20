@@ -111,6 +111,47 @@ export const EMPLOYMENT_STATUSES = ['Employed', 'Self-employed', 'Business owner
 
 /* ---------------- Institutions (autocomplete) ---------------- */
 
+/* ---------------- Countries & US states (searchable selects) ---------------- */
+
+export const COUNTRIES = [
+  ['United States', 'US'], ['United Kingdom', 'GB'], ['Canada', 'CA'], ['Australia', 'AU'],
+  ['Germany', 'DE'], ['France', 'FR'], ['Spain', 'ES'], ['Italy', 'IT'], ['Portugal', 'PT'],
+  ['Netherlands', 'NL'], ['Belgium', 'BE'], ['Switzerland', 'CH'], ['Austria', 'AT'],
+  ['Ireland', 'IE'], ['Sweden', 'SE'], ['Norway', 'NO'], ['Denmark', 'DK'], ['Finland', 'FI'],
+  ['Iceland', 'IS'], ['Poland', 'PL'], ['Czech Republic', 'CZ'], ['Greece', 'GR'],
+  ['Cyprus', 'CY'], ['Malta', 'MT'], ['Luxembourg', 'LU'], ['Monaco', 'MC'],
+  ['Estonia', 'EE'], ['Latvia', 'LV'], ['Lithuania', 'LT'], ['Hungary', 'HU'], ['Romania', 'RO'],
+  ['Bulgaria', 'BG'], ['Croatia', 'HR'], ['Slovenia', 'SI'], ['Slovakia', 'SK'],
+  ['Ukraine', 'UA'], ['Georgia', 'GE'], ['Armenia', 'AM'], ['Kazakhstan', 'KZ'],
+  ['Turkey', 'TR'], ['Israel', 'IL'], ['United Arab Emirates', 'AE'], ['Saudi Arabia', 'SA'],
+  ['Qatar', 'QA'], ['India', 'IN'], ['Singapore', 'SG'], ['Hong Kong', 'HK'], ['Japan', 'JP'],
+  ['South Korea', 'KR'], ['China', 'CN'], ['Taiwan', 'TW'], ['Thailand', 'TH'],
+  ['Vietnam', 'VN'], ['Philippines', 'PH'], ['Indonesia', 'ID'], ['Malaysia', 'MY'],
+  ['New Zealand', 'NZ'], ['Mexico', 'MX'], ['Brazil', 'BR'], ['Argentina', 'AR'],
+  ['Chile', 'CL'], ['Colombia', 'CO'], ['Peru', 'PE'], ['Uruguay', 'UY'],
+  ['South Africa', 'ZA'], ['Egypt', 'EG'], ['Morocco', 'MA'], ['Nigeria', 'NG'], ['Kenya', 'KE'],
+]
+export const COUNTRY_NAMES = COUNTRIES.map(([n]) => n)
+
+/* Real flag for a recognized country: emoji from its ISO code (offline, no assets). */
+export const countryFlag = (name) => {
+  const hit = COUNTRIES.find(([n]) => n.toLowerCase() === (name || '').trim().toLowerCase())
+  if (!hit) return null
+  return String.fromCodePoint(...[...hit[1]].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65))
+}
+
+export const US_STATES = [
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut',
+  'Delaware', 'District of Columbia', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois',
+  'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts',
+  'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada',
+  'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota',
+  'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina',
+  'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington',
+  'West Virginia', 'Wisconsin', 'Wyoming',
+  'American Samoa', 'Guam', 'Northern Mariana Islands', 'Puerto Rico', 'U.S. Virgin Islands',
+]
+
 export const INSTITUTIONS = [
   'Fidelity', 'Vanguard', 'Charles Schwab', 'Chase', 'Morgan Stanley',
   'Goldman Sachs', 'Merrill Lynch', 'Wells Fargo', 'Bank of America', 'Citi',
@@ -246,7 +287,7 @@ export const missingPersonalFields = (p) => {
     email: !isValidEmail(p.personal.email),
     dateOfBirth: !isValidDate(p.personal.dateOfBirth),
     country: !r.country?.trim(),
-    state: !r.state?.trim(),
+    state: r.country?.trim() === 'United States' && !r.state?.trim(),
     citizenship: !p.personal.citizenships.some((c) => c.trim()),
   }
 }

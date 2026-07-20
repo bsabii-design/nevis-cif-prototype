@@ -1,11 +1,11 @@
 /* Screens: Welcome, Personal, Work & income, Goals, Net worth. */
 import { Fragment, useEffect, useRef, useState } from 'react'
 import {
-  ASSET_CATEGORIES, EMPLOYMENT_STATUSES, LIABILITY_CATEGORIES, computeSummary,
-  fmtCompact, fmtMoney, fmtUSD, missingPersonalFields, requiredComplete, usdOf,
+  ASSET_CATEGORIES, EMPLOYMENT_STATUSES, LIABILITY_CATEGORIES, US_STATES, computeSummary,
+  COUNTRY_NAMES, fmtCompact, fmtMoney, fmtUSD, missingPersonalFields, requiredComplete, usdOf,
 } from './model.js'
 import { parseGoals } from './parse.js'
-import { DateInput, Field, MoneyInput, PhoneInput, RadioRow, TextInput } from './ui.jsx'
+import { CountrySelect, DateInput, Field, MoneyInput, PhoneInput, RadioRow, SearchableSelect, TextInput } from './ui.jsx'
 import { AssetRow, FinancialSummary, LiabilityRow } from './components.jsx'
 import { useCountUp } from './hooks.js'
 
@@ -41,34 +41,42 @@ const PlusIcon = () => (
   </svg>
 )
 
-/* `primary` marks the residence whose country + state drive tax residency
-   (the only required parts); street/city/ZIP stay optional. */
-function ResidenceFields({ residence, onChange, primary, errors = {}, onBlurField }) {
+/* Address block per Figma Desktop-33: Country (searchable, flag), Street,
+   then City / State / ZIP as three equal columns. State is a searchable
+   US-states select only for United States; elsewhere it relabels to
+   "State / province / region" and accepts free text. */
+function AddressFields({ residence, onChange, errors = {}, onBlurField }) {
   const set = (k, v) => onChange({ ...residence, [k]: v })
-  const blur = (k) => () => onBlurField?.(k)
+  const isUS = (residence.country || '').trim() === 'United States'
   return (
-    <div className="residence-grid">
-      <Field label="Country" required={primary} error={errors.country}>
-        <TextInput value={residence.country} onChange={(v) => set('country', v)} onBlur={blur('country')} />
+    <>
+      <Field label="Country" required error={errors.country}>
+        <CountrySelect value={residence.country} options={COUNTRY_NAMES}
+          placeholder="Start typing a country"
+          onChange={(v) => set('country', v)} onBlur={() => onBlurField?.('country')} />
       </Field>
       <Field label="Street address">
         <TextInput value={residence.street} onChange={(v) => set('street', v)} />
-      </Field>
-      <Field label="Apartment, suite, unit, etc.">
-        <TextInput value={residence.apartment} onChange={(v) => set('apartment', v)} />
       </Field>
       <div className="addr-row">
         <Field label="City">
           <TextInput value={residence.city} onChange={(v) => set('city', v)} />
         </Field>
-        <Field label="State" required={primary} error={errors.state}>
-          <TextInput value={residence.state} onChange={(v) => set('state', v)} onBlur={blur('state')} />
-        </Field>
+        {isUS ? (
+          <Field label="State" required error={errors.state}>
+            <SearchableSelect value={residence.state} options={US_STATES}
+              onChange={(v) => set('state', v)} onBlur={() => onBlurField?.('state')} />
+          </Field>
+        ) : (
+          <Field label="State / province / region">
+            <TextInput value={residence.state} onChange={(v) => set('state', v)} />
+          </Field>
+        )}
         <Field label="ZIP code">
           <TextInput value={residence.zip} onChange={(v) => set('zip', v)} inputMode="numeric" />
         </Field>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -111,19 +119,19 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
       <div className="focus-form form-filled">
         {/* ---- Legal identity ---- */}
         <div className="form-section">
-          <h2 className="form-section-title">Legal identity</h2>
+          <div className="form-section-head-block">
+            <h2 className="form-section-title">Legal identity</h2>
+            <p className="form-section-copy">As you have it in your ID.</p>
+          </div>
           <div className="field-pair">
-            <Field label="Legal first name" required error={err('firstName')}>
+            <Field label="First name" required error={err('firstName')}>
               <TextInput value={p.legalFirstName} onChange={(v) => set('legalFirstName', v)} onBlur={() => markTouched('firstName')} />
             </Field>
-            <Field label="Legal last name" required error={err('lastName')}>
+            <Field label="Last name" required error={err('lastName')}>
               <TextInput value={p.legalLastName} onChange={(v) => set('legalLastName', v)} onBlur={() => markTouched('lastName')} />
             </Field>
           </div>
-          <div className="field-pair">
-            <Field label="Middle name">
-              <TextInput value={p.middleName} onChange={(v) => set('middleName', v)} />
-            </Field>
+          <div className="addr-row">
             <Field label="Date of birth" required error={dobError()}>
               <DateInput value={p.dateOfBirth}
                 onChange={(v) => set('dateOfBirth', v)} onBlur={() => markTouched('dateOfBirth')} />
@@ -133,8 +141,10 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
 
         {/* ---- Contact ---- */}
         <div className="form-section">
-          <h2 className="form-section-title">Contact</h2>
-          <p className="form-section-copy">So your advisor can reach you and send your summary.</p>
+          <div className="form-section-head-block">
+            <h2 className="form-section-title">Contact</h2>
+            <p className="form-section-copy">How you can be reached.</p>
+          </div>
           <div className="field-pair">
             <Field label="Email" required error={emailError()}>
               <TextInput value={p.email} type="email" onChange={(v) => set('email', v)} onBlur={() => markTouched('email')} />
@@ -147,53 +157,33 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
 
         {/* ---- Residential address ---- */}
         <div className="form-section">
-          <div className="form-section-header">
+          <div className="form-section-head-block">
             <h2 className="form-section-title">Residential address</h2>
-            <button className="section-add" aria-label="Add another residence"
-              onClick={() => set('additionalResidences', [...p.additionalResidences, { country: '', street: '', apartment: '', city: '', state: '', zip: '' }])}>
-              <PlusIcon />
-            </button>
+            <p className="form-section-copy">Your primary home address.</p>
           </div>
-          <p className="form-section-copy">Your primary home — this sets your tax residency.</p>
-          <ResidenceFields primary residence={p.primaryResidence}
+          <AddressFields residence={p.primaryResidence}
             errors={{ country: err('country'), state: err('state', 'Select a state.') }}
             onBlurField={(k) => markTouched(k)}
             onChange={(r) => set('primaryResidence', r)} />
-
-          {p.additionalResidences.map((r, i) => (
-            <div className="form-subsection" key={i}>
-              <div className="form-section-head">
-                <h3 className="form-subsection-title">Additional residence</h3>
-                <button className="link-danger"
-                  onClick={() => set('additionalResidences', p.additionalResidences.filter((_, j) => j !== i))}>
-                  Remove
-                </button>
-              </div>
-              <ResidenceFields residence={r}
-                onChange={(nr) => set('additionalResidences', p.additionalResidences.map((x, j) => j === i ? nr : x))} />
-            </div>
-          ))}
         </div>
 
         {/* ---- Citizenship ---- */}
         <div className="form-section">
-          <div className="form-section-header">
+          <div className="form-section-head-block">
             <h2 className="form-section-title">Citizenship</h2>
-            <button className="section-add" aria-label="Add another citizenship"
-              onClick={() => set('citizenships', [...p.citizenships, ''])}>
-              <PlusIcon />
-            </button>
+            <p className="form-section-copy">For tax and residency context.</p>
           </div>
-          <p className="form-section-copy">For tax and residency context.</p>
           <Field label="Country of citizenship" required error={err('citizenship')}>
-            <TextInput value={p.citizenships[0] || ''} placeholder="United States"
+            <CountrySelect value={p.citizenships[0] || ''} options={COUNTRY_NAMES}
+              placeholder="Start typing a country"
               onChange={(v) => set('citizenships', p.citizenships.map((x, j) => j === 0 ? v : x))}
               onBlur={() => markTouched('citizenship')} />
           </Field>
           {p.citizenships.slice(1).map((c, i) => (
             <div className="citizenship-row" key={i + 1}>
-              <Field label="Additional country of citizenship">
-                <TextInput value={c}
+              <Field label="Additional citizenship">
+                <CountrySelect value={c} options={COUNTRY_NAMES}
+                  placeholder="Start typing a country"
                   onChange={(v) => set('citizenships', p.citizenships.map((x, j) => j === i + 1 ? v : x))} />
               </Field>
               <button className="link-danger citizenship-remove"
@@ -202,6 +192,9 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
               </button>
             </div>
           ))}
+          <button className="add-row" onClick={() => set('citizenships', [...p.citizenships, ''])}>
+            <PlusIcon /> Add another citizenship
+          </button>
         </div>
       </div>
 

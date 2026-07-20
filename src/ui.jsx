@@ -1,6 +1,6 @@
 /* Shared UI primitives. */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { CURRENCIES, INSTITUTIONS, institutionAvatar, parseAmount } from './model.js'
+import { CURRENCIES, INSTITUTIONS, countryFlag, institutionAvatar, parseAmount } from './model.js'
 
 export function Field({ label, helper, required, error, children }) {
   return (
@@ -144,6 +144,68 @@ export function InstitutionCombobox({ value, onChange, placeholder, autoFocus, o
     </div>
   )
 }
+
+/* Searchable select over a fixed list (countries, US states). Filter-as-you-type,
+   keyboard navigation, optional icon (real country flag) in input and rows.
+   Free text stays if it matches nothing — the prototype never blocks typing. */
+export function SearchableSelect({ value, onChange, options, placeholder, icon, onBlur }) {
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(-1)
+  const query = (value || '').trim().toLowerCase()
+  const exact = options.some((n) => n.toLowerCase() === query)
+  const matches = (exact ? options : options.filter((n) => n.toLowerCase().includes(query)))
+    .slice()
+    .sort((a, b) => {
+      const ap = a.toLowerCase().startsWith(query) ? 0 : 1
+      const bp = b.toLowerCase().startsWith(query) ? 0 : 1
+      return ap - bp || a.localeCompare(b)
+    })
+    .slice(0, 8)
+  const pick = (name) => { onChange(name); setOpen(false); setActive(-1) }
+  const inputIcon = icon ? icon(value) : null
+
+  return (
+    <div className="combo">
+      {inputIcon && <span className="combo-avatar combo-flag" aria-hidden="true">{inputIcon}</span>}
+      <input
+        className={'input' + (inputIcon ? ' combo-input-avatar' : '')}
+        role="combobox"
+        aria-expanded={open && matches.length > 0}
+        value={value || ''}
+        placeholder={placeholder}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); setActive(-1) }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => { setOpen(false); setActive(-1); onBlur?.() }}
+        onKeyDown={(e) => {
+          if (!open || matches.length === 0) return
+          if (e.key === 'ArrowDown') { e.preventDefault(); setActive((i) => (i + 1) % matches.length) }
+          if (e.key === 'ArrowUp') { e.preventDefault(); setActive((i) => (i - 1 + matches.length) % matches.length) }
+          if (e.key === 'Enter' && active >= 0) { e.preventDefault(); pick(matches[active]) }
+          if (e.key === 'Escape') { setOpen(false); setActive(-1) }
+        }}
+      />
+      {open && matches.length > 0 && (
+        <ul className="combo-list" role="listbox">
+          {matches.map((name, i) => {
+            const rowIcon = icon ? icon(name) : null
+            return (
+              <li key={name} role="option" aria-selected={i === active}
+                className={'combo-item' + (i === active ? ' combo-item-active' : '')}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => pick(name)}>
+                {rowIcon && <span className="combo-flag" aria-hidden="true">{rowIcon}</span>}
+                {name}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+/* Country pickers share the flag icon; SearchableSelect stays generic. */
+export const CountrySelect = (props) => <SearchableSelect {...props} icon={countryFlag} />
 
 /* Grouped custom select (product-styled dropdown, not the native menu). */
 export function GroupedSelect({ value, onChange, groups, options, placeholder }) {

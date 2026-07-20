@@ -716,8 +716,8 @@ input, select, textarea { font: inherit; color: inherit; }
 .input::placeholder { color: var(--content-tertiary); }
 .select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--content-secondary) 50%), linear-gradient(135deg, var(--content-secondary) 50%, transparent 50%); background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
 
-.field { display: flex; flex-direction: column; gap: var(--space-4); }
-.field-label { font: var(--text-label-md); }
+.field { display: flex; flex-direction: column; gap: var(--space-8); }
+.field-label { font: var(--text-body-md); color: var(--content-secondary); }
 .field-required { color: var(--content-secondary); }
 .field-helper { font: var(--text-body-sm); color: var(--content-tertiary); }
 .field-error { font: var(--text-body-sm); color: var(--color-red-strong); }
@@ -853,12 +853,10 @@ input, select, textarea { font: inherit; color: inherit; }
 
 
 .form-section { display: flex; flex-direction: column; gap: var(--space-12); margin-top: var(--space-16); }
-.form-section-title { font: var(--text-label-lg); margin-bottom: var(--space-4); }
-/* Short "why" under a section title; sits tight to the title, normal gap to the first field. */
-.form-section-copy {
-  font: var(--text-body-sm); color: var(--content-secondary);
-  margin-top: calc(-1 * var(--space-12));
-}
+.form-section-title { font: var(--text-label-md); }
+/* Section header: 13 Medium title, 11/64% why-line 4px under, 12px to fields. */
+.form-section-head-block { display: flex; flex-direction: column; gap: var(--space-4); }
+.form-section-copy { font: var(--text-body-sm); color: var(--content-secondary); }
 /* Section header with an add "+" on the right (replaces the long "+ Add …" link). */
 .form-section-header {
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-12);
@@ -873,11 +871,11 @@ input, select, textarea { font: inherit; color: inherit; }
   transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
 .section-add:hover { background: var(--bg-secondary); color: var(--content-primary); }
-/* Hairline between sections: 32px above the line, 24px below (Personal form). */
+/* Hairline between sections: 24px above and below (Desktop-33). */
 .form-filled { gap: 0; }
 .form-filled .form-section { margin-top: 0; }
 .form-filled .form-section + .form-section {
-  margin-top: var(--space-32);
+  margin-top: var(--space-24);
   padding-top: var(--space-24);
   border-top: var(--border-w) solid var(--border-subtle);
 }
@@ -895,14 +893,27 @@ input, select, textarea { font: inherit; color: inherit; }
 .name-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-12); }
 @media (max-width: 720px) { .name-row { grid-template-columns: 1fr; } }
 /* Balanced two-up rows so no field is left as a lonely half-width stub. */
-.field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-12); align-items: start; }
+.field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); align-items: start; }
 @media (max-width: 720px) { .field-pair { grid-template-columns: 1fr; } }
 .field-half { max-width: calc(50% - var(--space-8)); }
 .input-compact { max-width: 200px; }
 
-/* City 50% · State 25% · ZIP 25% */
-.addr-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--space-12); }
+/* City · State · ZIP: three equal columns (Desktop-33); also sizes lone thirds (DOB). */
+.addr-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-8); }
 @media (max-width: 720px) { .addr-row { grid-template-columns: 1fr; } }
+
+/* "+ Add another citizenship": quiet inline action, 13 Medium at 48%. */
+.add-row {
+  display: flex; align-items: center; gap: var(--space-4);
+  align-self: flex-start;
+  height: 28px;
+  font: var(--text-label-md); color: var(--content-tertiary);
+  border-radius: var(--radius-4);
+  transition: color var(--duration-fast) var(--ease);
+}
+.add-row:hover { color: var(--content-primary); }
+
+.combo-flag { font-size: 14px; line-height: 1; }
 
 .citizenship-row { display: flex; align-items: flex-end; gap: var(--space-12); }
 .citizenship-row .field { flex: 1; }
