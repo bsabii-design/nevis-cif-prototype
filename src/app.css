@@ -116,7 +116,7 @@ input, select, textarea { font: inherit; color: inherit; }
   transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
 .side-link:hover { color: var(--content-primary); background: var(--bg-ghost-hover); }
-.side-link-active, .side-link-active:hover { background: var(--bg-secondary); color: var(--content-primary); }
+.side-link-active, .side-link-active:hover { background: var(--bg-selected); color: var(--content-primary); }
 .side-identity { display: flex; align-items: center; gap: var(--space-4); padding-left: 14px; }
 .side-avatar {
   width: 20px; height: 20px; flex: none;
@@ -267,7 +267,7 @@ input, select, textarea { font: inherit; color: inherit; }
   display: flex; align-items: center; gap: var(--space-8);
   height: 40px;
   padding: 0 var(--space-12);
-  background: var(--bg-secondary);
+  background: var(--bg-tint);
   border-radius: var(--radius-8);
 }
 .group-name { font: var(--text-label-md); flex: 1; min-width: 0; }
@@ -598,7 +598,7 @@ input, select, textarea { font: inherit; color: inherit; }
   transition: background-color var(--duration-fast) var(--ease);
 }
 .panel-choice-row + .panel-choice-row { border-top: var(--border-w) solid var(--border-subtle); }
-.panel-choice-row:hover { background: var(--bg-secondary); }
+.panel-choice-row:hover { background: var(--bg-ghost-hover); }
 .panel-choice-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .panel-choice-name { font: var(--text-label-md); }
 .panel-choice-eg { font: var(--text-body-sm); color: var(--content-tertiary); }
@@ -614,7 +614,7 @@ input, select, textarea { font: inherit; color: inherit; }
   border-radius: var(--radius-8);
   transition: border-color var(--duration-fast) var(--ease), background-color var(--duration-fast) var(--ease);
 }
-.panel-upload:hover, .panel-upload.is-drag { border-color: var(--border-selected); background: var(--bg-secondary); }
+.panel-upload:hover, .panel-upload.is-drag { border-color: var(--border-selected); background: var(--bg-ghost-hover); }
 .panel-upload-icon { flex: none; color: var(--content-secondary); }
 .panel-upload-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .panel-upload-name { font: var(--text-label-md); }
@@ -903,7 +903,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .goal-editor {
   display: flex; flex-direction: column; gap: var(--space-12);
   padding: var(--space-16);
-  background: var(--bg-secondary);
+  background: var(--bg-tint);
   border-radius: var(--radius-12);
   margin: var(--space-4) 0;
 }

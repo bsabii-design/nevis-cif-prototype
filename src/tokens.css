@@ -48,8 +48,9 @@
   --bg-primary-disabled:var(--color-black-a48);
   --bg-secondary:       var(--color-black-a4);
   --bg-secondary-hover: var(--color-black-a8);
-  --bg-ghost-hover:     var(--color-black-a4);
-  --bg-selected:        var(--color-black-a6);
+  --bg-ghost-hover:     rgba(20, 20, 19, 0.03);  /* lighter: hovers were reading dirty */
+  --bg-selected:        rgba(20, 20, 19, 0.045); /* selected row / band / nav item */
+  --bg-tint:            rgba(20, 20, 19, 0.03);  /* quiet surfaces: group bands, editor cards */
   --bg-overlay:         var(--color-beige-80);
 
   --border-default:  var(--color-black-a16);
