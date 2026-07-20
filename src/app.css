@@ -99,8 +99,8 @@ input, select, textarea { font: inherit; color: inherit; }
 .shell { display: flex; align-items: stretch; flex: 1; }
 
 .sidebar {
-  width: 235px; flex: none;
-  padding: var(--space-20) var(--space-8);
+  width: var(--sidebar-w); flex: none;
+  padding: var(--space-16) var(--space-8);
   display: flex; flex-direction: column; justify-content: space-between;
   border-right: var(--border-w) solid var(--border-subtle);
   position: sticky; top: 57px; align-self: flex-start;
@@ -156,13 +156,13 @@ input, select, textarea { font: inherit; color: inherit; }
 
 .page {
   flex: 1; min-width: 0;
-  /* Content column sits on the grid: left edge at 25vw + 15px of the
-     viewport (sidebar is 235px), regardless of the side panel. */
-  padding: var(--space-20) var(--space-24) 0 max(var(--space-24), calc(25vw - 220px));
-  display: flex; flex-direction: column; align-items: flex-start;
+  /* Reading column centered in whatever space the shell leaves it —
+     between sidebar and panel when the panel is open (per Figma Desktop-41). */
+  padding: var(--space-16) var(--space-24) 0;
+  display: flex; flex-direction: column; align-items: center;
 }
 .page-centered { align-items: center; padding-left: var(--space-24); }
-.screen { flex: 1; display: flex; flex-direction: column; gap: var(--space-24); width: 100%; max-width: 572px; padding-bottom: var(--space-48); }
+.screen { flex: 1; display: flex; flex-direction: column; gap: var(--space-24); width: 100%; max-width: var(--content-col); padding-bottom: var(--space-48); }
 .narrow-col { max-width: none; }
 .page-title { font: 500 24px/32px var(--font-serif); }
 .page-title-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); }
@@ -559,7 +559,7 @@ input, select, textarea { font: inherit; color: inherit; }
 
 /* Full-height non-modal panel column (third column of the shell) */
 .shell-panel {
-  width: 353px; flex: none;
+  width: var(--panel-w); flex: none;
   display: flex; flex-direction: column;
   border-left: var(--border-w) solid var(--border-subtle);
   position: sticky; top: 57px; align-self: flex-start;
@@ -568,7 +568,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .panel-head {
   flex: none;
   display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-12);
-  padding: var(--space-20) var(--space-16) var(--space-16);
+  padding: var(--space-16) var(--panel-pad);
 }
 .panel-head-titles { display: flex; flex-direction: column; gap: var(--space-8); }
 .panel-title { font: 500 24px/32px var(--font-serif); }
@@ -580,13 +580,13 @@ input, select, textarea { font: inherit; color: inherit; }
 .panel-body {
   flex: 1; overflow-y: auto;
   display: flex; flex-direction: column; gap: var(--space-16);
-  padding: 0 var(--space-16) var(--space-20);
+  padding: 0 var(--panel-pad) var(--space-20);
 }
 .panel-foot {
   position: relative;
   flex: none;
   display: flex; justify-content: flex-end; align-items: center; gap: var(--space-8);
-  padding: var(--space-12) var(--space-16);
+  padding: var(--space-12) var(--panel-pad);
   background: var(--bg-page);
 }
 .panel-foot-remove { margin-right: auto; }
@@ -600,11 +600,11 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Choice list (Linear-style): flat rows edge-to-edge, straight hairline
    dividers, neat chevron. Name + one-line examples so a non-expert knows
    where things belong. */
-.panel-choice { display: flex; flex-direction: column; margin: 0 calc(-1 * var(--space-16)); }
+.panel-choice { display: flex; flex-direction: column; margin: 0 calc(-1 * var(--panel-pad)); }
 .panel-choice-row {
   display: flex; align-items: center; gap: var(--space-12);
   width: 100%; text-align: left;
-  padding: var(--space-12) var(--space-16);
+  padding: var(--space-12) var(--panel-pad);
   transition: background-color var(--duration-fast) var(--ease);
 }
 .panel-choice-row + .panel-choice-row { border-top: var(--border-w) solid var(--border-subtle); }
@@ -618,9 +618,9 @@ input, select, textarea { font: inherit; color: inherit; }
    the describe-or-upload composer (Granola pattern). No strokes at rest. */
 .upload-entry {
   display: flex; align-items: center; gap: var(--space-12);
-  width: calc(100% + var(--space-16) * 2);
-  margin: var(--space-8) calc(-1 * var(--space-16)) 0;
-  padding: var(--space-12) var(--space-16);
+  width: calc(100% + var(--panel-pad) * 2);
+  margin: var(--space-8) calc(-1 * var(--panel-pad)) 0;
+  padding: var(--space-12) var(--panel-pad);
   font: var(--text-label-md); text-align: left;
   border-top: var(--border-w) solid var(--border-subtle);
   transition: background-color var(--duration-fast) var(--ease);
