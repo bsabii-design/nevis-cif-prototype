@@ -289,13 +289,12 @@ function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
   const set = (k, v) => onChange({ ...goal, [k]: v })
 
   if (!editing) {
-    const meta = [goal.horizon, goal.targetAmount != null ? fmtMoney(goal.targetAmount, goal.currency) : null]
-      .filter(Boolean).join(' · ')
     return (
       <div className="goal-row" onClick={onOpen} role="button" tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() } }}>
         <span className="goal-row-title">{goal.title}</span>
-        {meta && <span className="goal-row-meta">{meta}</span>}
+        <span className="goal-row-when">{goal.horizon}</span>
+        <span className="goal-row-amount">{goal.targetAmount != null ? fmtMoney(goal.targetAmount, goal.currency) : ''}</span>
       </div>
     )
   }

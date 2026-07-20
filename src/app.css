@@ -881,16 +881,21 @@ input, select, textarea { font: inherit; color: inherit; }
 .goals-question { font: var(--text-heading-sm); }
 /* Goal rows: the same flat list language as assets */
 .goal-rows { display: flex; flex-direction: column; }
+/* Table columns like the asset list: timings share one x, amounts share
+   the right edge — nothing jumps as meta comes and goes. */
 .goal-row {
-  display: flex; align-items: center; gap: var(--space-16);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 130px 110px;
+  align-items: center; column-gap: var(--space-16);
   height: 44px; padding: 0 var(--space-12);
   border-radius: var(--radius-8);
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease);
 }
 .goal-row:hover { background: var(--bg-ghost-hover); }
-.goal-row-title { flex: 1; min-width: 0; font: var(--text-body-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.goal-row-meta { flex: none; font: var(--text-body-md); color: var(--content-secondary); font-variant-numeric: tabular-nums; }
+.goal-row-title { min-width: 0; font: var(--text-body-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.goal-row-when { font: var(--text-body-md); color: var(--content-secondary); white-space: nowrap; }
+.goal-row-amount { justify-self: end; text-align: right; font: var(--text-body-md); color: var(--content-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* Inline editor: a calm surface card in place of the row */
 /* Editor: a quiet grey surface, no stroke — strokes belong to section
