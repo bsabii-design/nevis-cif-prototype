@@ -95,7 +95,7 @@ const ALL_INSTITUTIONS = [...new Set([...BANKS, ...INVESTMENT_FIRMS, ...RETIREME
 const INSTITUTION_ALIASES = {
   schwab: 'Charles Schwab', boa: 'Bank of America', bofa: 'Bank of America',
   citibank: 'Citi', amex: 'American Express', etrade: 'E*TRADE',
-  jpmorgan: 'J.P. Morgan', 'jp morgan': 'J.P. Morgan',
+  jpmorgan: 'J.P. Morgan', 'jp morgan': 'J.P. Morgan', ally: 'Ally Bank',
 }
 
 const TYPE_PATTERNS = [

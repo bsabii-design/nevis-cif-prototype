@@ -332,7 +332,6 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
   const [edited, setEdited] = useState(false)
   const [confirmLeave, setConfirmLeave] = useState(null) // {run}
   const [attempted, setAttempted] = useState(false)
-  const [uploadOpen, setUploadOpen] = useState(false)
   const [uploadText, setUploadText] = useState('')
   const [readingLabel, setReadingLabel] = useState('')
   const fileRef = useRef(null)
@@ -464,6 +463,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
             <button className="panel-back" onClick={backToChoice}>Back to Add assets</button>
           )}
           <h2 className="panel-title">{title}</h2>
+          {stage === 'choice' && <p className="panel-sub">Choose an asset type to add.</p>}
         </div>
         <button className="menu-trigger" aria-label="Close" onClick={requestClose}>✕</button>
       </div>
@@ -482,51 +482,45 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
                 </button>
               ))}
             </div>
-            {!uploadOpen ? (
-              <button className="upload-entry"
-                onClick={() => setUploadOpen(true)}
+            <div className="ai-wrap">
+              <div className="ai-card"
                 onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('is-drag') }}
                 onDragLeave={(e) => e.currentTarget.classList.remove('is-drag')}
                 onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('is-drag'); startReading() }}>
-                <span className="upload-entry-orb"><UploadIcon /></span>
-                Add assets from text or statements
-              </button>
-            ) : (
-              <div className="upload-open"
-                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('is-drag') }}
-                onDragLeave={(e) => e.currentTarget.classList.remove('is-drag')}
-                onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('is-drag'); startReading() }}>
-                <span className="upload-open-title">Add assets from text or statements</span>
-                <div className="upload-composer">
+                <div className="ai-card-head">
+                  <span className="ai-card-title">Use AI instead</span>
+                  <span className="ai-card-copy">
+                    Type what you know, or attach one or more statements.
+                    We'll prepare the accounts for your review.
+                  </span>
+                </div>
+                <div className="ai-composer">
                   <textarea
-                    className="input upload-desc"
-                    rows={3}
-                    autoFocus
-                    placeholder={'For example: Fidelity brokerage around $1.2M, Chase checking $40K, and a Vanguard Roth IRA about $250K.'}
+                    className="ai-input"
+                    rows={2}
+                    placeholder="Fidelity brokerage $1.2M, Chase checking $40K, Vanguard Roth IRA $250K"
                     value={uploadText}
                     onChange={(e) => setUploadText(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitDescription() } }}
                   />
-                  <button
-                    className={'upload-send' + (uploadText.trim() ? ' upload-send-on' : '')}
-                    aria-label="Create accounts from your description"
-                    onClick={submitDescription}>
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" />
-                    </svg>
-                  </button>
+                  <div className="ai-composer-row">
+                    <button className="ai-attach" aria-label="Attach statements" onClick={() => fileRef.current?.click()}>
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M14 7.5 8.3 13.2a3.7 3.7 0 0 1-5.2-5.2L8.8 2.3a2.5 2.5 0 0 1 3.5 3.5L6.6 11.5a1.2 1.2 0 0 1-1.8-1.8L10 4.5" />
+                      </svg>
+                    </button>
+                    <button
+                      className={'ai-send' + (uploadText.trim() ? ' ai-send-on' : '')}
+                      aria-label="Create accounts from your description"
+                      onClick={submitDescription}>
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-                <span className="upload-or">or</span>
-                <div className="upload-actions">
-                  <button className="btn btn-secondary" onClick={() => fileRef.current?.click()}>Upload statements</button>
-                  <span className="upload-hint">PDF, JPG or PNG · You can drop files here</span>
-                </div>
-                <p className="upload-note">
-                  Nevis will extract accounts and balances and prepare them for your review.
-                  Nothing is added until you confirm.
-                </p>
               </div>
-            )}
+            </div>
             <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" hidden onChange={startReading} />
           </>
         )}

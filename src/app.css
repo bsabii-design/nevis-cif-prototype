@@ -580,6 +580,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .panel-head-titles { display: flex; flex-direction: column; gap: var(--space-8); }
 .panel-title { font: 500 24px/32px var(--font-serif); }
+.panel-sub { font: var(--text-body-sm); color: var(--content-secondary); margin-top: calc(-1 * var(--space-8)); } /* sits right under the 32px title line (mock gap 0) */
 .panel-back {
   align-self: flex-start;
   font: var(--text-body-sm); color: var(--content-secondary);
@@ -604,72 +605,67 @@ input, select, textarea { font: inherit; color: inherit; }
   background: linear-gradient(to top, var(--color-beige), var(--color-beige-0));
   pointer-events: none;
 }
-/* Choice list (Linear-style): flat rows edge-to-edge, straight hairline
-   dividers, neat chevron. Name + one-line examples so a non-expert knows
-   where things belong. */
-.panel-choice { display: flex; flex-direction: column; margin: 0 calc(-1 * var(--panel-pad)); }
+/* Choice list per Figma 51-958: rows sit on the content column (no edge
+   bleed), 12px vertical padding, hairline between rows, small quiet chevron. */
+.panel-choice { display: flex; flex-direction: column; }
 .panel-choice-row {
   display: flex; align-items: center; gap: var(--space-12);
   width: 100%; text-align: left;
-  padding: var(--space-12) var(--panel-pad);
+  padding: var(--space-12) 0;
   transition: background-color var(--duration-fast) var(--ease);
 }
 .panel-choice-row + .panel-choice-row { border-top: var(--border-w) solid var(--border-subtle); }
-.panel-choice-row:hover { background: var(--bg-ghost-hover); }
+.panel-choice-row:hover { background: var(--bg-tint); }
+.panel-choice-row:hover .panel-choice-chevron { color: var(--content-primary); }
 .panel-choice-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .panel-choice-name { font: var(--text-label-md); }
 .panel-choice-eg { font: var(--text-body-sm); color: var(--content-tertiary); }
-.panel-choice-chevron { flex: none; color: var(--content-tertiary); }
+.panel-choice-chevron { flex: none; width: 12px; height: 12px; color: var(--content-tertiary); transition: color var(--duration-fast) var(--ease); }
 
-/* Upload entry: one quiet row below the categories — expands in place into
-   the describe-or-upload composer (Granola pattern). No strokes at rest. */
-.upload-entry {
-  display: flex; align-items: center; gap: var(--space-12);
-  width: calc(100% + var(--panel-pad) * 2);
-  margin: var(--space-8) calc(-1 * var(--panel-pad)) 0;
-  padding: var(--space-12) var(--panel-pad);
-  font: var(--text-label-md); text-align: left;
-  border-top: var(--border-w) solid var(--border-subtle);
-  transition: background-color var(--duration-fast) var(--ease);
+/* "Use AI instead" card (Figma 51-958): pinned to the panel bottom.
+   Tint card explains the promise; the white composer inside takes either
+   a typed description or attached statements — both land in review. */
+.ai-wrap { margin-top: auto; padding-top: var(--space-32); }
+.ai-card {
+  display: flex; flex-direction: column; gap: var(--space-8);
+  padding: var(--space-12);
+  background: var(--bg-tint);
+  border-radius: var(--radius-12);
 }
-.upload-entry:hover { background: var(--bg-ghost-hover); }
-.upload-entry-orb {
-  width: 24px; height: 24px; flex: none;
+.ai-card.is-drag .ai-composer { outline: var(--border-w) solid var(--border-selected); }
+.ai-card-head { display: flex; flex-direction: column; gap: var(--space-2); }
+.ai-card-title { font: var(--text-label-md); }
+.ai-card-copy { font: var(--text-body-sm); color: var(--content-secondary); }
+.ai-composer {
+  display: flex; flex-direction: column; gap: var(--space-8);
+  padding: var(--space-8);
+  background: var(--bg-surface);
+  border-radius: var(--radius-12);
+}
+.ai-input {
+  border: none; outline: none; background: transparent;
+  font: var(--text-body-md);
+  min-height: 40px; resize: none;
+  padding: 0;
+}
+.ai-input::placeholder { color: var(--content-tertiary); }
+.ai-composer-row { display: flex; align-items: center; justify-content: space-between; }
+.ai-attach {
+  width: 24px; height: 24px;
   display: flex; align-items: center; justify-content: center;
-  background: var(--bg-primary); color: var(--content-inverse);
-  border-radius: var(--radius-full);
+  color: var(--content-secondary);
+  border-radius: var(--radius-4);
+  transition: color var(--duration-fast) var(--ease);
 }
-.upload-entry-orb .panel-upload-icon { width: 13px; height: 13px; }
-
-.upload-open {
-  display: flex; flex-direction: column; align-items: stretch; gap: var(--space-12);
-  margin-top: var(--space-16);
-  padding-top: var(--space-16);
-  border-top: var(--border-w) solid var(--border-subtle);
-}
-.upload-open.is-drag .upload-desc { border-color: var(--border-selected); }
-.upload-entry.is-drag { background: var(--bg-ghost-hover); }
-.upload-open-title { font: var(--text-label-md); }
-.upload-composer { position: relative; }
-.upload-desc {
-  display: block;
-  min-height: 84px; /* .input's fixed control height is declared later; min-height outranks it */
-  padding: var(--space-8) var(--space-48) var(--space-8) var(--space-12);
-  line-height: 20px; resize: none;
-}
-.upload-send {
-  position: absolute; right: 8px; bottom: 8px;
-  width: 28px; height: 28px;
+.ai-attach:hover { color: var(--content-primary); }
+.ai-send {
+  width: 24px; height: 24px;
   display: flex; align-items: center; justify-content: center;
-  color: var(--content-tertiary);
-  border-radius: var(--radius-full);
+  background: var(--bg-secondary); color: var(--content-tertiary);
+  border-radius: var(--radius-4);
   transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
-.upload-send-on { background: var(--bg-primary); color: var(--content-inverse); }
-.upload-or { font: var(--text-body-sm); color: var(--content-tertiary); }
-.upload-actions { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-8); }
-.upload-hint { font: var(--text-body-sm); color: var(--content-tertiary); }
-.upload-note { font: var(--text-body-sm); color: var(--content-secondary); margin-top: var(--space-4); }
+.ai-send-on { background: var(--bg-primary); color: var(--content-inverse); }
 .upload-steps {
   list-style: none; margin: var(--space-4) 0 0;
   display: flex; flex-direction: column; gap: var(--space-8);
