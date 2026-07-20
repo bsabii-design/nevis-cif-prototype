@@ -879,19 +879,42 @@ input, select, textarea { font: inherit; color: inherit; }
 /* ---------------- Goals ---------------- */
 
 .goals-question { font: var(--text-heading-sm); }
-/* Goal starters: quiet pills that seed the textarea. */
-.goal-chips { display: flex; flex-wrap: wrap; gap: var(--space-8); }
-.goal-chip {
-  height: var(--control-h);
-  padding: 0 var(--space-12);
-  display: inline-flex; align-items: center;
-  font: var(--text-label-md); color: var(--content-secondary);
-  background: var(--bg-surface);
-  border: var(--border-w) solid var(--border-subtle);
-  border-radius: var(--radius-full);
-  transition: border-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+/* Goal examples: quiet dotted text links under the textarea — hints, not controls */
+.goal-try { font: var(--text-body-sm); color: var(--content-tertiary); }
+.goal-try-btn {
+  font: var(--text-body-sm); color: var(--content-secondary);
+  border-bottom: 1px dotted var(--content-tertiary);
+  transition: color var(--duration-fast) var(--ease);
 }
-.goal-chip:hover { border-color: var(--border-hovered); color: var(--content-primary); }
+.goal-try-btn:hover { color: var(--content-primary); }
+.goal-try-sep { color: var(--content-tertiary); }
+
+/* Goal rows: the same flat list language as assets */
+.goal-rows { display: flex; flex-direction: column; }
+.goal-row {
+  display: flex; align-items: center; gap: var(--space-16);
+  height: 44px; padding: 0 var(--space-12);
+  border-radius: var(--radius-8);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+.goal-row:hover { background: var(--bg-ghost-hover); }
+.goal-row-title { flex: 1; min-width: 0; font: var(--text-body-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.goal-row-meta { flex: none; font: var(--text-body-md); color: var(--content-secondary); font-variant-numeric: tabular-nums; }
+.goal-row-hint { flex: none; font: var(--text-body-sm); color: var(--content-tertiary); }
+
+/* Inline editor: a calm surface card in place of the row */
+.goal-editor {
+  display: flex; flex-direction: column; gap: var(--space-12);
+  padding: var(--space-16);
+  background: var(--bg-surface);
+  border-radius: var(--radius-12);
+  margin: var(--space-4) 0;
+}
+.goal-note { font: var(--text-body-sm); color: var(--content-tertiary); }
+
+.goal-compose { display: flex; flex-direction: column; gap: var(--space-12); }
+.self-end { align-self: flex-end; }
 .goals-textarea { height: auto; padding: var(--space-12); line-height: 20px; resize: vertical; }
 .goals-actions { display: flex; justify-content: space-between; gap: var(--space-12); }
 .editor-card { flex-direction: column; align-items: stretch; gap: var(--space-16); cursor: default; }

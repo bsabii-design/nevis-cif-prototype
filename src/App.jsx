@@ -44,16 +44,16 @@ function ShareDialog({ profile, onCancel, onConfirm }) {
     },
     {
       label: 'Goals',
-      state: goals ? `${goals} goal${goals > 1 ? 's' : ''}` : profile.goalsDeferred ? 'You chose to explore these together' : 'Not filled in yet',
-      muted: !goals && !profile.goalsDeferred,
+      state: goals ? `${goals} goal${goals > 1 ? 's' : ''}` : 'Not filled in yet',
+      muted: !goals,
     },
     {
       label: 'Net worth',
       state: [
-        assets ? `${assets} asset${assets > 1 ? 's' : ''}` : profile.assetsDeferred ? 'assets together with Sarah' : 'no assets yet',
+        assets ? `${assets} asset${assets > 1 ? 's' : ''}` : 'no assets yet',
         liabs ? `${liabs} liabilit${liabs > 1 ? 'ies' : 'y'}` : profile.liabilitiesExplicitlyNone ? 'no liabilities' : 'liabilities not answered yet',
       ].join(' · '),
-      muted: !assets && !profile.assetsDeferred,
+      muted: !assets,
     },
   ]
   return (
@@ -298,7 +298,6 @@ export default function App() {
                 onEditLiability={(l) => openAssetPanel({ kind: 'liability', category: l.category, id: l.id })}
                 onRemoveLiability={(l) => setRemoveDialog({ kind: 'liability', item: l })}
                 onAnswerNone={answerNoLiabilities}
-                onDeferAssets={() => { setProfile((p) => ({ ...p, assetsDeferred: true })); touch() }}
                 panelOpen={!!assetPanel}
                 panelTarget={assetPanel ? { category: panelCat, id: assetPanel.id } : null}
               />

@@ -12,8 +12,9 @@ const cleanTitle = (clause) =>
   sentenceCase(
     clause
       .replace(/^(i['’]d like to|i['’]d love to|i want to|i hope to|i plan to|we['’]d like to|we want to|and|also)\s+/i, '')
+      .replace(/\s+for (?:about|around)?\s*\$?\d[\w,.]*/i, '')
       .replace(/\s+in about .*$/i, '')
-      .replace(/\s+by \d{4}.*$/i, '')
+      .replace(/\s+(?:by|in)\s+\d{4}.*$/i, '')
       .replace(/[.?!]\s*$/, '')
       .trim()
   )
@@ -40,13 +41,20 @@ const extractGoalAmount = (clause) => {
   return Math.round(n)
 }
 
+/* Years-out -> soft horizon bucket. Precise dates are advisor work, not client homework. */
+const horizonFromYear = (year) => {
+  if (year == null) return null
+  const n = year - THIS_YEAR
+  return n <= 5 ? 'Within 5 years' : n <= 10 ? '5–10 years' : '10+ years'
+}
+
 export const parseGoals = (text) => {
-  // The demo sentence maps to the exact cards from the spec.
+  // The demo sentence maps to the exact goals from the spec.
   if (/sell my business/i.test(text) && /coast/i.test(text) && /college/i.test(text)) {
     return [
-      { id: uid(), title: 'Sell my business', targetYear: 2036, targetAmount: null, currency: 'USD' },
-      { id: uid(), title: 'Move closer to the coast', targetYear: 2036, targetAmount: null, currency: 'USD' },
-      { id: uid(), title: "Help pay for my children's college", targetYear: null, targetAmount: null, currency: 'USD' },
+      { id: uid(), title: 'Sell my business', horizon: '5–10 years', targetAmount: null, currency: 'USD', note: 'sell my business in about ten years' },
+      { id: uid(), title: 'Move closer to the coast', horizon: '5–10 years', targetAmount: null, currency: 'USD', note: 'move closer to the coast' },
+      { id: uid(), title: "Help pay for my children's college", horizon: null, targetAmount: null, currency: 'USD', note: "help pay for my children's college" },
     ]
   }
   const clauses = text.split(/,\s*(?:and\s+)?|\s+and\s+|\.\s+|;\s*/i).map((c) => c.trim()).filter(Boolean)
@@ -54,10 +62,10 @@ export const parseGoals = (text) => {
     .map((clause) => {
       const title = cleanTitle(clause)
       if (!title || title.length < 3) return null
-      return { id: uid(), title, targetYear: extractYear(clause), targetAmount: extractGoalAmount(clause), currency: 'USD' }
+      return { id: uid(), title, horizon: horizonFromYear(extractYear(clause)), targetAmount: extractGoalAmount(clause), currency: 'USD', note: clause }
     })
     .filter(Boolean)
-  return goals.length ? goals : [{ id: uid(), title: sentenceCase(text.trim()), targetYear: null, targetAmount: null, currency: 'USD' }]
+  return goals.length ? goals : [{ id: uid(), title: sentenceCase(text.trim()), horizon: null, targetAmount: null, currency: 'USD', note: text.trim() }]
 }
 
 /* ---------------- Statement extraction (spec §17–18) ---------------- */

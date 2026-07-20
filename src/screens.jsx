@@ -1,5 +1,5 @@
 /* Screens: Welcome, Personal, Work & income, Goals, Net worth. */
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import {
   ASSET_CATEGORIES, EMPLOYMENT_STATUSES, LIABILITY_CATEGORIES, computeSummary,
   fmtMoney, fmtUSD, missingPersonalFields, requiredComplete, usdOf,
@@ -265,67 +265,60 @@ export function Work({ profile, onChange, onNav }) {
   )
 }
 
-/* ---------------- Goals (spec §11) ---------------- */
+/* ---------------- Goals ---------------- */
 
-function GoalCard({ goal, onChange, onRemove }) {
+const HORIZONS = ['Within 5 years', '5–10 years', '10+ years', 'Not sure yet']
+
+/* Quiet inline examples — hints to start from, not choice controls. */
+const GOAL_TRIES = [
+  { label: 'Retire early', seed: "I'd like to retire early" },
+  { label: 'Buy a home', seed: 'I want to buy a home' },
+  { label: "Kids' education", seed: "I'd like to help pay for my children's education" },
+  { label: 'Sell my business', seed: 'I plan to sell my business' },
+  { label: 'Leave a legacy', seed: 'I want to leave a legacy for my family' },
+]
+
+/* Resting rows never show absence; the editor offers optional detail. */
+function GoalRow({ goal, onChange, onRemove }) {
   const [editing, setEditing] = useState(!goal.title)
   const set = (k, v) => onChange({ ...goal, [k]: v })
-  const meta = [
-    goal.targetYear ? `Around ${goal.targetYear}` : 'Timeline not added',
-    goal.targetAmount != null ? `${fmtMoney(goal.targetAmount, goal.currency)} target` : 'Target amount not added',
-  ].join(' · ')
 
   if (!editing) {
+    const meta = [goal.horizon, goal.targetAmount != null ? fmtMoney(goal.targetAmount, goal.currency) : null]
+      .filter(Boolean).join(' · ')
     return (
-      <div className="card">
-        <div className="card-info">
-          <div className="card-title">{goal.title}</div>
-          <div className="card-subtitle">{meta}</div>
-        </div>
-        <div className="card-right">
-          <button className="btn btn-ghost" onClick={() => setEditing(true)}>Edit</button>
-          <button className="btn btn-ghost btn-remove" onClick={onRemove}>Remove</button>
-        </div>
+      <div className="goal-row" onClick={() => setEditing(true)} role="button" tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEditing(true) } }}>
+        <span className="goal-row-title">{goal.title}</span>
+        {meta ? <span className="goal-row-meta">{meta}</span> : <span className="goal-row-hint">When?</span>}
       </div>
     )
   }
   return (
-    <div className="card editor-card">
-      <div className="extract-grid">
-        <div className="editor-wide">
-          <Field label="Goal">
-            <TextInput value={goal.title} onChange={(v) => set('title', v)} placeholder="What would you like to achieve?" autoFocus={!goal.title} />
-          </Field>
-        </div>
-        <Field label="Target year" helper="Optional">
-          <input className="input" inputMode="numeric" placeholder="2036" value={goal.targetYear ?? ''}
-            onChange={(e) => set('targetYear', e.target.value ? Number(e.target.value.replace(/\D/g, '').slice(0, 4)) : null)} />
-        </Field>
-        <Field label="Target amount" helper="Optional">
-          <MoneyInput amount={goal.targetAmount} currency={goal.currency}
-            onAmount={(v) => set('targetAmount', v)} onCurrency={(c) => set('currency', c)} />
-        </Field>
-      </div>
+    <div className="goal-editor">
+      <Field label="Goal">
+        <TextInput value={goal.title} onChange={(v) => set('title', v)}
+          placeholder="What would you like to achieve?" autoFocus={!goal.title} />
+      </Field>
+      <Field label="When">
+        <RadioRow name="When" options={HORIZONS} value={goal.horizon || ''}
+          onChange={(v) => set('horizon', v || null)} />
+      </Field>
+      <Field label="Amount" helper="Optional — a rough figure helps Sarah prepare.">
+        <MoneyInput amount={goal.targetAmount} currency={goal.currency}
+          onAmount={(v) => set('targetAmount', v)} onCurrency={(c) => set('currency', c)} />
+      </Field>
+      {goal.note && <p className="goal-note">You wrote: “{goal.note}”</p>}
       <div className="editor-actions">
         <button className="btn btn-ghost btn-remove" onClick={onRemove}>Remove</button>
         <span className="editor-actions-spacer" />
-        <button className="btn btn-secondary" onClick={() => setEditing(false)}>Close</button>
+        <button className="btn btn-secondary" onClick={() => setEditing(false)}>Done</button>
       </div>
     </div>
   )
 }
 
-/* Chip accelerators: one click seeds the sentence, the person tunes it. */
-const GOAL_CHIPS = [
-  { label: 'Retire early', seed: "I'd like to retire early" },
-  { label: 'Buy a home', seed: "I want to buy a home" },
-  { label: "Kids' education", seed: "I'd like to help pay for my children's education" },
-  { label: 'Sell my business', seed: "I plan to sell my business" },
-  { label: 'Leave a legacy', seed: "I want to leave a legacy for my family" },
-  { label: 'A big purchase', seed: "I'm planning a big purchase" },
-]
-
-export function Goals({ profile, onChange, onNav }) {
+export function Goals({ profile, onChange }) {
   const [text, setText] = useState('')
   const [creating, setCreating] = useState(false)
   const goals = profile.goals
@@ -347,70 +340,56 @@ export function Goals({ profile, onChange, onNav }) {
     }, 1200)
   }
 
+  const empty = goals.length === 0
   return (
     <div className="screen">
       <div className="narrow-col">
-      <h1 className="page-title">Your goals</h1>
-
-      {goals.length === 0 ? (
-        <>
-          <h2 className="goals-question">What would you like your wealth to help you achieve?</h2>
-          {profile.goalsDeferred && (
-            <p className="nw-deferred-note">
-              You've chosen to explore this together with Sarah — you can still add goals anytime.
-            </p>
-          )}
-          <p className="page-copy">
-            Describe what you're planning in your own words — or start from one of these.<br />
-            We'll turn it into a clear set of goals you can refine.
-          </p>
-          <div className="goal-chips">
-            {GOAL_CHIPS.map((c) => (
-              <button key={c.label} className="goal-chip" onClick={() => addSeed(c.seed)}>
-                {c.label}
-              </button>
-            ))}
-          </div>
-          <textarea
-            className="input goals-textarea"
-            rows={4}
-            placeholder="For example: I'd like to sell my business in about ten years, move closer to the coast and help pay for my children's college."
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-          {creating ? (
-            <div className="reading"><span className="spinner" aria-hidden="true" /><span className="reading-text">Creating your goals…</span></div>
-          ) : (
-            <div className="goals-actions">
-              <button className="btn btn-secondary"
-                onClick={() => { onChange({ ...profile, goalsDeferred: true }); onNav('networth') }}>
-                I'd rather explore this with Sarah
-              </button>
-              <button className="btn btn-primary" disabled={!text.trim()} onClick={create}>Create goals</button>
-            </div>
-          )}
-        </>
-      ) : (
-        <>
-          <p className="page-copy">These shape the strategy Sarah prepares for your meeting. Edit anything — rough is fine.</p>
-          <div className="groups">
-            <div className="group">
-              {goals.map((g) => (
-                <GoalCard key={g.id} goal={g}
-                  onChange={(ng) => setGoals(goals.map((x) => (x.id === g.id ? ng : x)))}
-                  onRemove={() => setGoals(goals.filter((x) => x.id !== g.id))} />
-              ))}
-            </div>
-          </div>
-          <button className="btn btn-secondary self-start"
-            onClick={() => setGoals([...goals, { id: Date.now(), title: '', targetYear: null, targetAmount: null, currency: 'USD' }])}>
-            Add another goal
-          </button>
-        </>
-      )}
-
+      <div className="title-block">
+        <h1 className="page-title">Your goals</h1>
+        <p className="page-copy">
+          {empty
+            ? 'What would you like your wealth to help you achieve? Describe it in your own words — rough is fine.'
+            : 'These shape the strategy Sarah prepares for your meeting. Edit anything — rough is fine.'}
+        </p>
       </div>
 
+      {!empty && (
+        <div className="goal-rows">
+          {goals.map((g) => (
+            <GoalRow key={g.id} goal={g}
+              onChange={(ng) => setGoals(goals.map((x) => (x.id === g.id ? ng : x)))}
+              onRemove={() => setGoals(goals.filter((x) => x.id !== g.id))} />
+          ))}
+        </div>
+      )}
+
+      <div className="goal-compose">
+        <textarea
+          className="input goals-textarea"
+          rows={empty ? 4 : 2}
+          placeholder={empty
+            ? "For example: I'd like to sell my business in about ten years, move closer to the coast and help pay for my children's college."
+            : 'Add another goal in your own words…'}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+        <p className="goal-try">
+          Try one of these:{' '}
+          {GOAL_TRIES.map((c, i) => (
+            <Fragment key={c.label}>
+              {i > 0 && <span className="goal-try-sep"> · </span>}
+              <button className="goal-try-btn" onClick={() => addSeed(c.seed)}>{c.label}</button>
+            </Fragment>
+          ))}
+        </p>
+        {creating ? (
+          <div className="reading"><span className="spinner" aria-hidden="true" /><span className="reading-text">Creating your goals…</span></div>
+        ) : (
+          <button className="btn btn-primary self-end" onClick={create}>Create goals</button>
+        )}
+      </div>
+
+      </div>
     </div>
   )
 }
@@ -432,7 +411,7 @@ const GROUP_ADD_LABEL = {
 
 export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   onAddAsset, onAddLiability, onEditAsset, onRemoveAsset, onEditLiability, onRemoveLiability,
-  onAnswerNone, onDeferAssets, panelOpen, panelTarget }) {
+  onAnswerNone, panelOpen, panelTarget }) {
   const { assets, liabilities, liabilitiesExplicitlyNone: none } = profile
 
   /* Collapsing header: when the summary card scrolls out of view, a compact
@@ -513,15 +492,6 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
                     Add accounts, property, and anything else you own.<br />
                     Your net worth builds as you go — rough estimates are fine.
                   </p>
-                  {profile.assetsDeferred ? (
-                    <p className="nw-deferred-note">
-                      You've chosen to go through this together with Sarah. You can still add things anytime.
-                    </p>
-                  ) : (
-                    <button className="link-quiet" onClick={onDeferAssets}>
-                      I'd rather go through this with Sarah
-                    </button>
-                  )}
                 </div>
               )}
               {assetGroups.map((cat) => {

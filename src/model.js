@@ -235,9 +235,9 @@ export const missingPersonalFields = (p) => {
 export const sectionState = (p) => ({
   personal: requiredComplete(p),
   work: !!(p.work.employmentStatus || p.work.annualIncome != null || p.work.jobTitle || p.work.businessName || p.work.occupation),
-  goals: p.goals.length > 0 || p.goalsDeferred,
+  goals: p.goals.length > 0,
   networth:
-    (p.assets.length > 0 || p.assetsDeferred) &&
+    p.assets.length > 0 &&
     (p.liabilities.length > 0 || p.liabilitiesExplicitlyNone),
 })
 
@@ -250,8 +250,6 @@ export const emptyResidence = () => ({ country: 'United States', street: '', apa
 
 export const blankProfile = () => ({
   shared: false,
-  goalsDeferred: false,
-  assetsDeferred: false,
   personal: {
     legalFirstName: 'Jonathan', // prefilled from the advisor invitation
     middleName: '',
@@ -272,8 +270,6 @@ export const blankProfile = () => ({
 
 export const seedProfile = () => ({
   shared: false,
-  goalsDeferred: false,
-  assetsDeferred: false,
   personal: {
     legalFirstName: 'Jonathan',
     middleName: '',
