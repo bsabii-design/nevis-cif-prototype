@@ -2,7 +2,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import {
   ASSET_CATEGORIES, EMPLOYMENT_STATUSES, LIABILITY_CATEGORIES, computeSummary,
-  fmtMoney, fmtUSD, missingPersonalFields, requiredComplete, usdOf,
+  fmtCompact, fmtMoney, fmtUSD, missingPersonalFields, requiredComplete, usdOf,
 } from './model.js'
 import { parseGoals } from './parse.js'
 import { DateInput, Field, MoneyInput, PhoneInput, RadioRow, TextInput } from './ui.jsx'
@@ -304,7 +304,7 @@ function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() } }}>
         <span className="goal-row-title">{goal.title}</span>
         <span className="goal-row-when">{goal.horizon}</span>
-        <span className="goal-row-amount">{goal.targetAmount != null ? fmtMoney(goal.targetAmount, goal.currency) : ''}</span>
+        <span className="goal-row-amount">{goal.targetAmount != null ? fmtCompact(goal.targetAmount, goal.currency) : ''}</span>
       </div>
     )
   }
@@ -530,7 +530,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
                           <line x1="7" y1="2" x2="7" y2="12" /><line x1="2" y1="7" x2="12" y2="7" />
                         </svg>
                       </button>
-                      <span className="group-subtotal">{known.length ? fmtUSD(subtotal) : '—'}</span>
+                      <span className="group-subtotal">{known.length ? fmtCompact(subtotal) : '—'}</span>
                     </div>
                     <div className="group-rows">
                       {items.map((a) => (
@@ -581,7 +581,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
                           <line x1="7" y1="2" x2="7" y2="12" /><line x1="2" y1="7" x2="12" y2="7" />
                         </svg>
                       </button>
-                      <span className="group-subtotal">{known.length ? fmtUSD(subtotal) : '—'}</span>
+                      <span className="group-subtotal">{known.length ? fmtCompact(subtotal) : '—'}</span>
                     </div>
                     <div className="group-rows">
                       {items.map((l) => (

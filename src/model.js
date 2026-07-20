@@ -18,6 +18,18 @@ export const fmtMoney = (n, currency = 'USD') =>
 
 export const fmtUSD = (n) => fmtMoney(n, 'USD')
 
+/* Compact money for lists: scanning, not bookkeeping. Full values live in
+   editors and details. <100K full · 100K–999K → K · 1M+ → M · 1B+ → B,
+   at most one decimal ($1.2M, never $1.24M). */
+export const fmtCompact = (n, currency = 'USD') => {
+  if (n == null) return ''
+  const abs = Math.abs(n)
+  if (abs < 100000) return fmtMoney(n, currency)
+  const [div, suffix] = abs >= 1e9 ? [1e9, 'B'] : abs >= 1e6 ? [1e6, 'M'] : [1e3, 'K']
+  const v = (Math.round((n / div) * 10) / 10).toFixed(1).replace(/\.0$/, '')
+  return `${CURRENCY_SYMBOLS[currency] ?? ''}${v}${suffix}`
+}
+
 /* "1,850,000" → 1850000 ; junk/empty → null */
 export const parseAmount = (s) => {
   const digits = String(s).replace(/[^0-9]/g, '')

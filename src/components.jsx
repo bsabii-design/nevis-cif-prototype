@@ -1,7 +1,7 @@
 /* Domain components: shell, summary, cards, category grid. */
 import {
   ASSET_CATEGORIES, assetCategory, assetSubtitle, assetTitle, computeSummary,
-  fmtMoney, fmtUSD, hasForeignValues, institutionAvatar, liabilityCategory, usdOf,
+  fmtCompact, fmtMoney, fmtUSD, hasForeignValues, institutionAvatar, liabilityCategory, usdOf,
 } from './model.js'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { useCountUp } from './hooks.js'
@@ -205,8 +205,8 @@ export function AssetRow({ asset, onEdit, onRemove, active }) {
           <span className="value-missing-text" title={missingValueLabel(asset)} aria-label={missingValueLabel(asset)}>—</span>
         ) : (
           <div className="value-wrap">
-            <span className="value-text">{fmtMoney(asset.value, cur)}</span>
-            {cur !== 'USD' && <span className="value-approx">≈ {fmtUSD(usdOf(asset.value, cur))}</span>}
+            <span className="value-text">{fmtCompact(asset.value, cur)}</span>
+            {cur !== 'USD' && <span className="value-approx">≈ {fmtCompact(usdOf(asset.value, cur))}</span>}
           </div>
         )}
       </div>
@@ -237,8 +237,8 @@ export function LiabilityRow({ liability, onEdit, active }) {
           <span className="value-missing-text" title="Balance not added" aria-label="Balance not added">—</span>
         ) : (
           <div className="value-wrap">
-            <span className="value-text">{fmtMoney(liability.outstandingBalance, cur)}</span>
-            {cur !== 'USD' && <span className="value-approx">≈ {fmtUSD(usdOf(liability.outstandingBalance, cur))}</span>}
+            <span className="value-text">{fmtCompact(liability.outstandingBalance, cur)}</span>
+            {cur !== 'USD' && <span className="value-approx">≈ {fmtCompact(usdOf(liability.outstandingBalance, cur))}</span>}
           </div>
         )}
       </div>
