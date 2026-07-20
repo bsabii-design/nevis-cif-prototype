@@ -637,21 +637,19 @@ input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------------- Inputs ---------------- */
 
-/* Filled input is the product default: grey fill at rest, lifts to a clean
-   white field with a crisp border on focus. background-color (not the
-   shorthand) preserves the native select's arrow image. */
+/* White input on the beige page: crisp and alive, not grey-on-grey.
+   Hairline border at rest, darker on hover, ink on focus. */
 .input {
   height: var(--control-h);
   width: 100%;
   padding: 0 var(--space-12);
-  background-color: var(--bg-secondary);
-  border: var(--border-w) solid transparent;
+  background-color: var(--bg-surface);
+  border: var(--border-w) solid var(--border-default);
   border-radius: var(--radius-8);
-  transition: background-color var(--duration-fast) var(--ease),
-    border-color var(--duration-fast) var(--ease);
+  transition: border-color var(--duration-fast) var(--ease);
 }
-.input:hover { background-color: var(--bg-secondary-hover); }
-.input:focus { outline: none; background-color: var(--bg-surface); border-color: var(--border-selected); }
+.input:hover { border-color: var(--border-hovered); }
+.input:focus { outline: none; border-color: var(--border-selected); }
 .input::placeholder { color: var(--content-tertiary); }
 .select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--content-secondary) 50%), linear-gradient(135deg, var(--content-secondary) 50%, transparent 50%); background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
 
@@ -907,10 +905,12 @@ input, select, textarea { font: inherit; color: inherit; }
 .goal-editor {
   display: flex; flex-direction: column; gap: var(--space-12);
   padding: var(--space-16);
-  background: var(--bg-surface);
+  border: var(--border-w) solid var(--border-subtle);
   border-radius: var(--radius-12);
   margin: var(--space-4) 0;
 }
+.goal-add-amount { align-self: flex-start; font: var(--text-body-sm); color: var(--content-secondary); transition: color var(--duration-fast) var(--ease); }
+.goal-add-amount:hover { color: var(--content-primary); }
 .goal-note { font: var(--text-body-sm); color: var(--content-tertiary); }
 
 /* Chat-style layout: the goal list grows from the top, the composer is
