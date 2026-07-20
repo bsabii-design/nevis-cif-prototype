@@ -329,14 +329,22 @@ export function Goals({ profile, onChange }) {
   const goals = profile.goals
   const setGoals = (g) => onChange({ ...profile, goals: g })
 
+  /* Unchecking stashes the goal's details; re-checking restores them —
+     toggling is a safe round trip, never a silent data loss. */
+  const stashRef = useRef({})
   const presetGoal = (label) => goals.find((g) => g.preset === label)
+  const removeGoal = (g) => {
+    if (g.preset) stashRef.current[g.preset] = g
+    setGoals(goals.filter((x) => x.id !== g.id))
+    if (editingId === g.id) setEditingId(null)
+  }
   const togglePreset = (label) => {
     const g = presetGoal(label)
     if (g) {
-      setGoals(goals.filter((x) => x.id !== g.id))
-      if (editingId === g.id) setEditingId(null)
+      removeGoal(g)
     } else {
-      setGoals([...goals, { id: Date.now(), title: label, horizon: null, targetAmount: null, currency: 'USD', preset: label, note: '' }])
+      const restored = stashRef.current[label]
+      setGoals([...goals, restored ?? { id: Date.now(), title: label, horizon: null, targetAmount: null, currency: 'USD', preset: label, note: '' }])
     }
   }
   const addOther = () => {
@@ -387,7 +395,7 @@ export function Goals({ profile, onChange }) {
               onOpen={() => setEditingId(g.id)}
               onClose={() => setEditingId(null)}
               onChange={(ng) => setGoals(goals.map((x) => (x.id === g.id ? ng : x)))}
-              onRemove={() => { setGoals(goals.filter((x) => x.id !== g.id)); if (editingId === g.id) setEditingId(null) }} />
+              onRemove={() => removeGoal(g)} />
           ))}
         </div>
       )}
