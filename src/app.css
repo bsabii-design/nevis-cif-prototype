@@ -614,21 +614,46 @@ input, select, textarea { font: inherit; color: inherit; }
 .panel-choice-eg { font: var(--text-body-sm); color: var(--content-tertiary); }
 .panel-choice-chevron { flex: none; color: var(--content-tertiary); }
 
-/* Compact upload drop zone: dashed border reads as "drop a file here",
-   click opens the picker, drop reads it directly — no separate stage. */
-.panel-upload {
-  display: flex; align-items: center; gap: var(--space-12);
-  width: 100%; text-align: left; cursor: pointer;
-  padding: var(--space-12);
+/* Upload card: the smart path, expanded and inviting — a white drop zone
+   with a dark orb accent and the three-step story visible before any click. */
+.upload-card {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-8);
+  width: 100%; cursor: pointer;
+  margin-top: var(--space-8);
+  padding: var(--space-20) var(--space-16);
+  background: var(--bg-surface);
   border: var(--border-w) dashed var(--border-default);
-  border-radius: var(--radius-8);
-  transition: border-color var(--duration-fast) var(--ease), background-color var(--duration-fast) var(--ease);
+  border-radius: var(--radius-12);
+  transition: border-color var(--duration-fast) var(--ease), box-shadow var(--duration-fast) var(--ease);
 }
-.panel-upload:hover, .panel-upload.is-drag { border-color: var(--border-selected); background: var(--bg-ghost-hover); }
-.panel-upload-icon { flex: none; color: var(--content-secondary); }
-.panel-upload-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-.panel-upload-name { font: var(--text-label-md); }
-.panel-upload-eg { font: var(--text-body-sm); color: var(--content-tertiary); }
+.upload-card:hover, .upload-card.is-drag {
+  border-color: var(--border-selected);
+  box-shadow: var(--shadow-sm);
+}
+.upload-orb {
+  width: 36px; height: 36px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-primary); color: var(--content-inverse);
+  border-radius: var(--radius-full);
+}
+.upload-orb .panel-upload-icon { color: var(--content-inverse); }
+.upload-card-title { font: var(--text-label-lg); }
+.upload-steps {
+  list-style: none; margin: var(--space-4) 0 0;
+  display: flex; flex-direction: column; gap: var(--space-8);
+  align-self: stretch;
+}
+.upload-steps li {
+  display: flex; align-items: center; gap: var(--space-8);
+  font: var(--text-body-sm); color: var(--content-secondary);
+}
+.upload-step-n {
+  flex: none; width: 16px; height: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font: 500 9px/1 var(--font-sans); color: var(--content-secondary);
+  border: var(--border-w) solid var(--border-default);
+  border-radius: var(--radius-full);
+}
 .nw-block { display: flex; flex-direction: column; gap: var(--space-8); align-items: flex-start; }
 .nw-label { font: var(--text-body-sm); color: var(--content-secondary); }
 .nw-figure { font: 500 40px/44px var(--font-serif); font-variant-numeric: tabular-nums; }

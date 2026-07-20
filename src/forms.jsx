@@ -459,17 +459,19 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
                 </button>
               ))}
             </div>
-            <div className="panel-upload" role="button" tabIndex={0}
+            <div className="upload-card" role="button" tabIndex={0}
               onClick={() => fileRef.current?.click()}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileRef.current?.click() } }}
               onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('is-drag') }}
               onDragLeave={(e) => e.currentTarget.classList.remove('is-drag')}
               onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('is-drag'); startReading() }}>
-              <UploadIcon />
-              <span className="panel-upload-main">
-                <span className="panel-upload-name">Drop in a statement</span>
-                <span className="panel-upload-eg">Nevis adds your accounts · PDF or a photo</span>
-              </span>
+              <span className="upload-orb"><UploadIcon /></span>
+              <span className="upload-card-title">Drop statements here</span>
+              <ol className="upload-steps">
+                <li><span className="upload-step-n">1</span>Drop one or more PDFs or photos</li>
+                <li><span className="upload-step-n">2</span>Nevis extracts accounts and balances</li>
+                <li><span className="upload-step-n">3</span>You review before anything is added</li>
+              </ol>
             </div>
             <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" hidden onChange={startReading} />
           </>
