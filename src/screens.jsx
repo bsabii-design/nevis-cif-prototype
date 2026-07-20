@@ -5,7 +5,7 @@ import {
   fmtMoney, fmtUSD, missingPersonalFields, requiredComplete, usdOf,
 } from './model.js'
 import { parseGoals } from './parse.js'
-import { DateInput, Field, GroupedSelect, MoneyInput, PhoneInput, RadioRow, TextInput } from './ui.jsx'
+import { DateInput, Field, MoneyInput, PhoneInput, RadioRow, TextInput } from './ui.jsx'
 import { AssetRow, FinancialSummary, LiabilityRow } from './components.jsx'
 import { useCountUp } from './hooks.js'
 
@@ -302,8 +302,8 @@ function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
           placeholder="What would you like to achieve?" />
       </Field>
       <Field label="When">
-        <GroupedSelect options={HORIZONS} value={goal.horizon || ''}
-          placeholder="Select timing" onChange={(v) => set('horizon', v || null)} />
+        <RadioRow name="When" options={HORIZONS} value={goal.horizon || ''}
+          onChange={(v) => set('horizon', v || null)} />
       </Field>
       {showAmount ? (
         <Field label="Estimated amount">
