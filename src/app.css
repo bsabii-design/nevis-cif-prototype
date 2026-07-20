@@ -391,6 +391,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .inst { white-space: nowrap; }
 .inst .avatar { display: inline-flex; vertical-align: middle; margin-right: var(--space-4); }
 .arow-type { margin-right: var(--space-8); }
+.arow-type::after { content: '·'; margin-left: var(--space-8); color: var(--content-tertiary); }
 .arow-note-gap { margin-left: var(--space-8); }
 
 /* ---------------- Overflow menu ---------------- */
