@@ -1028,7 +1028,12 @@ input, select, textarea { font: inherit; color: inherit; }
 .xcard-src-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .xcard-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-16); }
 .xcard-amount { font: 500 24px/32px var(--font-serif); }
-.xcard-skip { font: var(--text-label-md); color: var(--content-secondary); transition: color var(--duration-fast) var(--ease); }
+.xcard-skip {
+  font: var(--text-label-md); color: var(--content-secondary);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+}
+.xcard:hover .xcard-skip, .xcard-skip:focus-visible { opacity: 1; }
 .xcard-skip:hover { color: var(--content-primary); }
 
 
