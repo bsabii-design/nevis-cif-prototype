@@ -102,9 +102,9 @@
 
   /* ---- Layout ---- */
   --content-max: 1200px;
-  --panel-w: 360px;
+  --panel-w: 404px;
   --panel-pad: 20px;      /* side panel inner side padding */
   --sidebar-w: 200px;
-  --content-col: 628px;   /* reading column, centered between sidebar and panel */
+  --content-col: 676px;   /* reading column (12 cols), centered in the 836 zone with 80px margins */
   --control-h: 32px;
 }
