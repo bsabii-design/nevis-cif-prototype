@@ -69,6 +69,13 @@ export const INSURANCE_PROVIDERS = [
 ]
 
 /* Crypto platforms and wallets. */
+export const CRYPTO_ASSETS = ['Bitcoin', 'Ethereum', 'Solana', 'USDC', 'XRP']
+
+export const CARD_ISSUERS = [
+  'American Express', 'Chase', 'Capital One', 'Citi', 'Discover',
+  'Bank of America', 'Wells Fargo', 'Barclays', 'U.S. Bank', 'Synchrony',
+]
+
 export const CRYPTO_PLATFORMS = [
   'Coinbase', 'Kraken', 'Gemini', 'Binance.US', 'Robinhood', 'Ledger', 'Trezor', 'Cold wallet',
 ]

@@ -310,6 +310,10 @@ export default function App() {
             <LiabilityPanel
               key={assetPanel.k}
               category={assetPanel.category}
+              propertyOptions={profile.assets
+                .filter((a) => a.category === 'realestate')
+                .map((a) => a.name || a.subtype)
+                .filter(Boolean)}
               onCategoryChange={setPanelCat}
               liability={assetPanel.id ? profile.liabilities.find((l) => l.id === assetPanel.id) : null}
               onCommit={commitLiability}

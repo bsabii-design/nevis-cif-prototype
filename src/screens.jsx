@@ -554,10 +554,14 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
               )}
 
               {none && liabilities.length === 0 && (
-                <p className="owe-none">
-                  No liabilities — you've told us you don't currently have any.
-                  Add one if that changes.
-                </p>
+                <div className="nw-empty">
+                  <p className="owe-none">
+                    You don't currently have any liabilities. Add one if that changes.
+                  </p>
+                  <button className="add-row" onClick={() => onAddLiability(null)}>
+                    <PlusIcon /> Add a liability
+                  </button>
+                </div>
               )}
 
               {liabGroups.map((cat) => {

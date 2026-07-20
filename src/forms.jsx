@@ -4,10 +4,10 @@ import {
   ASSET_CATEGORIES, BANKS, CASH_BANK_TYPES, COLLECTIBLE_TYPES, CRYPTO_PLATFORMS,
   INSURANCE_PROVIDERS, INSURANCE_TYPES, INVESTMENT_FIRMS, INVESTMENT_TYPES, PROPERTY_TYPES,
   RETIREMENT_GROUPS, RETIREMENT_PLANS, RETIREMENT_PROVIDERS, RETIREMENT_TYPES,
-  LIABILITY_CATEGORIES, assetCategory, liabilityCategory, uid,
+  LIABILITY_CATEGORIES, assetCategory, liabilityCategory, uid, CRYPTO_ASSETS, CARD_ISSUERS,
 } from './model.js'
 import { extractedAccounts, MOCK_STATEMENT_NAME, parseAccountsText } from './parse.js'
-import { Dialog, Field, GroupedSelect, InstitutionCombobox, MoneyInput, Select, TextInput } from './ui.jsx'
+import { Dialog, Field, GroupedSelect, InstitutionCombobox, MoneyInput, Select, TextInput, SearchableSelect } from './ui.jsx'
 
 function MoneyField({ label, amount, currency, onAmount, onCurrency }) {
   return (
@@ -30,6 +30,7 @@ const INVESTMENT_TYPE_OPTIONS = [...INVESTMENT_TYPES, 'Other']
 const PROPERTY_TYPE_OPTIONS = [...PROPERTY_TYPES, 'Other']
 const INSURANCE_TYPE_OPTIONS = [...INSURANCE_TYPES, 'Other']
 const COLLECTIBLE_TYPE_OPTIONS = [...COLLECTIBLE_TYPES, 'Other']
+const CRYPTO_ASSET_OPTIONS = [...CRYPTO_ASSETS, 'Other']
 
 const assetToForm = (asset) => {
   const f = {
@@ -48,6 +49,7 @@ const assetToForm = (asset) => {
     realestate: PROPERTY_TYPES,
     collectibles: COLLECTIBLE_TYPES,
     insurance: INSURANCE_TYPES,
+    crypto: CRYPTO_ASSETS,
   }
   if (asset && otherMap[asset.category] && f.subtype && !otherMap[asset.category].includes(f.subtype)) {
     f.customType = f.subtype
@@ -92,7 +94,8 @@ const missingAssetFields = (category, f) => {
     if (!f.subtype) m.subtype = true
     if (noInst) m.institution = true
   } else if (category === 'crypto') {
-    if (noInst) m.institution = true
+    if (!f.subtype) m.subtype = true
+    else if (f.subtype === 'Other' && noCustom) m.customType = true
   } else if (category === 'collectibles') {
     if (!f.subtype) m.subtype = true
     else if (f.subtype === 'Other' && noCustom) m.customType = true
@@ -177,10 +180,10 @@ function AssetFields({ category, form, set, errors = {} }) {
             groups={RETIREMENT_GROUPS} placeholder="Select account type" />
         </Field>
         {form.subtype === 'Other retirement account' && customTypeField()}
-        <Field label={isPension ? 'Employer or plan provider' : 'Provider'} required error={err('institution')}>
+        <Field label={isPension ? 'Employer or plan institution' : 'Institution'} required error={err('institution')}>
           <InstitutionCombobox value={form.institutionOrProvider}
             onChange={(v) => set('institutionOrProvider', v)}
-            placeholder="Start typing a provider…" options={RETIREMENT_PROVIDERS} />
+            placeholder="Start typing an institution…" options={RETIREMENT_PROVIDERS} />
         </Field>
         <Field label="Account nickname">
           <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Current employer 401(k)" />
@@ -200,7 +203,7 @@ function AssetFields({ category, form, set, errors = {} }) {
       </Field>
       {form.subtype === 'Other' && customTypeField('Property type name')}
       <Field label="Property name" required error={err('name')}>
-        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Austin house" />
+        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Lake house" />
       </Field>
       <Field label="Address">
         <TextInput value={form.address} onChange={(v) => set('address', v)} placeholder="Street, city, state" />
@@ -226,10 +229,10 @@ function AssetFields({ category, form, set, errors = {} }) {
         <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
           options={INSURANCE_TYPE_OPTIONS} placeholder="Select type" />
       </Field>
-      <Field label="Provider" required error={err('institution')}>
+      <Field label="Institution" required error={err('institution')}>
         <InstitutionCombobox value={form.institutionOrProvider}
           onChange={(v) => set('institutionOrProvider', v)}
-          placeholder="Start typing a provider…" options={INSURANCE_PROVIDERS} />
+          placeholder="Northwestern Mutual, New York Life…" options={INSURANCE_PROVIDERS} />
       </Field>
       <Field label="Name">
         <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Whole life policy" />
@@ -241,13 +244,15 @@ function AssetFields({ category, form, set, errors = {} }) {
 
   if (category === 'crypto') return (
     <>
-      <Field label="Platform or wallet" required error={err('institution')}>
+      <Field label="Asset" required error={err('subtype')}>
+        <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
+          options={CRYPTO_ASSET_OPTIONS} placeholder="Bitcoin, Ethereum…" />
+      </Field>
+      {form.subtype === 'Other' && customTypeField('Asset name')}
+      <Field label="Platform or wallet">
         <InstitutionCombobox value={form.institutionOrProvider}
           onChange={(v) => set('institutionOrProvider', v)}
           placeholder="Coinbase, Kraken, Ledger…" options={CRYPTO_PLATFORMS} />
-      </Field>
-      <Field label="Name">
-        <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Crypto holdings" />
       </Field>
       <MoneyField label="Current value" amount={form.value} currency={form.currency}
         onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
@@ -620,6 +625,31 @@ const LIABILITY_EXAMPLES = {
   other: 'Anything else you owe',
 }
 
+/* Per-category labels: the "name" slot means different things per debt
+   (her review: nobody writes "Mortgage 2" — mortgages relate to property,
+   loans to purpose, cards to a nickname). */
+const LIABILITY_FIELDS = {
+  mortgage: { nameLabel: 'Property', namePlaceholder: 'Primary residence, lake house…', lenderLabel: 'Lender', lenderPlaceholder: 'Chase, Wells Fargo…', propertyPicker: true },
+  'personal-loan': { nameLabel: 'Loan purpose', namePlaceholder: 'Car loan, student loan, medical…', lenderLabel: 'Lender', lenderPlaceholder: 'Chase, SoFi…' },
+  'business-loan': { nameLabel: 'Loan name', namePlaceholder: 'Working capital, equipment loan…', lenderLabel: 'Lender', lenderPlaceholder: 'Chase, Wells Fargo…' },
+  'credit-line': { nameLabel: 'Name', namePlaceholder: 'HELOC, credit line…', lenderLabel: 'Lender', lenderPlaceholder: 'Chase, Wells Fargo…' },
+  'credit-card': { issuerFirst: true, lenderLabel: 'Card issuer', lenderPlaceholder: 'American Express, Chase…', lenderOptions: CARD_ISSUERS, nameLabel: 'Card nickname', namePlaceholder: 'Amex Platinum, Visa Sapphire…' },
+  other: { nameLabel: 'Name', namePlaceholder: 'Describe the debt', lenderLabel: 'Lender', lenderPlaceholder: 'Chase, Wells Fargo…' },
+}
+
+/* Interest rate with the % living inside the field: shown as "4.25%" at rest,
+   plain digits while editing. */
+function RateInput({ value, onChange }) {
+  const [focused, setFocused] = useState(false)
+  const shown = value === '' ? '' : focused ? String(value) : value + '%'
+  return (
+    <input className="input" placeholder="4.25%" inputMode="decimal"
+      value={shown}
+      onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+      onChange={(e) => onChange(e.target.value.replace(/[^0-9.]/g, '').slice(0, 5))} />
+  )
+}
+
 const liabilityToForm = (l) => ({
   name: l?.name || '',
   lender: l?.lender || '',
@@ -628,7 +658,7 @@ const liabilityToForm = (l) => ({
   currency: l?.currency || 'USD',
 })
 
-export function LiabilityPanel({ category: initialCategory, liability, onCommit, onLiveChange, onClose, onRemove, setGuard, onCategoryChange }) {
+export function LiabilityPanel({ category: initialCategory, liability, onCommit, onLiveChange, onClose, onRemove, setGuard, onCategoryChange, propertyOptions = [] }) {
   const direct = !!(liability || initialCategory)
   const [stage, setStage] = useState(direct ? 'form' : 'choice') // choice | form
   const [category, setCategory] = useState(liability?.category || initialCategory || null)
@@ -708,27 +738,36 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
           </div>
         )}
 
-        {stage === 'form' && (
-          <div className="focus-form">
-            <Field label="Name">
-              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder={cat.label} />
+        {stage === 'form' && (() => {
+          const cfg = LIABILITY_FIELDS[category] || LIABILITY_FIELDS.other
+          const nameField = cfg.propertyPicker ? (
+            <Field label={cfg.nameLabel} key="name">
+              <SearchableSelect value={form.name} options={propertyOptions}
+                placeholder={cfg.namePlaceholder}
+                onChange={(v) => set('name', v)} />
             </Field>
-            <Field label="Lender">
+          ) : (
+            <Field label={cfg.nameLabel} key="name">
+              <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder={cfg.namePlaceholder} />
+            </Field>
+          )
+          const lenderField = (
+            <Field label={cfg.lenderLabel} key="lender">
               <InstitutionCombobox value={form.lender} onChange={(v) => set('lender', v)}
-                placeholder="Chase, Wells Fargo…" />
+                placeholder={cfg.lenderPlaceholder} options={cfg.lenderOptions} />
             </Field>
-            <MoneyField label="Outstanding balance" amount={form.outstandingBalance} currency={form.currency}
-              onAmount={(v) => set('outstandingBalance', v)} onCurrency={(c) => set('currency', c)} />
-            <Field label="Interest rate">
-              <div className="currency rate-field">
-                <input className="input currency-input" placeholder="4.25" inputMode="decimal"
-                  value={form.interestRate}
-                  onChange={(e) => set('interestRate', e.target.value.replace(/[^0-9.]/g, '').slice(0, 5))} />
-                <span className="currency-suffix">%</span>
-              </div>
-            </Field>
-          </div>
-        )}
+          )
+          return (
+            <div className="focus-form">
+              {cfg.issuerFirst ? [lenderField, nameField] : [nameField, lenderField]}
+              <MoneyField label="Outstanding balance" amount={form.outstandingBalance} currency={form.currency}
+                onAmount={(v) => set('outstandingBalance', v)} onCurrency={(c) => set('currency', c)} />
+              <Field label="Interest rate">
+                <RateInput value={form.interestRate} onChange={(v) => set('interestRate', v)} />
+              </Field>
+            </div>
+          )
+        })()}
       </div>
 
       {stage === 'form' && (

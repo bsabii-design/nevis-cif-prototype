@@ -165,6 +165,7 @@ export const assetRowText = (a) => {
       : { primary: t || 'Insurance or annuity', secondaryInst: inst || null }
   }
   if (a.category === 'crypto') {
+    if (t) return { primaryType: t, primaryInst: inst || undefined, secondary: name || null }
     return name
       ? { primary: name, secondaryInst: inst || null }
       : { primaryInst: inst || null, primary: inst ? undefined : 'Crypto' }
