@@ -5,7 +5,7 @@ import {
   COUNTRY_NAMES, fmtCompact, fmtMoney, fmtUSD, missingPersonalFields, requiredComplete, usdOf,
 } from './model.js'
 import { parseGoals } from './parse.js'
-import { CountrySelect, DateInput, Field, MoneyInput, PhoneInput, RadioRow, SearchableSelect, TextInput } from './ui.jsx'
+import { CompanyInput, CountrySelect, DateInput, Field, MoneyInput, PhoneInput, RadioRow, SearchableSelect, TextInput } from './ui.jsx'
 import { AssetRow, FinancialSummary, LiabilityRow } from './components.jsx'
 import { useCountUp } from './hooks.js'
 
@@ -214,11 +214,8 @@ export function Work({ profile, onChange, onNav }) {
     <div className="screen">
       <div className="narrow-col">
       <div className="title-block">
-        <div className="page-title-row">
-          <h1 className="page-title">Occupation & income</h1>
-          <span className="optional-tag">Optional</span>
-        </div>
-        <p className="page-copy">Add any context that would be useful for your conversation with Sarah.</p>
+        <h1 className="page-title">Occupation & income</h1>
+        <p className="page-copy">Add any relevant details about your work and income.</p>
       </div>
 
       <div className="focus-form">
@@ -228,28 +225,32 @@ export function Work({ profile, onChange, onNav }) {
         </Field>
 
         {st === 'Employed' && (
-          <>
+          <div className="field-pair">
             <Field label="Job title"><TextInput value={w.jobTitle} onChange={(v) => set('jobTitle', v)} /></Field>
-            <Field label="Employer"><TextInput value={w.employer} onChange={(v) => set('employer', v)} /></Field>
-          </>
+            <Field label="Employer"><CompanyInput value={w.employer} onChange={(v) => set('employer', v)} /></Field>
+          </div>
         )}
         {(st === 'Self-employed' || st === 'Business owner') && (
-          <>
+          <div className="field-pair">
             <Field label="Occupation"><TextInput value={w.occupation} onChange={(v) => set('occupation', v)} /></Field>
-            <Field label="Business name"><TextInput value={w.businessName} onChange={(v) => set('businessName', v)} /></Field>
-          </>
+            <Field label="Business name"><CompanyInput value={w.businessName} onChange={(v) => set('businessName', v)} /></Field>
+          </div>
         )}
         {st === 'Retired' && (
-          <Field label="Previous occupation" helper="Optional">
-            <TextInput value={w.occupation} onChange={(v) => set('occupation', v)} />
-          </Field>
+          <div className="field-half">
+            <Field label="Previous occupation">
+              <TextInput value={w.occupation} onChange={(v) => set('occupation', v)} />
+            </Field>
+          </div>
         )}
 
         {st && st !== 'Not employed' && (
-          <Field label={st === 'Retired' ? 'Annual retirement income' : 'Annual income'} helper="A rough estimate is fine.">
-            <MoneyInput amount={w.annualIncome} currency={w.currency}
-              onAmount={(v) => set('annualIncome', v)} onCurrency={(c) => set('currency', c)} />
-          </Field>
+          <div className="field-half">
+            <Field label={st === 'Retired' ? 'Annual retirement income' : 'Annual income'}>
+              <MoneyInput amount={w.annualIncome} currency={w.currency}
+                onAmount={(v) => set('annualIncome', v)} onCurrency={(c) => set('currency', c)} />
+            </Field>
+          </div>
         )}
       </div>
 

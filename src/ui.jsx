@@ -145,6 +145,22 @@ export function InstitutionCombobox({ value, onChange, placeholder, autoFocus, o
   )
 }
 
+/* Text input with a leading company avatar — real logo for known names,
+   letter avatar otherwise (Occupation mock: Employer field). */
+export function CompanyInput({ value, onChange, placeholder }) {
+  const av = institutionAvatar(value)
+  return (
+    <div className="combo">
+      {av && (av.logo
+        ? <img className="avatar avatar-sm combo-avatar avatar-logo" src={av.logo} alt="" aria-hidden="true" />
+        : <span className="avatar avatar-sm combo-avatar" style={{ background: av.color }} aria-hidden="true">{av.letter}</span>)}
+      <input className={'input' + (av ? ' combo-input-avatar' : '')}
+        value={value || ''} placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)} />
+    </div>
+  )
+}
+
 /* Searchable select over a fixed list (countries, US states). Filter-as-you-type,
    keyboard navigation, optional icon (real country flag) in input and rows.
    Free text stays if it matches nothing — the prototype never blocks typing. */

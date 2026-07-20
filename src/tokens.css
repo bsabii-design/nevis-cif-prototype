@@ -51,6 +51,7 @@
   --bg-ghost-hover:     rgba(20, 20, 19, 0.03);  /* lighter: hovers were reading dirty */
   --bg-selected:        rgba(20, 20, 19, 0.045); /* selected row / band / nav item */
   --bg-tint:            rgba(20, 20, 19, 0.03);  /* quiet surfaces: group bands, editor cards */
+  --bg-faint:           rgba(20, 20, 19, 0.02);  /* unselected pills (Figma 2%) */
   --bg-overlay:         var(--color-beige-80);
 
   --border-default:  var(--color-black-a16);
