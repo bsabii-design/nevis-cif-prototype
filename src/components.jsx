@@ -158,7 +158,8 @@ export const assetRowText = (a) => {
       ? { primary: name, secondary: [t, a.address].filter(Boolean).join(' · ') || null }
       : { primary: t || 'Property', secondary: a.address || null }
   }
-  if (a.category === 'business') return { primary: name || 'Business interest', secondary: name ? 'Business interest' : null }
+  // The group band already says "Business interests" — echoing it in the row adds nothing.
+  if (a.category === 'business') return { primary: name || 'Business interest', secondary: null }
   if (a.category === 'insurance') {
     return name
       ? { primary: name, secondaryInst: inst, secondary: t || null }

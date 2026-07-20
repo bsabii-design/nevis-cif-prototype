@@ -47,8 +47,8 @@ export const ASSET_CATEGORIES = [
   { key: 'realestate', label: 'Real estate', single: 'Real estate', add: 'property', cta: 'Add asset', formTitle: 'Add real estate' },
   { key: 'business', label: 'Business interests', single: 'Business interest', add: 'business interest', cta: 'Add asset', formTitle: 'Add business interest' },
   { key: 'insurance', label: 'Insurance & annuities', single: 'Insurance or annuity', add: 'policy', cta: 'Add asset', formTitle: 'Add insurance or annuity' },
-  { key: 'crypto', label: 'Crypto', single: 'Crypto or digital asset', add: 'crypto', cta: 'Add asset', formTitle: 'Add crypto or digital asset' },
-  { key: 'collectibles', label: 'Art and collectibles', single: 'Art or collectible', add: 'item', cta: 'Add asset', formTitle: 'Add art or collectible' },
+  { key: 'crypto', label: 'Crypto & digital assets', single: 'Crypto or digital asset', add: 'crypto', cta: 'Add asset', formTitle: 'Add crypto or digital asset' },
+  { key: 'collectibles', label: 'Art & collectibles', single: 'Art or collectible', add: 'item', cta: 'Add asset', formTitle: 'Add art or collectible' },
   { key: 'other', label: 'Other assets', single: 'Other asset', add: 'asset', cta: 'Add asset', formTitle: 'Add other asset' },
 ]
 export const assetCategory = (key) => ASSET_CATEGORIES.find((c) => c.key === key)
