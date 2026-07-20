@@ -9,9 +9,7 @@ import { useSavedFlash } from './hooks.js'
 
 const LEAVE_COPY = {
   asset: { title: 'Leave without adding this asset?', body: 'Your entries will be lost.' },
-  'asset-edit': { title: 'Leave without saving changes?', body: 'Your changes will be lost.' },
   liability: { title: 'Leave without adding this liability?', body: 'Your entries will be lost.' },
-  'liability-edit': { title: 'Leave without saving changes?', body: 'Your changes will be lost.' },
   extract: { title: 'Leave without adding these accounts?', body: 'Your changes will be lost.', stay: 'Keep reviewing' },
 }
 
@@ -180,6 +178,16 @@ export default function App() {
     setAssetPanel(null)
   }
 
+  /* Live edits: the object already exists — update in place, keep the panel open. */
+  const liveUpdateAsset = (a) => {
+    setProfile((p) => ({ ...p, assets: p.assets.map((x) => (x.id === a.id ? a : x)) }))
+    touch()
+  }
+  const liveUpdateLiability = (l) => {
+    setProfile((p) => ({ ...p, liabilities: p.liabilities.map((x) => (x.id === l.id ? l : x)) }))
+    touch()
+  }
+
   const commitLiability = (liability) => {
     setProfile((p) => ({
       ...p,
@@ -320,6 +328,7 @@ export default function App() {
               onCategoryChange={setPanelCat}
               liability={assetPanel.id ? profile.liabilities.find((l) => l.id === assetPanel.id) : null}
               onCommit={commitLiability}
+              onLiveChange={liveUpdateLiability}
               onRemove={assetPanel.id ? () => {
                 const item = profile.liabilities.find((l) => l.id === assetPanel.id)
                 if (item) setRemoveDialog({ kind: 'liability', item })
@@ -334,6 +343,7 @@ export default function App() {
               onCategoryChange={setPanelCat}
               asset={assetPanel.id ? profile.assets.find((a) => a.id === assetPanel.id) : null}
               onCommitAsset={commitAsset}
+              onLiveChange={liveUpdateAsset}
               onCommitAccounts={commitExtracted}
               onRemove={assetPanel.id ? () => {
                 const item = profile.assets.find((a) => a.id === assetPanel.id)

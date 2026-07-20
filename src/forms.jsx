@@ -312,7 +312,7 @@ const CATEGORY_EXAMPLES = {
   other: 'Anything else of value',
 }
 
-export function AssetPanel({ category: initialCategory, asset, onCommitAsset, onCommitAccounts, onClose, onRemove, setGuard, onCategoryChange }) {
+export function AssetPanel({ category: initialCategory, asset, onCommitAsset, onLiveChange, onCommitAccounts, onClose, onRemove, setGuard, onCategoryChange }) {
   const direct = !!(asset || initialCategory)
   const [stage, setStage] = useState(direct ? 'form' : 'choice') // choice | form | upload | reading | review
   const [category, setCategory] = useState(asset?.category || initialCategory || null)
@@ -330,16 +330,44 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
   const fileRef = useRef(null)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
+  /* Editing is live: changes flow into the profile (debounced), so an open
+     edit form is never "unsaved" — guards protect only creation and review. */
   const formDirty = asset
-    ? JSON.stringify(form) !== initialRef.current
+    ? false
     : !!(form.name || form.institutionOrProvider || form.address || form.value != null)
   const dirty = stage === 'form' ? formDirty : stage === 'review' ? edited : false
 
   useEffect(() => {
-    const kind = stage === 'review' ? 'extract' : asset ? 'asset-edit' : 'asset'
+    const kind = stage === 'review' ? 'extract' : 'asset'
     setGuard(dirty ? { kind } : null)
     return () => setGuard(null)
-  }, [dirty, stage, asset, setGuard])
+  }, [dirty, stage, setGuard])
+
+  const buildAsset = () => ({
+    id: asset?.id ?? uid(),
+    category,
+    subtype:
+      form.subtype === 'Other' || form.subtype === 'Other retirement account'
+        ? form.customType.trim() || form.subtype
+        : form.subtype,
+    name: form.name.trim(),
+    institutionOrProvider: form.institutionOrProvider.trim(),
+    address: form.address.trim(),
+    currency: form.currency,
+    value: form.value ?? null,
+  })
+
+  const liveTimer = useRef(null)
+  const lastSent = useRef(initialRef.current)
+  useEffect(() => {
+    if (!asset || stage !== 'form') return
+    const snapshot = JSON.stringify(form)
+    if (snapshot === lastSent.current) return
+    if (Object.keys(missingAssetFields(category, form)).length > 0) return
+    clearTimeout(liveTimer.current)
+    liveTimer.current = setTimeout(() => { lastSent.current = snapshot; onLiveChange(buildAsset()) }, 400)
+    return () => clearTimeout(liveTimer.current)
+  }, [form])
 
   const guarded = (run) => (dirty ? setConfirmLeave({ run }) : run())
   const requestClose = () => guarded(onClose)
@@ -386,19 +414,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
       }, 60)
       return
     }
-    onCommitAsset({
-      id: asset?.id ?? uid(),
-      category,
-      subtype:
-        form.subtype === 'Other' || form.subtype === 'Other retirement account'
-          ? form.customType.trim() || form.subtype
-          : form.subtype,
-      name: form.name.trim(),
-      institutionOrProvider: form.institutionOrProvider.trim(),
-      address: form.address.trim(),
-      currency: form.currency,
-      value: form.value ?? null,
-    })
+    onCommitAsset(buildAsset())
   }
 
   const editTitle = () => {
@@ -494,7 +510,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
         {stage === 'form' && (
           <div className="focus-form">
             <AssetFields category={category} form={form} set={set}
-              errors={attempted ? missingAssetFields(category, form) : {}} />
+              errors={asset || attempted ? missingAssetFields(category, form) : {}} />
           </div>
         )}
       </div>
@@ -504,18 +520,23 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
           {stage === 'form' && asset && onRemove && (
             <button className="btn btn-ghost btn-remove panel-foot-remove" onClick={onRemove}>Remove</button>
           )}
-          <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
-          {stage === 'form' ? (
-            <button className="btn btn-primary" onClick={commitForm}>
-              {asset ? 'Save changes'
-                : category === 'cash'
-                  ? (form.subtype === 'Cash' ? 'Add cash' : form.subtype === 'Other' ? 'Add asset' : 'Add account')
-                  : cat.cta}
-            </button>
+          {stage === 'form' && asset ? (
+            <button className="btn btn-secondary" onClick={onClose}>Done</button>
           ) : (
-            <button className="btn btn-primary" onClick={() => onCommitAccounts(accounts)}>
-              Add {accounts.length} account{accounts.length === 1 ? '' : 's'}
-            </button>
+            <>
+              <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
+              {stage === 'form' ? (
+                <button className="btn btn-primary" onClick={commitForm}>
+                  {category === 'cash'
+                    ? (form.subtype === 'Cash' ? 'Add cash' : form.subtype === 'Other' ? 'Add asset' : 'Add account')
+                    : cat.cta}
+                </button>
+              ) : (
+                <button className="btn btn-primary" onClick={() => onCommitAccounts(accounts)}>
+                  Add {accounts.length} account{accounts.length === 1 ? '' : 's'}
+                </button>
+              )}
+            </>
           )}
         </div>
       )}
@@ -556,7 +577,7 @@ const liabilityToForm = (l) => ({
   currency: l?.currency || 'USD',
 })
 
-export function LiabilityPanel({ category: initialCategory, liability, onCommit, onClose, onRemove, setGuard, onCategoryChange }) {
+export function LiabilityPanel({ category: initialCategory, liability, onCommit, onLiveChange, onClose, onRemove, setGuard, onCategoryChange }) {
   const direct = !!(liability || initialCategory)
   const [stage, setStage] = useState(direct ? 'form' : 'choice') // choice | form
   const [category, setCategory] = useState(liability?.category || initialCategory || null)
@@ -567,14 +588,35 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
   const formDirty = liability
-    ? JSON.stringify(form) !== initialRef.current
+    ? false
     : !!(form.name || form.lender || form.outstandingBalance != null || form.interestRate !== '')
   const dirty = stage === 'form' && formDirty
 
   useEffect(() => {
-    setGuard(dirty ? { kind: liability ? 'liability-edit' : 'liability' } : null)
+    setGuard(dirty ? { kind: 'liability' } : null)
     return () => setGuard(null)
-  }, [dirty, liability, setGuard])
+  }, [dirty, setGuard])
+
+  const buildLiability = () => ({
+    id: liability?.id ?? uid(),
+    category,
+    name: form.name.trim(),
+    lender: form.lender.trim(),
+    currency: form.currency,
+    outstandingBalance: form.outstandingBalance ?? null,
+    interestRate: form.interestRate === '' ? null : Number(form.interestRate),
+  })
+
+  const liveTimer = useRef(null)
+  const lastSent = useRef(initialRef.current)
+  useEffect(() => {
+    if (!liability || stage !== 'form') return
+    const snapshot = JSON.stringify(form)
+    if (snapshot === lastSent.current) return
+    clearTimeout(liveTimer.current)
+    liveTimer.current = setTimeout(() => { lastSent.current = snapshot; onLiveChange(buildLiability()) }, 400)
+    return () => clearTimeout(liveTimer.current)
+  }, [form])
 
   const guarded = (run) => (dirty ? setConfirmLeave({ run }) : run())
   const requestClose = () => guarded(onClose)
@@ -586,17 +628,7 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
   const cat = category ? liabilityCategory(category) : null
   const title = stage === 'choice' ? 'Add liabilities' : liability ? `Edit ${cat.label.toLowerCase()}` : cat.formTitle
 
-  const commit = () => {
-    onCommit({
-      id: liability?.id ?? uid(),
-      category,
-      name: form.name.trim(),
-      lender: form.lender.trim(),
-      currency: form.currency,
-      outstandingBalance: form.outstandingBalance ?? null,
-      interestRate: form.interestRate === '' ? null : Number(form.interestRate),
-    })
-  }
+  const commit = () => { onCommit(buildLiability()) }
 
   return (
     <aside className="shell-panel" aria-label={title}>
@@ -653,10 +685,14 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
           {liability && onRemove && (
             <button className="btn btn-ghost btn-remove panel-foot-remove" onClick={onRemove}>Remove</button>
           )}
-          <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={commit}>
-            {liability ? 'Save changes' : 'Add liability'}
-          </button>
+          {liability ? (
+            <button className="btn btn-secondary" onClick={onClose}>Done</button>
+          ) : (
+            <>
+              <button className="btn btn-secondary" onClick={requestClose}>Cancel</button>
+              <button className="btn btn-primary" onClick={commit}>Add liability</button>
+            </>
+          )}
         </div>
       )}
 
