@@ -6,40 +6,40 @@
    ============================================================ */
 
 :root {
-  /* ---- Color · primitives ---- */
+  /* ---- Color · primitives ----
+     The whole product is FOUR colors: beige, white, ink, red.
+     Everything else is ink at a fixed opacity step, one job per step:
+       2%  tint at rest (pills, bands)     48% tertiary text · disabled · quiet controls
+       4%  tint active (hover/selected)    64% secondary text
+       6%  stroke (only stroke)            80% primary-button hover state
+       8%  pressed tint (secondary hover) 100% primary text · focus · primary button */
   --color-black: #141413;
   --color-white: #ffffff;
   --color-beige: #f7f6f0;
   --color-beige-80: rgba(247, 246, 240, 0.8);
   --color-beige-0: rgba(247, 246, 240, 0);
 
+  --color-black-a2:  rgba(20, 20, 19, 0.02);
   --color-black-a4:  rgba(20, 20, 19, 0.04);
   --color-black-a6:  rgba(20, 20, 19, 0.06);
   --color-black-a8:  rgba(20, 20, 19, 0.08);
-  --color-black-a12: rgba(20, 20, 19, 0.12);
-  --color-black-a16: rgba(20, 20, 19, 0.16);
-  --color-black-a20: rgba(20, 20, 19, 0.20);
-  --color-black-a24: rgba(20, 20, 19, 0.24);
   --color-black-a48: rgba(20, 20, 19, 0.48);
   --color-black-a64: rgba(20, 20, 19, 0.64);
   --color-black-a80: rgba(20, 20, 19, 0.80);
 
-  --color-blue-soft:   #e6f1f5;
-  --color-blue-bright: #1080b4;  /* single restrained accent */
-  --color-green-bright:#4caf50;
-
-  /* Validation / danger — muted brick red that sits with the beige palette */
-  --color-red-soft:   rgba(163, 52, 43, 0.08);
-  --color-red-bright: #b2392f;   /* borders, icons */
-  --color-red-strong: #932e25;   /* error text (AA on beige) */
+  /* Validation / danger — one red; soft fill is the same red at 8% */
+  --color-red:        #b2392f;
+  --color-red-soft:   rgba(178, 57, 47, 0.08);
+  --color-red-bright: var(--color-red); /* alias */
+  --color-red-strong: var(--color-red); /* alias */
 
   /* ---- Color · semantic (use these in components) ---- */
   --content-primary:   var(--color-black);
   --content-secondary: var(--color-black-a64);
   --content-tertiary:  var(--color-black-a48);
   --content-inverse:   var(--color-white);
-  --content-accent:    var(--color-blue-bright);
-  --content-positive:  var(--color-green-bright);
+  --content-accent:    var(--color-black);     /* no third hue: accents are ink */
+  --content-positive:  var(--color-black-a48); /* no green: state dots are quiet ink */
 
   --bg-page:            var(--color-beige);
   --bg-surface:         var(--color-white);
@@ -48,15 +48,15 @@
   --bg-primary-disabled:var(--color-black-a48);
   --bg-secondary:       var(--color-black-a4);
   --bg-secondary-hover: var(--color-black-a8);
-  --bg-ghost-hover:     rgba(20, 20, 19, 0.03);  /* lighter: hovers were reading dirty */
-  --bg-selected:        rgba(20, 20, 19, 0.045); /* selected row / band / nav item */
-  --bg-tint:            rgba(20, 20, 19, 0.03);  /* quiet surfaces: group bands, editor cards */
-  --bg-faint:           rgba(20, 20, 19, 0.02);  /* unselected pills (Figma 2%) */
+  --bg-ghost-hover:     var(--color-black-a4);
+  --bg-selected:        var(--color-black-a4);
+  --bg-tint:            var(--color-black-a2);
+  --bg-faint:           var(--color-black-a2);
   --bg-overlay:         var(--color-beige-80);
 
-  --border-default:  var(--color-black-a16);
-  --border-subtle:   var(--color-black-a6); /* structural hairlines per mock */
-  --border-hovered:  var(--color-black-a24);
+  --border-default:  var(--color-black-a6);
+  --border-subtle:   var(--color-black-a6);
+  --border-hovered:  var(--color-black-a48); /* control affordances (checkbox) */
   --border-selected: var(--color-black);
 
   /* ---- Typography ----
