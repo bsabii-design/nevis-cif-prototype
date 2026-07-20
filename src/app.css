@@ -597,7 +597,6 @@ input, select, textarea { font: inherit; color: inherit; }
   padding: var(--space-12) var(--panel-pad);
   background: var(--bg-page);
 }
-.panel-foot-remove { margin-right: auto; }
 .panel-foot::before {
   content: '';
   position: absolute; bottom: 100%; left: 0; right: 0;

@@ -569,7 +569,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
       {(stage === 'form' || (stage === 'review' && accounts.length > 0)) && (
         <div className="panel-foot">
           {stage === 'form' && asset && onRemove && (
-            <button className="btn btn-tertiary panel-foot-remove" onClick={onRemove}>Remove</button>
+            <button className="btn btn-tertiary" onClick={onRemove}>Remove</button>
           )}
           {stage === 'form' && asset ? (
             <button className="btn btn-secondary" onClick={onClose}>Done</button>
@@ -734,7 +734,7 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
       {stage === 'form' && (
         <div className="panel-foot">
           {liability && onRemove && (
-            <button className="btn btn-tertiary panel-foot-remove" onClick={onRemove}>Remove</button>
+            <button className="btn btn-tertiary" onClick={onRemove}>Remove</button>
           )}
           {liability ? (
             <button className="btn btn-secondary" onClick={onClose}>Done</button>
