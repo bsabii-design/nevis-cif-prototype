@@ -133,7 +133,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .nw-empty { display: flex; flex-direction: column; gap: var(--space-8); align-items: flex-start; padding: var(--space-8) 0 var(--space-16); }
 .nw-empty-title { font: var(--text-heading-sm); }
 .nw-empty-cta { margin-top: var(--space-8); }
-.nw-pill-count { margin-left: var(--space-8); font: var(--text-body-sm); color: var(--content-tertiary); }
+.nw-pill-count { margin-left: var(--space-8); font: var(--text-label-sm); color: var(--content-secondary); }
 .nw-deferred-note { font: var(--text-body-sm); color: var(--content-secondary); }
 .link-quiet { font: var(--text-body-sm); color: var(--content-tertiary); text-align: left; transition: color var(--duration-fast) var(--ease); }
 .link-quiet:hover { color: var(--content-primary); }
@@ -311,7 +311,7 @@ input, select, textarea { font: inherit; color: inherit; }
    Table-like columns so the eye scans straight down: primary | nickname | value. */
 .arow {
   display: grid;
-  grid-template-columns: minmax(0, 256px) minmax(0, 1fr) max-content;
+  grid-template-columns: minmax(0, 322px) minmax(0, 1fr) max-content;
   align-items: center; column-gap: var(--space-16);
   height: 44px;
   padding: 0 var(--space-12);
@@ -432,7 +432,7 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Collapsing header: title + summary card scroll away; only the divider +
    toolbar stick. When the card leaves the viewport, a compact net-worth
    figure fades into the toolbar so the counter never disappears. */
-.nw-header-top { display: flex; flex-direction: column; gap: var(--space-20); }
+
 .nw-header {
   position: sticky; top: 57px; z-index: 4;
   display: flex; flex-direction: column; gap: var(--space-16);
@@ -444,15 +444,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .nw-toolbar-right { display: flex; align-items: center; gap: var(--space-16); }
 /* Collapsed summary: the card's essence (label + serif figure) as a slim bar
    that slides in where the card was, keeping the live counter at the top. */
-.nw-compact-bar {
-  display: flex; align-items: baseline; gap: var(--space-12);
-  max-height: 0; opacity: 0; overflow: hidden;
-  transition: max-height var(--duration-normal) var(--ease),
-    opacity var(--duration-fast) var(--ease);
-}
-.nw-header-compact .nw-compact-bar { max-height: 44px; opacity: 1; }
-.nw-compact-label { font: var(--text-body-sm); color: var(--content-secondary); }
-.nw-compact-fig { font: 500 24px/32px var(--font-serif); font-variant-numeric: tabular-nums; }
+
 /* A soft fade below the toolbar so scrolling rows dissolve into it. */
 .nw-header::after {
   content: '';

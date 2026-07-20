@@ -6,8 +6,7 @@ import {
 } from './model.js'
 import { parseGoals } from './parse.js'
 import { CompanyInput, CountrySelect, DateInput, Field, MoneyInput, PhoneInput, RadioRow, SearchableSelect, TextInput } from './ui.jsx'
-import { AssetRow, FinancialSummary, LiabilityRow } from './components.jsx'
-import { useCountUp } from './hooks.js'
+import { AssetRow, LiabilityRow } from './components.jsx'
 
 /* ---------------- Welcome (spec §7) ---------------- */
 
@@ -432,24 +431,6 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   onAnswerNone, panelOpen, panelTarget }) {
   const { assets, liabilities, liabilitiesExplicitlyNone: none } = profile
 
-  /* Collapsing header: when the summary card scrolls out of view, a compact
-     net-worth figure fades into the sticky toolbar so the counter stays visible. */
-  const cardRef = useRef(null)
-  const [compact, setCompact] = useState(false)
-  useEffect(() => {
-    const el = cardRef.current
-    if (!el) return
-    const obs = new IntersectionObserver(
-      ([e]) => setCompact(!e.isIntersecting),
-      { rootMargin: '-57px 0px 0px 0px' }
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
-  const nw = computeSummary(profile).nw
-  const shownNW = useCountUp(nw)
-  const compactNW = nw == null ? '—' : fmtUSD(shownNW)
-
   /* Only categories that contain saved records appear on the page. */
   const assetGroups = ASSET_CATEGORIES.filter((c) => assets.some((a) => a.category === c.key))
   const liabGroups = LIABILITY_CATEGORIES.filter((c) => liabilities.some((l) => l.category === c.key))
@@ -457,24 +438,15 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   return (
     <div className="screen">
       <div className="narrow-col">
-      <div className="nw-header-top" ref={cardRef}>
-        <div className="title-block">
-          <h1 className="page-title">Net worth</h1>
-          <p className="page-copy">
-            Add anything you own or owe to build a clearer financial picture.<br />
-            You can update it anytime.
-          </p>
-        </div>
-
-        <FinancialSummary profile={profile} />
+      <div className="title-block">
+        <h1 className="page-title">Net worth</h1>
+        <p className="page-copy">
+          Add anything you own or owe to build a clearer financial picture.<br />
+          You can update it anytime.
+        </p>
       </div>
 
-      <div className={'nw-header' + (compact ? ' nw-header-compact' : '')}>
-        <div className="nw-compact-bar" aria-hidden={!compact}>
-          <span className="nw-compact-label">Estimated net worth</span>
-          <span className="nw-compact-fig">{compactNW}</span>
-        </div>
-
+      <div className="nw-header">
         <div className="nw-divider" />
 
         <div className="nw-toolbar">
@@ -482,22 +454,24 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
             <button role="tab" aria-selected={tab === 'assets'}
               className={'nw-pill' + (tab === 'assets' ? ' nw-pill-active' : '')}
               onClick={() => onTab('assets')}>
-              Assets{assets.length > 0 && <span className="nw-pill-count">{assets.length}</span>}
+              Assets<span className="nw-pill-count">{assets.length}</span>
             </button>
             <button role="tab" aria-selected={tab === 'liabilities'}
               className={'nw-pill' + (tab === 'liabilities' ? ' nw-pill-active' : '')}
               onClick={() => onTab('liabilities')}>
-              Liabilities{liabilities.length > 0 && <span className="nw-pill-count">{liabilities.length}</span>}
+              Liabilities<span className="nw-pill-count">{liabilities.length}</span>
             </button>
           </div>
-          <div className="nw-toolbar-right">
-            {tab === 'assets' && assets.length > 0 && (
-              <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
-            )}
-            {tab === 'liabilities' && liabilities.length > 0 && (
-              <button className="btn btn-primary" onClick={() => onAddLiability(null)}>Add liabilities</button>
-            )}
-          </div>
+          {!panelOpen && (
+            <div className="nw-toolbar-right">
+              {tab === 'assets' && assets.length > 0 && (
+                <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
+              )}
+              {tab === 'liabilities' && liabilities.length > 0 && (
+                <button className="btn btn-primary" onClick={() => onAddLiability(null)}>Add liabilities</button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
