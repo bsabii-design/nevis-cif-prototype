@@ -208,8 +208,13 @@ input, select, textarea { font: inherit; color: inherit; }
 .btn-secondary { background: var(--bg-secondary); }
 .btn-secondary:hover { background: var(--bg-secondary-hover); }
 .btn-ghost:hover { background: var(--bg-ghost-hover); }
-.btn-danger { background: var(--color-red-soft); color: var(--color-red-strong); }
-.btn-danger:hover { background: var(--color-red-bright); color: var(--content-inverse); }
+/* Solid destructive — lives only in confirmation dialogs. */
+.btn-danger { background: var(--color-red); color: var(--content-inverse); }
+.btn-danger:hover { background: var(--color-red-80); }
+/* Tertiary text action (panel Remove): quiet until hovered, never red in place. */
+.btn-tertiary { color: var(--content-secondary); }
+.btn-tertiary:hover { background: var(--bg-ghost-hover); color: var(--content-primary); }
+.btn-tertiary:active { background: var(--bg-secondary-hover); }
 .btn-remove { color: var(--content-secondary); }
 .btn-remove:hover { color: var(--color-red-bright); background: var(--color-red-soft); }
 
@@ -592,6 +597,7 @@ input, select, textarea { font: inherit; color: inherit; }
   padding: var(--space-12) var(--panel-pad);
   background: var(--bg-page);
 }
+.panel-foot-remove { margin-right: auto; }
 .panel-foot::before {
   content: '';
   position: absolute; bottom: 100%; left: 0; right: 0;

@@ -29,6 +29,7 @@
   /* Validation / danger — one red; soft fill is the same red at 8% */
   --color-red:        #b2392f;
   --color-red-soft:   rgba(178, 57, 47, 0.08);
+  --color-red-80:     rgba(178, 57, 47, 0.80); /* solid danger hover, mirrors ink 80 */
   --color-red-bright: var(--color-red); /* alias */
   --color-red-strong: var(--color-red); /* alias */
 
