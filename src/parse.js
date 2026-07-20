@@ -91,6 +91,13 @@ export const extractedAccounts = () => [
 
 const ALL_INSTITUTIONS = [...new Set([...BANKS, ...INVESTMENT_FIRMS, ...RETIREMENT_PROVIDERS, ...INSTITUTIONS])]
 
+/* Shorthand people actually write -> canonical dictionary name */
+const INSTITUTION_ALIASES = {
+  schwab: 'Charles Schwab', boa: 'Bank of America', bofa: 'Bank of America',
+  citibank: 'Citi', amex: 'American Express', etrade: 'E*TRADE',
+  jpmorgan: 'J.P. Morgan', 'jp morgan': 'J.P. Morgan',
+}
+
 const TYPE_PATTERNS = [
   [/roth\s*ira/i, 'Roth IRA'], [/traditional\s*ira/i, 'Traditional IRA'],
   [/sep\s*ira/i, 'SEP IRA'], [/\bira\b/i, 'Traditional IRA'],
@@ -117,7 +124,10 @@ export const parseAccountsText = (text) => {
   const clauses = text.split(/,\s*(?:and\s+)?|\s+and\s+|\.\s+|;\s*/i).map((c) => c.trim()).filter(Boolean)
   const accounts = []
   for (const clause of clauses) {
-    const inst = ALL_INSTITUTIONS.find((n) => clause.toLowerCase().includes(n.toLowerCase())) || ''
+    const lower = clause.toLowerCase()
+    const inst = ALL_INSTITUTIONS.find((n) => lower.includes(n.toLowerCase()))
+      || INSTITUTION_ALIASES[Object.keys(INSTITUTION_ALIASES).find((a) => lower.includes(a))]
+      || ''
     const type = (TYPE_PATTERNS.find(([re]) => re.test(clause)) || [])[1] || ''
     const value = extractAccountAmount(clause)
     if (!inst && !type && value == null) continue

@@ -614,38 +614,40 @@ input, select, textarea { font: inherit; color: inherit; }
 .panel-choice-eg { font: var(--text-body-sm); color: var(--content-tertiary); }
 .panel-choice-chevron { flex: none; color: var(--content-tertiary); }
 
-/* Upload card: the smart path, expanded and inviting — a white drop zone
-   with a dark orb accent and the three-step story visible before any click. */
-.upload-card {
-  display: flex; flex-direction: column; align-items: center; gap: var(--space-8);
-  width: 100%; cursor: pointer;
-  margin-top: var(--space-8);
-  padding: var(--space-20) var(--space-16);
-  background: var(--bg-surface);
-  border: var(--border-w) dashed var(--border-default);
-  border-radius: var(--radius-12);
-  transition: border-color var(--duration-fast) var(--ease), box-shadow var(--duration-fast) var(--ease);
+/* Upload entry: one quiet row below the categories — expands in place into
+   the describe-or-upload composer (Granola pattern). No strokes at rest. */
+.upload-entry {
+  display: flex; align-items: center; gap: var(--space-12);
+  width: calc(100% + var(--space-16) * 2);
+  margin: var(--space-8) calc(-1 * var(--space-16)) 0;
+  padding: var(--space-12) var(--space-16);
+  font: var(--text-label-md); text-align: left;
+  border-top: var(--border-w) solid var(--border-subtle);
+  transition: background-color var(--duration-fast) var(--ease);
 }
-.upload-card:hover, .upload-card.is-drag {
-  border-color: var(--border-selected);
-  box-shadow: var(--shadow-sm);
-}
-.upload-orb {
-  width: 36px; height: 36px; flex: none;
+.upload-entry:hover { background: var(--bg-ghost-hover); }
+.upload-entry-orb {
+  width: 24px; height: 24px; flex: none;
   display: flex; align-items: center; justify-content: center;
   background: var(--bg-primary); color: var(--content-inverse);
   border-radius: var(--radius-full);
 }
-.upload-orb .panel-upload-icon { color: var(--content-inverse); }
-.upload-card-title { font: var(--text-label-lg); text-align: center; }
-.upload-card-sub { font: var(--text-body-sm); color: var(--content-tertiary); }
-.upload-card-open { cursor: default; align-items: stretch; }
+.upload-entry-orb .panel-upload-icon { width: 13px; height: 13px; }
+
+.upload-open {
+  display: flex; flex-direction: column; align-items: stretch; gap: var(--space-12);
+  margin-top: var(--space-16);
+  padding-top: var(--space-16);
+  border-top: var(--border-w) solid var(--border-subtle);
+}
+.upload-open.is-drag .upload-desc { border-color: var(--border-selected); }
+.upload-entry.is-drag { background: var(--bg-ghost-hover); }
+.upload-open-title { font: var(--text-label-md); }
 .upload-composer { position: relative; }
 .upload-desc {
   display: block;
   min-height: 84px; /* .input's fixed control height is declared later; min-height outranks it */
   padding: var(--space-8) var(--space-48) var(--space-8) var(--space-12);
-  background-color: var(--bg-tint);
   line-height: 20px; resize: none;
 }
 .upload-send {
@@ -657,9 +659,10 @@ input, select, textarea { font: inherit; color: inherit; }
   transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
 .upload-send-on { background: var(--bg-primary); color: var(--content-inverse); }
-.upload-actions { display: flex; align-items: center; gap: var(--space-8); }
-.upload-add-btn { gap: var(--space-8); }
+.upload-or { font: var(--text-body-sm); color: var(--content-tertiary); }
+.upload-actions { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-8); }
 .upload-hint { font: var(--text-body-sm); color: var(--content-tertiary); }
+.upload-note { font: var(--text-body-sm); color: var(--content-secondary); margin-top: var(--space-4); }
 .upload-steps {
   list-style: none; margin: var(--space-4) 0 0;
   display: flex; flex-direction: column; gap: var(--space-8);
