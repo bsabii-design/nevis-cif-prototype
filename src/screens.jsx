@@ -272,10 +272,20 @@ const HORIZONS = ['Within 5 years', '5–10 years', '10+ years', 'Not sure yet']
 /* The standard goal taxonomy — one tap creates the goal, no AI in the way.
    ~8 presets cover most real cases; "Other…" catches the rest in the
    client's own words. */
+/* Lifecycle order: the personal big three, then liquidity & family
+   events, then legacy — with Other closing the list. */
 const GOAL_PRESETS = [
-  'Retire early', 'Buy a home', "Kids' education", 'Sell my business',
-  'Leave a legacy', 'Charitable giving', 'A big purchase', 'Care for my parents',
+  'Retire early', 'Buy a home', "Children's education",
+  'Make a major purchase', 'Sell my business', 'Support my parents',
+  'Leave a legacy', 'Charitable giving',
 ]
+
+/* Goals saved under earlier label wording keep their pill lit. */
+const PRESET_ALIASES = {
+  "Kids' education": "Children's education",
+  'A big purchase': 'Make a major purchase',
+  'Care for my parents': 'Support my parents',
+}
 
 const CheckIcon = () => (
   <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -332,7 +342,7 @@ export function Goals({ profile, onChange }) {
   /* Unchecking stashes the goal's details; re-checking restores them —
      toggling is a safe round trip, never a silent data loss. */
   const stashRef = useRef({})
-  const presetGoal = (label) => goals.find((g) => g.preset === label)
+  const presetGoal = (label) => goals.find((g) => g.preset === label || PRESET_ALIASES[g.preset] === label)
   const removeGoal = (g) => {
     if (g.preset) stashRef.current[g.preset] = g
     setGoals(goals.filter((x) => x.id !== g.id))
