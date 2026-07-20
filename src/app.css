@@ -973,7 +973,7 @@ input, select, textarea { font: inherit; color: inherit; }
   height: var(--control-h);
   padding: 0 var(--space-12);
   font: var(--text-label-md); color: var(--content-secondary);
-  border: var(--border-w) solid var(--border-subtle);
+  background: var(--bg-faint);
   border-radius: var(--radius-full);
   transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
