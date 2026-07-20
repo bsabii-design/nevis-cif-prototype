@@ -11,8 +11,8 @@
      Everything else is ink at a fixed opacity step, one job per step:
        2%  tint at rest (pills, bands)     48% tertiary text · disabled · quiet controls
        4%  tint active (hover/selected)    64% secondary text
-       6%  stroke (only stroke)            80% primary-button hover state
-       8%  pressed tint (secondary hover) 100% primary text · focus · primary button */
+       6%  stroke + pressed (sec. hover)   80% primary-button hover state
+                                          100% primary text · focus · primary button */
   --color-black: #141413;
   --color-white: #ffffff;
   --color-beige: #f7f6f0;
@@ -22,7 +22,6 @@
   --color-black-a2:  rgba(20, 20, 19, 0.02);
   --color-black-a4:  rgba(20, 20, 19, 0.04);
   --color-black-a6:  rgba(20, 20, 19, 0.06);
-  --color-black-a8:  rgba(20, 20, 19, 0.08);
   --color-black-a48: rgba(20, 20, 19, 0.48);
   --color-black-a64: rgba(20, 20, 19, 0.64);
   --color-black-a80: rgba(20, 20, 19, 0.80);
@@ -47,7 +46,7 @@
   --bg-primary-hover:   var(--color-black-a80);
   --bg-primary-disabled:var(--color-black-a48);
   --bg-secondary:       var(--color-black-a4);
-  --bg-secondary-hover: var(--color-black-a8);
+  --bg-secondary-hover: var(--color-black-a6);
   --bg-ghost-hover:     var(--color-black-a4);
   --bg-selected:        var(--color-black-a4);
   --bg-tint:            var(--color-black-a2);
