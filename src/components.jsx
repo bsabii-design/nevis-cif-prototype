@@ -136,7 +136,9 @@ function Inst({ name }) {
   const av = institutionAvatar(name)
   return (
     <span className="inst">
-      {av && <span className="avatar avatar-sm" style={{ background: av.color }} aria-hidden="true">{av.letter}</span>}
+      {av && (av.logo
+        ? <img className="avatar avatar-sm avatar-logo" src={av.logo} alt="" aria-hidden="true" />
+        : <span className="avatar avatar-sm" style={{ background: av.color }} aria-hidden="true">{av.letter}</span>)}
       {name}
     </span>
   )

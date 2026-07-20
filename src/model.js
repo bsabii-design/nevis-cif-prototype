@@ -120,6 +120,24 @@ export const INSTITUTIONS = [
 
 const AVATAR_COLORS = ['#455285', '#68457A', '#346C83', '#596625', '#AD5507', '#8F2F28']
 
+/* Known institutions ship a real logo (bundled locally in /public/logos);
+   everything else — a family trust, a private lender — falls back to the
+   letter avatar. The mix is deliberate: the system supports both. */
+const LOGO_FILES = {
+  'fidelity': 'fidelity', 'vanguard': 'vanguard', 'charles schwab': 'schwab', 'chase': 'chase',
+  'morgan stanley': 'morganstanley', 'goldman sachs': 'goldman', 'merrill': 'merrill', 'merrill lynch': 'merrill',
+  'wells fargo': 'wellsfargo', 'bank of america': 'bofa', 'citi': 'citi', 'j.p. morgan': 'jpmorgan',
+  'ubs': 'ubs', 'edward jones': 'edwardjones', 't. rowe price': 'trowe', 'betterment': 'betterment',
+  'robinhood': 'robinhood', 'e*trade': 'etrade', 'coinbase': 'coinbase', 'kraken': 'kraken', 'gemini': 'gemini',
+  'ally bank': 'ally', 'capital one': 'capitalone', 'u.s. bank': 'usbank', 'pnc': 'pnc', 'truist': 'truist',
+  'td bank': 'td', 'fifth third bank': 'fifththird', 'empower': 'empower', 'principal': 'principal',
+  'tiaa': 'tiaa', 'voya': 'voya', 'john hancock': 'johnhancock', 'interactive brokers': 'ibkr',
+  'new york life': 'nyl', 'northwestern mutual': 'northwestern', 'massmutual': 'massmutual',
+  'prudential': 'prudential', 'pacific life': 'pacificlife', 'nationwide': 'nationwide',
+  'guardian life': 'guardian', 'lincoln financial': 'lincoln', 'transamerica': 'transamerica',
+  'binance.us': 'binanceus', 'northern trust': 'northerntrust',
+}
+
 /* Every institution gets an avatar, including free-text entries.
    Color is a deterministic hash of the name: one institution, one color, everywhere. */
 export const institutionAvatar = (name) => {
@@ -127,7 +145,12 @@ export const institutionAvatar = (name) => {
   if (!n) return null
   let h = 0
   for (const c of n) h = (h * 31 + c.charCodeAt(0)) % 997
-  return { letter: n[0].toUpperCase(), color: AVATAR_COLORS[h % AVATAR_COLORS.length] }
+  const slug = LOGO_FILES[n.toLowerCase()]
+  return {
+    letter: n[0].toUpperCase(),
+    color: AVATAR_COLORS[h % AVATAR_COLORS.length],
+    logo: slug ? `/logos/${slug}.png` : null,
+  }
 }
 
 /* ---------------- Card presentation ---------------- */

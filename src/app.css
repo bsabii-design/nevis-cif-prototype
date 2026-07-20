@@ -370,6 +370,14 @@ input, select, textarea { font: inherit; color: inherit; }
   font: var(--text-label-sm); color: var(--content-inverse);
 }
 .avatar-sm { width: 18px; height: 18px; font: 500 9px/1 var(--font-sans); }
+/* Real logo avatars: white circle, contained mark, hairline ring */
+.avatar-logo {
+  background: var(--bg-surface);
+  object-fit: contain;
+  padding: 2px;
+  box-sizing: border-box;
+  border: var(--border-w) solid var(--border-subtle);
+}
 /* Institution inline in a row line: avatar 4px before the name (mock 34:2557). */
 /* Inline so the parent's ellipsis can truncate the institution name as ordinary text. */
 .inst { white-space: nowrap; }

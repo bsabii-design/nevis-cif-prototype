@@ -94,11 +94,11 @@ export function InstitutionCombobox({ value, onChange, placeholder, autoFocus, o
 
   return (
     <div className="combo">
-      {avatar && (
-        <span className="avatar avatar-sm combo-avatar" style={{ background: avatar.color }} aria-hidden="true">
-          {avatar.letter}
-        </span>
-      )}
+      {avatar && (avatar.logo
+        ? <img className="avatar avatar-sm combo-avatar avatar-logo" src={avatar.logo} alt="" aria-hidden="true" />
+        : <span className="avatar avatar-sm combo-avatar" style={{ background: avatar.color }} aria-hidden="true">
+            {avatar.letter}
+          </span>)}
       <input
         className={'input' + (avatar ? ' combo-input-avatar' : '')}
         role="combobox"
@@ -132,7 +132,9 @@ export function InstitutionCombobox({ value, onChange, placeholder, autoFocus, o
                 className={'combo-item' + (i === active ? ' combo-item-active' : '')}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pick(name)}>
-                {av && <span className="avatar avatar-sm" style={{ background: av.color }}>{av.letter}</span>}
+                {av && (av.logo
+                  ? <img className="avatar avatar-sm avatar-logo" src={av.logo} alt="" />
+                  : <span className="avatar avatar-sm" style={{ background: av.color }}>{av.letter}</span>)}
                 {isUse ? <>Use “{name}”</> : name}
               </li>
             )
