@@ -748,14 +748,16 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Radio pills (employment status) */
 .radio-row { display: flex; flex-wrap: wrap; gap: var(--space-8); }
 .radio-pill {
+  height: var(--control-h);
+  display: inline-flex; align-items: center;
   font: var(--text-label-md); color: var(--content-secondary);
-  padding: var(--space-8) var(--space-16);
-  background: var(--bg-secondary);
+  padding: 0 var(--space-12);
+  border: var(--border-w) solid var(--border-subtle);
   border-radius: var(--radius-full);
   transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
-.radio-pill:hover { background: var(--bg-secondary-hover); color: var(--content-primary); }
-.radio-pill-on, .radio-pill-on:hover { background: var(--bg-primary); color: var(--content-inverse); }
+.radio-pill:hover { color: var(--content-primary); background: var(--bg-ghost-hover); }
+.radio-pill-on, .radio-pill-on:hover { background: var(--bg-surface); color: var(--content-primary); }
 
 /* ---------------- Focused pages & forms ---------------- */
 
@@ -889,18 +891,18 @@ input, select, textarea { font: inherit; color: inherit; }
 .goal-row:hover { background: var(--bg-ghost-hover); }
 .goal-row-title { flex: 1; min-width: 0; font: var(--text-body-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .goal-row-meta { flex: none; font: var(--text-body-md); color: var(--content-secondary); font-variant-numeric: tabular-nums; }
-.goal-row-hint { flex: none; font: var(--text-body-sm); color: var(--content-tertiary); }
 
 /* Inline editor: a calm surface card in place of the row */
+/* Editor: a quiet grey surface, no stroke — strokes belong to section
+   dividers only. White fields pop on the 4% fill. */
 .goal-editor {
   display: flex; flex-direction: column; gap: var(--space-12);
   padding: var(--space-16);
-  border: var(--border-w) solid var(--border-subtle);
+  background: var(--bg-secondary);
   border-radius: var(--radius-12);
   margin: var(--space-4) 0;
 }
-.goal-add-amount { align-self: flex-start; font: var(--text-body-sm); color: var(--content-secondary); transition: color var(--duration-fast) var(--ease); }
-.goal-add-amount:hover { color: var(--content-primary); }
+.goal-duo { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: var(--space-12); align-items: start; }
 .goal-note { font: var(--text-body-sm); color: var(--content-tertiary); }
 
 /* Goal picker: multi-select pills with a small checkbox; active = white,

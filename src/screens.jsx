@@ -287,7 +287,6 @@ const CheckIcon = () => (
    One goal open at a time — the list stays compact (accordion, parent-owned). */
 function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
   const set = (k, v) => onChange({ ...goal, [k]: v })
-  const [showAmount, setShowAmount] = useState(goal.targetAmount != null)
 
   if (!editing) {
     const meta = [goal.horizon, goal.targetAmount != null ? fmtMoney(goal.targetAmount, goal.currency) : null]
@@ -296,7 +295,7 @@ function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
       <div className="goal-row" onClick={onOpen} role="button" tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() } }}>
         <span className="goal-row-title">{goal.title}</span>
-        {meta ? <span className="goal-row-meta">{meta}</span> : <span className="goal-row-hint">Add timing</span>}
+        {meta && <span className="goal-row-meta">{meta}</span>}
       </div>
     )
   }
@@ -306,18 +305,16 @@ function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
         <TextInput value={goal.title} onChange={(v) => set('title', v)}
           placeholder="What would you like to achieve?" />
       </Field>
-      <Field label="When">
-        <RadioRow name="When" options={HORIZONS} value={goal.horizon || ''}
-          onChange={(v) => set('horizon', v || null)} />
-      </Field>
-      {showAmount ? (
-        <Field label="Estimated amount">
+      <div className="goal-duo">
+        <Field label="When">
+          <RadioRow name="When" options={HORIZONS} value={goal.horizon || ''}
+            onChange={(v) => set('horizon', v || null)} />
+        </Field>
+        <Field label="Amount">
           <MoneyInput amount={goal.targetAmount} currency={goal.currency}
             onAmount={(v) => set('targetAmount', v)} onCurrency={(c) => set('currency', c)} />
         </Field>
-      ) : (
-        <button className="goal-add-amount" onClick={() => setShowAmount(true)}>+ Add estimated amount</button>
-      )}
+      </div>
       <div className="editor-actions">
         <button className="btn btn-ghost btn-remove" onClick={onRemove}>Remove</button>
         <span className="editor-actions-spacer" />
