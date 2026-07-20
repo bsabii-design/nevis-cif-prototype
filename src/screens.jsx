@@ -237,16 +237,20 @@ export function Work({ profile, onChange, onNav }) {
           </div>
         )}
         {st === 'Retired' && (
-          <div className="field-half">
+          <div className="field-pair">
             <Field label="Previous occupation">
               <TextInput value={w.occupation} onChange={(v) => set('occupation', v)} />
+            </Field>
+            <Field label="Annual retirement income">
+              <MoneyInput amount={w.annualIncome} currency={w.currency}
+                onAmount={(v) => set('annualIncome', v)} onCurrency={(c) => set('currency', c)} />
             </Field>
           </div>
         )}
 
-        {st && st !== 'Not employed' && (
+        {st && st !== 'Retired' && st !== 'Not employed' && (
           <div className="field-half">
-            <Field label={st === 'Retired' ? 'Annual retirement income' : 'Annual income'}>
+            <Field label="Annual income">
               <MoneyInput amount={w.annualIncome} currency={w.currency}
                 onAmount={(v) => set('annualIncome', v)} onCurrency={(c) => set('currency', c)} />
             </Field>
