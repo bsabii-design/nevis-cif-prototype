@@ -9,19 +9,24 @@
   /* ---- Color · primitives ----
      The whole product is FOUR colors: beige, white, ink, red.
      Everything else is ink at a fixed opacity step, one job per step:
-       2%  tint at rest (pills, bands)     48% tertiary text · disabled · quiet controls
-       4%  tint active (hover/selected)    64% secondary text
-       6%  stroke + pressed (sec. hover)   80% primary-button hover state
-                                          100% primary text · focus · primary button */
+       3%  structure at rest (bands, chips) 48% tertiary text · disabled · quiet controls
+       5%  first response: structure hover  64% secondary text
+           + secondary-button rest          80% primary-button hover state
+       6%  stroke                          100% primary text · focus · primary button
+       7%  second response: button hover,
+           pressed, transient flashes
+     Selected is never grey — it is the white surface (tab, chip,
+     sidebar item, row being edited). */
   --color-black: #141413;
   --color-white: #ffffff;
   --color-beige: #f7f6f0;
   --color-beige-80: rgba(247, 246, 240, 0.8);
   --color-beige-0: rgba(247, 246, 240, 0);
 
-  --color-black-a2:  rgba(20, 20, 19, 0.02);
-  --color-black-a4:  rgba(20, 20, 19, 0.04);
+  --color-black-a3:  rgba(20, 20, 19, 0.03);
+  --color-black-a5:  rgba(20, 20, 19, 0.05);
   --color-black-a6:  rgba(20, 20, 19, 0.06);
+  --color-black-a7:  rgba(20, 20, 19, 0.07);
   --color-black-a48: rgba(20, 20, 19, 0.48);
   --color-black-a64: rgba(20, 20, 19, 0.64);
   --color-black-a80: rgba(20, 20, 19, 0.80);
@@ -46,12 +51,12 @@
   --bg-primary:         var(--color-black);
   --bg-primary-hover:   var(--color-black-a80);
   --bg-primary-disabled:var(--color-black-a48);
-  --bg-secondary:       var(--color-black-a4);
-  --bg-secondary-hover: var(--color-black-a6);
-  --bg-ghost-hover:     var(--color-black-a4);
-  --bg-selected:        var(--color-black-a4);
-  --bg-tint:            var(--color-black-a2);
-  --bg-faint:           var(--color-black-a2);
+  --bg-secondary:       var(--color-black-a5);
+  --bg-secondary-hover: var(--color-black-a7);
+  --bg-ghost-hover:     var(--color-black-a5);
+  --bg-selected:        var(--color-black-a7); /* transient only (flash); persistent selection is white */
+  --bg-tint:            var(--color-black-a3);
+  --bg-faint:           var(--color-black-a3);
   --bg-overlay:         var(--color-beige-80);
 
   --border-default:  var(--color-black-a6);
