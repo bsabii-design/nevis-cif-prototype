@@ -610,6 +610,7 @@ input, select, textarea { font: inherit; color: inherit; }
   padding: var(--space-12) var(--panel-pad);
   background: var(--bg-page);
 }
+.panel-foot-hint { margin-right: auto; font: var(--text-body-sm); color: var(--content-secondary); text-align: left; }
 .panel-foot::before {
   content: '';
   position: absolute; bottom: 100%; left: 0; right: 0;

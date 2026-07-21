@@ -148,33 +148,36 @@ function Inst({ name }) {
    `primaryType` + `primaryInst` render as "Type / [avatar] Institution". */
 export const assetRowText = (a) => {
   const t = a.subtype, inst = a.institutionOrProvider, name = a.name
+  /* When a row has no identity fields the category itself is the identity —
+     "Investment account — $2M" is an honest, meaningful record. */
+  const catLabel = assetCategory(a.category)?.single || 'Asset'
   if (a.category === 'cash' || a.category === 'investment' || a.category === 'retirement') {
     const type = a.category === 'investment' ? stripAcct(t) : t
-    if (!type && !inst) return { primary: name || 'Account', secondary: null }
+    if (!type && !inst) return { primary: name || catLabel, secondary: null }
     return { primaryType: type, primaryInst: inst, secondary: name || null }
   }
   if (a.category === 'realestate') {
     return name
       ? { primary: name, secondary: [t, a.address].filter(Boolean).join(' · ') || null }
-      : { primary: t || 'Property', secondary: a.address || null }
+      : { primary: t || catLabel, secondary: a.address || null }
   }
   // The group band already says "Business interests" — echoing it in the row adds nothing.
-  if (a.category === 'business') return { primary: name || 'Business interest', secondary: null }
+  if (a.category === 'business') return { primary: name || catLabel, secondary: null }
   if (a.category === 'insurance') {
     return name
       ? { primary: name, secondaryInst: inst, secondary: t || null }
-      : { primary: t || 'Insurance or annuity', secondaryInst: inst || null }
+      : { primary: t || catLabel, secondaryInst: inst || null }
   }
   if (a.category === 'crypto') {
     if (t) return { primaryType: t, primaryInst: inst || undefined, secondary: name || null }
     return name
       ? { primary: name, secondaryInst: inst || null }
-      : { primaryInst: inst || null, primary: inst ? undefined : 'Crypto' }
+      : { primaryInst: inst || null, primary: inst ? undefined : catLabel }
   }
   if (a.category === 'collectibles') {
-    return name ? { primary: name, secondary: t || null } : { primary: t || 'Collectible', secondary: null }
+    return name ? { primary: name, secondary: t || null } : { primary: t || catLabel, secondary: null }
   }
-  return { primary: name || 'Asset', secondary: null }
+  return { primary: name || catLabel, secondary: null }
 }
 
 const missingValueLabel = (a) =>
@@ -195,7 +198,8 @@ export function AssetRow({ asset, onEdit, onRemove, active }) {
       }}>
       <div className="arow-primary">
         {primary}
-        {primaryType && <span className="arow-type">{primaryType}</span>}
+        {/* the middle dot lives between two present values only */}
+        {primaryType && <span className={primaryInst ? 'arow-type' : undefined}>{primaryType}</span>}
         {primaryInst && <Inst name={primaryInst} />}
       </div>
       {(secondary || secondaryInst) && (

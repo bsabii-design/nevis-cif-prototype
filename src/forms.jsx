@@ -66,51 +66,16 @@ const assetToForm = (asset) => {
 /* No type field selects a default option. */
 const defaultSubtype = () => ''
 
-/* Required fields per category; the primary action is never disabled —
-   pressing it highlights what is missing instead. */
-const missingAssetFields = (category, f) => {
-  const m = {}
-  const noInst = !f.institutionOrProvider.trim()
-  const noName = !f.name.trim()
-  const noCustom = !f.customType.trim()
-  if (category === 'cash') {
-    if (!f.subtype) m.subtype = true
-    else {
-      if (f.subtype === 'Other' && noCustom) m.customType = true
-      if (CASH_BANK_TYPES.includes(f.subtype) && noInst) m.institution = true
-    }
-  } else if (category === 'investment') {
-    if (!f.subtype) m.subtype = true
-    else if (f.subtype === 'Other' && noCustom) m.customType = true
-    if (noInst) m.institution = true
-  } else if (category === 'retirement') {
-    if (!f.subtype) m.subtype = true
-    else if (f.subtype === 'Other retirement account' && noCustom) m.customType = true
-    if (noInst) m.institution = true
-  } else if (category === 'realestate') {
-    if (!f.subtype) m.subtype = true
-    else if (f.subtype === 'Other' && noCustom) m.customType = true
-    if (noName) m.name = true
-  } else if (category === 'insurance') {
-    if (!f.subtype) m.subtype = true
-    if (noInst) m.institution = true
-  } else if (category === 'crypto') {
-    if (!f.subtype) m.subtype = true
-    else if (f.subtype === 'Other' && noCustom) m.customType = true
-  } else if (category === 'collectibles') {
-    if (!f.subtype) m.subtype = true
-    else if (f.subtype === 'Other' && noCustom) m.customType = true
-    if (noName) m.name = true
-  } else {
-    if (noName) m.name = true
-  }
-  return m
-}
+/* One-field rule: no financial detail is required — we only prevent a
+   completely empty entry (mis-click protection, not a knowledge test).
+   The chosen category always provides the row's minimal identity. */
+const assetFormEmpty = (f) =>
+  !(f.name.trim() || f.institutionOrProvider.trim() || f.address.trim() ||
+    f.subtype || f.customType.trim() || f.value != null)
 
-function AssetFields({ category, form, set, errors = {} }) {
-  const err = (k) => (errors[k] ? 'Required' : null)
+function AssetFields({ category, form, set }) {
   const customTypeField = (label = 'Account type name') => (
-    <Field label={label} required error={err('customType')}>
+    <Field label={label}>
       <TextInput value={form.customType} onChange={(v) => set('customType', v)}
         placeholder="Enter account type" autoFocus />
     </Field>
@@ -118,48 +83,40 @@ function AssetFields({ category, form, set, errors = {} }) {
 
   if (category === 'cash') {
     const chip = form.subtype
-    const isBank = CASH_BANK_TYPES.includes(chip)
+    const isCash = chip === 'Cash'
     return (
       <>
-        <Field label="Account type" required error={err('subtype')}>
+        <Field label="Account type">
           <GroupedSelect value={chip} onChange={(v) => set('subtype', v)}
             options={CASH_TYPE_OPTIONS} placeholder="Select account type" />
         </Field>
         {chip === 'Other' && customTypeField()}
-        {(isBank || chip === 'Other') && (
-          <Field label="Institution" required={isBank} error={err('institution')}>
+        {!isCash && (
+          <Field label="Institution">
             <InstitutionCombobox value={form.institutionOrProvider}
               onChange={(v) => set('institutionOrProvider', v)}
               placeholder="Start typing an institution…" options={BANKS} />
           </Field>
         )}
-        {chip && chip !== 'Cash' && (
-          <Field label="Account nickname">
-            <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Everyday checking" />
-          </Field>
-        )}
-        {chip === 'Cash' && (
-          <Field label="Cash label">
-            <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Emergency cash" />
-          </Field>
-        )}
-        {chip && (
-          <MoneyField label={chip === 'Cash' ? 'Current amount' : 'Current balance'}
-            amount={form.value} currency={form.currency}
-            onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
-        )}
+        <Field label={isCash ? 'Cash label' : 'Account nickname'}>
+          <TextInput value={form.name} onChange={(v) => set('name', v)}
+            placeholder={isCash ? 'Emergency cash' : 'Everyday checking'} />
+        </Field>
+        <MoneyField label={isCash ? 'Current amount' : 'Current balance'}
+          amount={form.value} currency={form.currency}
+          onAmount={(v) => set('value', v)} onCurrency={(c) => set('currency', c)} />
       </>
     )
   }
 
   if (category === 'investment') return (
     <>
-      <Field label="Institution" required error={err('institution')}>
+      <Field label="Institution">
         <InstitutionCombobox value={form.institutionOrProvider}
           onChange={(v) => set('institutionOrProvider', v)}
           placeholder="Start typing an institution…" options={INVESTMENT_FIRMS} />
       </Field>
-      <Field label="Account type" required error={err('subtype')}>
+      <Field label="Account type">
         <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
           options={INVESTMENT_TYPE_OPTIONS} placeholder="Select account type" />
       </Field>
@@ -176,12 +133,12 @@ function AssetFields({ category, form, set, errors = {} }) {
     const isPension = form.subtype === 'Pension'
     return (
       <>
-        <Field label="Account type" required error={err('subtype')}>
+        <Field label="Account type">
           <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
             groups={RETIREMENT_GROUPS} placeholder="Select account type" />
         </Field>
         {form.subtype === 'Other retirement account' && customTypeField()}
-        <Field label={isPension ? 'Employer or plan institution' : 'Institution'} required error={err('institution')}>
+        <Field label={isPension ? 'Employer or plan institution' : 'Institution'}>
           <InstitutionCombobox value={form.institutionOrProvider}
             onChange={(v) => set('institutionOrProvider', v)}
             placeholder="Start typing an institution…" options={RETIREMENT_PROVIDERS} />
@@ -198,12 +155,12 @@ function AssetFields({ category, form, set, errors = {} }) {
 
   if (category === 'realestate') return (
     <>
-      <Field label="Property type" required error={err('subtype')}>
+      <Field label="Property type">
         <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
           options={PROPERTY_TYPE_OPTIONS} placeholder="Select property type" />
       </Field>
       {form.subtype === 'Other' && customTypeField('Property type name')}
-      <Field label="Property name" required error={err('name')}>
+      <Field label="Property name">
         <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Lake house" />
       </Field>
       <Field label="Address">
@@ -216,7 +173,7 @@ function AssetFields({ category, form, set, errors = {} }) {
 
   if (category === 'business') return (
     <>
-      <Field label="Name" required error={err('name')}>
+      <Field label="Name">
         <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Business or investment name" />
       </Field>
       <MoneyField label="Current value" amount={form.value} currency={form.currency}
@@ -226,11 +183,11 @@ function AssetFields({ category, form, set, errors = {} }) {
 
   if (category === 'insurance') return (
     <>
-      <Field label="Type" required error={err('subtype')}>
+      <Field label="Type">
         <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
           options={INSURANCE_TYPE_OPTIONS} placeholder="Select type" />
       </Field>
-      <Field label="Institution" required error={err('institution')}>
+      <Field label="Institution">
         <InstitutionCombobox value={form.institutionOrProvider}
           onChange={(v) => set('institutionOrProvider', v)}
           placeholder="Northwestern Mutual, New York Life…" options={INSURANCE_PROVIDERS} />
@@ -245,7 +202,7 @@ function AssetFields({ category, form, set, errors = {} }) {
 
   if (category === 'crypto') return (
     <>
-      <Field label="Asset" required error={err('subtype')}>
+      <Field label="Asset">
         <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
           options={CRYPTO_ASSET_OPTIONS} placeholder="Bitcoin, Ethereum…" />
       </Field>
@@ -262,12 +219,12 @@ function AssetFields({ category, form, set, errors = {} }) {
 
   if (category === 'collectibles') return (
     <>
-      <Field label="Type" required error={err('subtype')}>
+      <Field label="Type">
         <GroupedSelect value={form.subtype} onChange={(v) => set('subtype', v)}
           options={COLLECTIBLE_TYPE_OPTIONS} placeholder="Select type" />
       </Field>
       {form.subtype === 'Other' && customTypeField('Type name')}
-      <Field label="Name" required error={err('name')}>
+      <Field label="Name">
         <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Art collection" />
       </Field>
       <MoneyField label="Current value" amount={form.value} currency={form.currency}
@@ -277,7 +234,7 @@ function AssetFields({ category, form, set, errors = {} }) {
 
   return (
     <>
-      <Field label="Name" required error={err('name')}>
+      <Field label="Name">
         <TextInput value={form.name} onChange={(v) => set('name', v)} placeholder="Describe the asset" />
       </Field>
       <MoneyField label="Current value" amount={form.value} currency={form.currency}
@@ -374,7 +331,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
     if (!asset || stage !== 'form') return
     const snapshot = JSON.stringify(form)
     if (snapshot === lastSent.current) return
-    if (Object.keys(missingAssetFields(category, form)).length > 0) return
+    if (assetFormEmpty(form)) return
     clearTimeout(liveTimer.current)
     liveTimer.current = setTimeout(() => { lastSent.current = snapshot; onLiveChange(buildAsset()) }, 400)
     return () => clearTimeout(liveTimer.current)
@@ -452,16 +409,8 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
   const cat = category ? assetCategory(category) : null
 
   const commitForm = () => {
-    /* The primary action is always active: pressing it surfaces what's missing. */
-    if (Object.keys(missingAssetFields(category, form)).length > 0) {
-      setAttempted(true)
-      setTimeout(() => {
-        const el = document.querySelector('.shell-panel .field-missing input, .shell-panel .field-missing .gsel-trigger')
-        el?.focus()
-        el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 60)
-      return
-    }
+    /* The primary action is always active; an empty form asks for one detail. */
+    if (assetFormEmpty(form)) { setAttempted(true); return }
     onCommitAsset(buildAsset())
   }
 
@@ -633,14 +582,16 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
 
         {stage === 'form' && (
           <div className="focus-form">
-            <AssetFields category={category} form={form} set={set}
-              errors={asset || attempted ? missingAssetFields(category, form) : {}} />
+            <AssetFields category={category} form={form} set={set} />
           </div>
         )}
       </div>
 
       {(stage === 'form' || (stage === 'review' && accounts.length > 0)) && (
         <div className="panel-foot">
+          {stage === 'form' && !asset && attempted && assetFormEmpty(form) && (
+            <span className="panel-foot-hint">Add at least one detail to create this asset.</span>
+          )}
           {stage === 'form' && asset && onRemove && (
             <button className="btn btn-tertiary" onClick={onRemove}>Remove</button>
           )}
@@ -732,6 +683,9 @@ const liabilityToForm = (l) => ({
   currency: l?.currency || 'USD',
 })
 
+const liabilityFormEmpty = (f) =>
+  !(f.name.trim() || f.lender.trim() || f.outstandingBalance != null || f.interestRate !== '')
+
 export function LiabilityPanel({ category: initialCategory, liability, onCommit, onLiveChange, onClose, onRemove, setGuard, onCategoryChange, propertyOptions = [] }) {
   const direct = !!(liability || initialCategory)
   const [stage, setStage] = useState(direct ? 'form' : 'choice') // choice | form
@@ -740,6 +694,7 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
   const [form, setForm] = useState(() => liabilityToForm(liability))
   const initialRef = useRef(JSON.stringify(liabilityToForm(liability)))
   const [confirmLeave, setConfirmLeave] = useState(null) // {run}
+  const [attempted, setAttempted] = useState(false)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
   const formDirty = liability
@@ -783,7 +738,10 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
   const cat = category ? liabilityCategory(category) : null
   const title = stage === 'choice' ? 'Add liabilities' : liability ? `Edit ${cat.label.toLowerCase()}` : cat.formTitle
 
-  const commit = () => { onCommit(buildLiability()) }
+  const commit = () => {
+    if (liabilityFormEmpty(form)) { setAttempted(true); return }
+    onCommit(buildLiability())
+  }
 
   return (
     <aside className="shell-panel" aria-label={title}>
@@ -846,6 +804,9 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
 
       {stage === 'form' && (
         <div className="panel-foot">
+          {!liability && attempted && liabilityFormEmpty(form) && (
+            <span className="panel-foot-hint">Add at least one detail to create this liability.</span>
+          )}
           {liability && onRemove && (
             <button className="btn btn-tertiary" onClick={onRemove}>Remove</button>
           )}
