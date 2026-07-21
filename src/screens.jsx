@@ -310,12 +310,17 @@ function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
   const set = (k, v) => onChange({ ...goal, [k]: v })
 
   if (!editing) {
+    const meta = [goal.horizon, goal.targetAmount != null ? fmtCompact(goal.targetAmount, goal.currency) : null]
+      .filter(Boolean).join(' · ')
     return (
       <div className="goal-row" onClick={onOpen} role="button" tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() } }}>
         <span className="goal-row-title">{goal.title}</span>
-        <span className="goal-row-when">{goal.horizon}</span>
-        <span className="goal-row-amount">{goal.targetAmount != null ? fmtCompact(goal.targetAmount, goal.currency) : ''}</span>
+        <span className="goal-row-meta">{meta}</span>
+        <svg className="goal-row-chevron" width="12" height="12" viewBox="0 0 16 16" fill="none"
+          stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M6 4l4 4-4 4" />
+        </svg>
       </div>
     )
   }
@@ -325,14 +330,22 @@ function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
   const isPreset = !!goal.preset
   return (
     <div className="goal-editor">
-      {isPreset ? (
-        <h3 className="goal-editor-title">{goal.title}</h3>
-      ) : (
-        <Field label="Goal" required>
-          <TextInput value={goal.title} onChange={(v) => set('title', v)}
-            placeholder="Describe your goal" />
-        </Field>
-      )}
+      <div className="goal-editor-head">
+        {isPreset ? (
+          <h3 className="goal-editor-title">{goal.title}</h3>
+        ) : (
+          <Field label="Goal" required>
+            <TextInput value={goal.title} onChange={(v) => set('title', v)}
+              placeholder="Describe your goal" />
+          </Field>
+        )}
+        <button className="goal-collapse" aria-label="Done" onClick={onClose}>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+            strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M4 10l4-4 4 4" />
+          </svg>
+        </button>
+      </div>
       <div className="goal-duo">
         <Field label="When">
           <RadioRow name="When" options={HORIZONS} value={goal.horizon || ''}
@@ -422,7 +435,9 @@ export function Goals({ profile, onChange }) {
       </div>
 
       {goals.length > 0 && (
-        <div className="goal-rows">
+        <div className="goal-section">
+          <h2 className="goal-section-title">Your selected goals</h2>
+          <div className="goal-rows">
           {goals.map((g) => (
             <GoalRow key={g.id} goal={g}
               editing={editingId === g.id}
@@ -431,6 +446,7 @@ export function Goals({ profile, onChange }) {
               onChange={(ng) => setGoals(goals.map((x) => (x.id === g.id ? ng : x)))}
               onRemove={() => removeGoal(g)} />
           ))}
+          </div>
         </div>
       )}
 

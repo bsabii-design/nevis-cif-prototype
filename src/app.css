@@ -959,25 +959,35 @@ input, select, textarea { font: inherit; color: inherit; }
 /* ---------------- Goals ---------------- */
 
 .goals-question { font: var(--text-heading-sm); }
+.goal-editor-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-12); }
+.goal-editor-head .field { flex: 1; }
 .goal-editor-title { font: var(--text-label-md); }
+.goal-collapse {
+  flex: none; width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--content-tertiary);
+  border-radius: var(--radius-4);
+  transition: color var(--duration-fast) var(--ease);
+}
+.goal-collapse:hover { color: var(--content-primary); }
 
-/* Goal rows: the same flat list language as assets */
+/* Selected goals: compact accordion rows under the picker. The bubbles
+   choose; this list refines what was chosen. */
+.goal-section { display: flex; flex-direction: column; gap: var(--space-12); }
+.goal-section-title { font: var(--text-label-md); }
 .goal-rows { display: flex; flex-direction: column; }
-/* Table columns like the asset list: timings share one x, amounts share
-   the right edge — nothing jumps as meta comes and goes. */
 .goal-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 130px 110px;
-  align-items: center; column-gap: var(--space-16);
+  display: flex; align-items: center; gap: var(--space-16);
   height: 44px; padding: 0 var(--space-12);
   border-radius: var(--radius-8);
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease);
 }
 .goal-row:hover { background: var(--bg-ghost-hover); }
-.goal-row-title { min-width: 0; font: var(--text-body-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.goal-row-when { font: var(--text-body-md); color: var(--content-secondary); white-space: nowrap; }
-.goal-row-amount { justify-self: end; text-align: right; font: var(--text-body-md); color: var(--content-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.goal-row:hover .goal-row-chevron { color: var(--content-primary); }
+.goal-row-title { flex: 1; min-width: 0; font: var(--text-body-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.goal-row-meta { font: var(--text-body-md); color: var(--content-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.goal-row-chevron { flex: none; color: var(--content-tertiary); transition: color var(--duration-fast) var(--ease); }
 
 /* Inline editor: a calm surface card in place of the row */
 /* Editor: a quiet grey surface, no stroke — strokes belong to section
