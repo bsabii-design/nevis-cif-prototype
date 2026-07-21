@@ -613,7 +613,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
           </div>
           <div className="nw-toolbar-right">
             {tab === 'assets' && assets.length > 0 && (
-              <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
+              <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add asset</button>
             )}
             {tab === 'liabilities' && liabilities.length > 0 && (
               <button className="btn btn-primary" onClick={() => onAddLiability(null)}>Add liabilities</button>
@@ -629,7 +629,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
                 <div className="nw-empty">
                   <h2 className="nw-empty-title">No assets added yet</h2>
                   <p className="page-copy">Add accounts, property, investments, or anything else you own.</p>
-                  <button className="btn btn-primary nw-empty-cta" onClick={() => onAddAsset(null)}>Add assets</button>
+                  <button className="btn btn-primary nw-empty-cta" onClick={() => onAddAsset(null)}>Add asset</button>
                 </div>
               )}
               {assetGroups.map((cat) => {
