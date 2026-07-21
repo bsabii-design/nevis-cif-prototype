@@ -222,17 +222,18 @@ export function AssetRow({ asset, onEdit, onRemove, active }) {
 export function LiabilityRow({ liability, onEdit, active }) {
   const cur = liability.currency ?? 'USD'
   const cat = liabilityCategory(liability.category)
-  const meta = [
-    liability.name || null,
-    liability.interestRate != null && liability.interestRate !== '' ? `${liability.interestRate}% interest` : null,
-  ].filter(Boolean).join(' · ')
+  /* Identity first: the property / purpose / card the debt is about. The
+     category label is a fallback only — the group band already names it. */
+  const identity = liability.name?.trim() || cat?.label || 'Liability'
+  const meta = liability.interestRate != null && liability.interestRate !== ''
+    ? `${liability.interestRate}% interest` : null
   return (
     <div className={'arow' + (active ? ' arow-active' : '')} onClick={onEdit} role="button" tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit() }
       }}>
       <div className="arow-primary">
-        <span className={liability.lender ? 'arow-type' : undefined}>{cat?.label || 'Liability'}</span>
+        <span className={liability.lender ? 'arow-type' : undefined}>{identity}</span>
         {liability.lender && <Inst name={liability.lender} />}
       </div>
       {meta && <div className="arow-secondary">{meta}</div>}
