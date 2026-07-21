@@ -24,12 +24,14 @@ export function Welcome({ onStart }) {
       <div className="welcome-card">
         <span className="welcome-brand">Nevis</span>
         <div className="welcome-intro">
-          <h1 className="welcome-title">Welcome, Jonathan</h1>
-          <p className="welcome-copy">
-            Sarah invited you to add information to your financial profile before your meeting.
-            This will help her understand your goals and financial situation, so you can spend
-            more of your meeting discussing strategy.
-          </p>
+          <div className="welcome-intro-copy">
+            <h1 className="welcome-title">Welcome, Jonathan</h1>
+            <p className="welcome-copy">
+              Sarah invited you to add information to your financial profile before your meeting.
+              This will help her understand your goals and financial situation, so you can spend
+              more of your meeting discussing strategy.
+            </p>
+          </div>
         </div>
         <div className="welcome-section">
           <span className="welcome-sec-label">What you can add</span>

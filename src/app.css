@@ -231,7 +231,7 @@ input, select, textarea { font: inherit; color: inherit; }
   white-space: nowrap;
   transition: background-color var(--duration-normal) var(--ease), color var(--duration-normal) var(--ease);
 }
-.btn-lg { height: 40px; padding: 0 var(--space-16); font: var(--text-label-lg); }
+.btn-lg { height: 40px; padding: 0 var(--space-12); font: var(--text-label-lg); }
 .btn-primary { background: var(--bg-primary); color: var(--content-inverse); }
 .btn-primary:hover { background: var(--bg-primary-hover); }
 .btn-primary:disabled { background: var(--bg-primary-disabled); cursor: default; }
@@ -287,18 +287,24 @@ input, select, textarea { font: inherit; color: inherit; }
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: cover;
 }
+/* Card fills the viewport height (32px page margins); blocks sit 64 apart,
+   every block opens with a hairline. Figma 60-18907 values verbatim. */
 .welcome-card {
   position: relative;
-  width: 628px; max-height: 100%;
+  width: 628px; height: 100%;
   overflow-y: auto;
-  display: flex; flex-direction: column; gap: var(--space-48);
-  padding: var(--space-48) var(--space-20) var(--space-16);
+  display: flex; flex-direction: column; gap: var(--space-64);
+  padding: var(--space-16) var(--space-20);
   background: var(--bg-surface);
   border-radius: var(--radius-12);
 }
-.welcome-card > * { margin-left: var(--space-20); margin-right: var(--space-20); }
 .welcome-brand { font: 500 32px/40px var(--font-serif); }
-.welcome-intro { display: flex; flex-direction: column; gap: var(--space-16); }
+.welcome-intro {
+  display: flex; flex-direction: column; gap: var(--space-16);
+  padding-top: var(--space-16);
+  border-top: var(--border-w) solid var(--border-default);
+}
+.welcome-intro-copy { display: flex; flex-direction: column; gap: var(--space-8); }
 .welcome-title { font: 500 32px/40px var(--font-serif); }
 .welcome-copy { font: var(--text-body-lg); color: var(--content-secondary); }
 .welcome-section {
@@ -308,8 +314,8 @@ input, select, textarea { font: inherit; color: inherit; }
   font: var(--text-body-lg);
 }
 .welcome-sec-label { flex: 1; color: var(--content-primary); }
-.welcome-sec-body { flex: 1; display: flex; flex-direction: column; gap: var(--space-8); color: var(--content-secondary); }
-.welcome-cta { align-self: flex-start; margin-top: var(--space-8); margin-bottom: var(--space-16); }
+.welcome-sec-body { flex: 1; display: flex; flex-direction: column; color: var(--content-secondary); }
+.welcome-cta { align-self: flex-start; margin-top: auto; flex: none; }
 
 /* ---------------- Overview ---------------- */
 
