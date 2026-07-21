@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { assetTitle, blankProfile, loadState, requiredComplete, saveState, sectionState, seedProfile } from './model.js'
+import { assetTitle, blankProfile, loadState, requiredComplete, saveState, sectionState, seedProfile, uid } from './model.js'
 import { Dialog } from './ui.jsx'
 import { Sidebar, TopBar } from './components.jsx'
 import { AssetPanel, LiabilityPanel } from './forms.jsx'
@@ -259,6 +259,58 @@ export default function App() {
   const resetDemo = () => resetAll(seedProfile(), false, { name: 'personal' })
   const blankStart = () => resetAll(blankProfile(), true, { name: 'welcome' })
 
+  /* ---- Loop demo: assets add themselves on the Net worth page, then the
+     list clears and the cycle repeats — for screen-recording the motion.
+     The pre-loop profile is restored on stop. ---- */
+  const LOOP_ASSETS = [
+    { category: 'cash', subtype: 'Checking', institutionOrProvider: 'Chase', name: 'Personal', value: 420000, currency: 'USD', address: '' },
+    { category: 'investment', subtype: 'Brokerage account', institutionOrProvider: 'Fidelity', name: 'Family Portfolio', value: 1240500, currency: 'USD', address: '' },
+    { category: 'retirement', subtype: '401(k)', institutionOrProvider: 'Empower', name: 'Executive Plan', value: 480000, currency: 'USD', address: '' },
+    { category: 'realestate', subtype: 'House', institutionOrProvider: '', name: 'Aspen residence', value: 2500000, currency: 'USD', address: '' },
+    { category: 'crypto', subtype: 'Bitcoin', institutionOrProvider: 'Coinbase', name: '', value: 190000, currency: 'USD', address: '' },
+  ]
+  const LOOP_LIABILITY = { category: 'mortgage', name: 'Aspen residence', lender: 'Chase', outstandingBalance: 520000, interestRate: 4.25, currency: 'USD' }
+  const [looping, setLooping] = useState(false)
+  const loopSnapshot = useRef(null)
+  const startLoop = () => {
+    loopSnapshot.current = profile
+    guardRef.current = null
+    setAssetPanel(null)
+    forceNavigate({ name: 'networth', tab: 'assets' })
+    setLooping(true)
+  }
+  const stopLoop = () => {
+    setLooping(false)
+    if (loopSnapshot.current) { setProfile(loopSnapshot.current); loopSnapshot.current = null }
+  }
+  useEffect(() => {
+    if (!looping) return
+    let alive = true
+    let timer = null
+    /* Start from 'no debts yet' so the figure counts up from the first asset. */
+    const clearNW = () => setProfile((p) => ({ ...p, assets: [], liabilities: [], liabilitiesExplicitlyNone: true }))
+    const schedule = (fn, ms) => { if (alive) timer = setTimeout(fn, ms) }
+    let i = 0
+    const step = () => {
+      if (!alive) return
+      if (i < LOOP_ASSETS.length) {
+        const a = LOOP_ASSETS[i]
+        i += 1
+        setProfile((p) => ({ ...p, assets: [...p.assets, { ...a, id: uid() }] }))
+        schedule(step, 1100)
+      } else if (i === LOOP_ASSETS.length) {
+        i += 1
+        setProfile((p) => ({ ...p, liabilities: [{ ...LOOP_LIABILITY, id: uid() }] }))
+        schedule(step, 1500)
+      } else {
+        schedule(() => { clearNW(); i = 0; schedule(step, 900) }, 2800)
+      }
+    }
+    clearNW()
+    schedule(step, 800)
+    return () => { alive = false; clearTimeout(timer) }
+  }, [looping]) // eslint-disable-line react-hooks/exhaustive-deps
+
   /* ---- render ---- */
 
   const r = route
@@ -352,6 +404,10 @@ export default function App() {
         <button className="footer-link" onClick={blankStart}>Blank start</button>
         <span className="footer-sep">·</span>
         <button className="footer-link" onClick={() => setRoute({ name: 'inputlab' })}>Input lab</button>
+        <span className="footer-sep">·</span>
+        <button className="footer-link" onClick={looping ? stopLoop : startLoop}>
+          {looping ? 'Stop loop' : 'Loop demo'}
+        </button>
       </footer>
 
       {shareDialog && (

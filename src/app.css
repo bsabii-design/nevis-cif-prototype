@@ -1094,6 +1094,10 @@ input, select, textarea { font: inherit; color: inherit; }
   .panel { position: static; order: -1; }
 }
 
+/* Rows, bands and the summary ease in on mount — reads on recordings. */
+@keyframes rise-in { from { opacity: 0; transform: translateY(4px); } }
+.arow, .group, .nw-summary { animation: rise-in var(--duration-normal) var(--ease); }
+
 /* ---------------- Reduced motion ---------------- */
 
 @media (prefers-reduced-motion: reduce) {
