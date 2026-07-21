@@ -285,6 +285,19 @@ const PRESET_ALIASES = {
   'Care for my parents': 'Support my parents',
 }
 
+/* Optional Details placeholder per preset — an example teaches faster than
+   an instruction. */
+const PRESET_DETAIL_EXAMPLES = {
+  'Retire early': 'For example: Step back around 55',
+  'Buy a home': 'For example: A second home near the coast',
+  "Children's education": 'For example: College for two kids',
+  'Make a major purchase': 'For example: A boat, a plane, an art piece',
+  'Sell my business': 'For example: Full or partial exit in a few years',
+  'Support my parents': 'For example: Ongoing care and housing costs',
+  'Leave a legacy': 'For example: Trusts set up for the family',
+  'Charitable giving': 'For example: Annual donations or setting up a foundation',
+}
+
 const CheckIcon = () => (
   <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M1.5 5.5 4 8l4.5-6" />
@@ -306,22 +319,36 @@ function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
       </div>
     )
   }
+  /* The pill IS the goal's type: preset cards keep their name fixed — a
+     different goal means a different pill, not a rename. Only "Other" goals
+     are named freely. */
+  const isPreset = !!goal.preset
   return (
     <div className="goal-editor">
-      <Field label="Goal">
-        <TextInput value={goal.title} onChange={(v) => set('title', v)}
-          placeholder="What would you like to achieve?" />
-      </Field>
+      {isPreset ? (
+        <h3 className="goal-editor-title">{goal.title}</h3>
+      ) : (
+        <Field label="Goal" required>
+          <TextInput value={goal.title} onChange={(v) => set('title', v)}
+            placeholder="Describe your goal" />
+        </Field>
+      )}
       <div className="goal-duo">
         <Field label="When">
           <RadioRow name="When" options={HORIZONS} value={goal.horizon || ''}
             onChange={(v) => set('horizon', v || null)} />
         </Field>
-        <Field label="Amount">
+        <Field label="Estimated amount">
           <MoneyInput amount={goal.targetAmount} currency={goal.currency}
             onAmount={(v) => set('targetAmount', v)} onCurrency={(c) => set('currency', c)} />
         </Field>
       </div>
+      {isPreset && (
+        <Field label="Details">
+          <TextInput value={goal.note || ''} onChange={(v) => set('note', v)}
+            placeholder={PRESET_DETAIL_EXAMPLES[goal.preset] || 'Anything that helps explain this goal'} />
+        </Field>
+      )}
       <div className="editor-actions">
         <button className="btn btn-tertiary" onClick={onRemove}>Remove</button>
         <button className="btn btn-secondary" onClick={onClose}>Done</button>

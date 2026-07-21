@@ -959,6 +959,8 @@ input, select, textarea { font: inherit; color: inherit; }
 /* ---------------- Goals ---------------- */
 
 .goals-question { font: var(--text-heading-sm); }
+.goal-editor-title { font: var(--text-label-md); }
+
 /* Goal rows: the same flat list language as assets */
 .goal-rows { display: flex; flex-direction: column; }
 /* Table columns like the asset list: timings share one x, amounts share
