@@ -538,7 +538,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
       <div className="title-block">
         <h1 className="page-title">Net worth</h1>
         <p className="nw-copy">
-          Add anything you own or owe to build a clearer financial picture.
+          Build a clearer picture of what you own and owe.<br />
           You can update it anytime.
         </p>
       </div>
