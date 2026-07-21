@@ -54,7 +54,7 @@
   --bg-secondary:       var(--color-stone-4);
   --bg-secondary-hover: var(--color-black-a6);
   --bg-ghost-hover:     var(--color-black-a2); /* hover = the same quiet 2% as resting tints */
-  --bg-selected:        var(--color-stone-3);
+  --bg-selected:        var(--color-black-a2); /* same quiet step as hover — selection reads by persistence, not weight */
   /* Resting fill for standalone controls that must read as shapes on
      the page: sidebar active item, secondary CTA, tab chips at rest. */
   --bg-quiet:           var(--color-stone-3);
