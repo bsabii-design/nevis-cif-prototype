@@ -965,7 +965,21 @@ input, select, textarea { font: inherit; color: inherit; }
    The bubbles choose; this list refines what was chosen. */
 .goal-section { display: flex; flex-direction: column; gap: var(--space-12); }
 .goal-section-title { font: var(--text-label-md); }
-.goal-rows { display: flex; flex-direction: column; }
+/* The list lives in a white group card (Linear settings container);
+   hairlines run inside it, inset by the card's padding. On the white
+   surface, resting fields and the selected pill borrow a hairline
+   stroke so they don't dissolve. */
+.goal-rows {
+  display: flex; flex-direction: column;
+  background: var(--bg-surface);
+  border-radius: var(--radius-12);
+  padding: 0 var(--space-20);
+}
+.goal-rows .input { border-color: var(--border-subtle); }
+.goal-rows .input:hover { border-color: var(--border-default); }
+.goal-rows .input:focus { border-color: var(--border-selected); }
+.goal-rows .radio-pill-on,
+.goal-rows .radio-pill-on:hover { box-shadow: inset 0 0 0 var(--border-w) var(--border-subtle); }
 .goal-item + .goal-item { border-top: var(--border-w) solid var(--border-subtle); }
 /* Rows sit flush with the section title — no inset, no hover plate.
    The full-width hairlines are the only chrome; hover speaks through
