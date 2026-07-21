@@ -146,7 +146,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .nw-sum-stats { display: flex; gap: var(--space-32); margin-top: var(--space-8); }
 .nw-stat { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
 .nw-stat-label { font: var(--text-body-sm); color: var(--content-tertiary); }
-.nw-stat-val { font: 400 13px/16px var(--font-sans); font-variant-numeric: tabular-nums; }
+.nw-stat-val { font: var(--text-number-secondary); font-variant-numeric: tabular-nums; }
 .nw-stat-val-empty { color: var(--content-secondary); }
 .nw-stat-hint { font: 400 13px/16px var(--font-sans); color: var(--content-secondary); }
 .nw-slot-link {
@@ -314,7 +314,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .group-name { font: var(--text-label-md); flex: 1; min-width: 0; }
 /* Hover swaps the subtotal for the add button in the same spot (Notion-style). */
 .group-subtotal {
-  font: var(--text-body-md); color: var(--content-tertiary);
+  font: var(--text-number-secondary); color: var(--content-tertiary);
   font-variant-numeric: tabular-nums;
   pointer-events: none; /* sits above the absolute plus in paint order — must not eat its clicks */
   transition: opacity var(--duration-fast) var(--ease);
@@ -397,7 +397,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .card-remove:hover { background: var(--bg-secondary); color: var(--content-primary); }
 
 .value-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); }
-.value-text { font: var(--text-label-md); }
+.value-text { font: var(--text-number-primary); font-variant-numeric: tabular-nums; }
 .value-approx { font: var(--text-body-sm); color: var(--content-secondary); }
 .value-missing-text { font: var(--text-body-md); color: var(--content-tertiary); }
 

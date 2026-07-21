@@ -76,6 +76,11 @@
   --text-label-lg:   500 16px/20px var(--font-sans);
   --text-label-md:   500 13px/16px var(--font-sans);  /* base */
   --text-label-sm:   500 11px/12px var(--font-sans);
+  /* Money (mirrors Figma Number/primary & Number/secondary): primary is
+     the one loud figure in a table row; secondary is aggregates and
+     supporting sums — regular, never competing with row values. */
+  --text-number-primary:   500 13px/20px var(--font-sans);
+  --text-number-secondary: 400 13px/20px var(--font-sans);
 
   /* ---- Spacing ---- */
   --space-2: 2px; --space-4: 4px; --space-8: 8px; --space-12: 12px;
