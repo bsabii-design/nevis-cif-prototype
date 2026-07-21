@@ -116,7 +116,7 @@ input, select, textarea { font: inherit; color: inherit; }
   transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
 .side-link:hover { color: var(--content-primary); background: var(--bg-ghost-hover); }
-.side-link-active, .side-link-active:hover { background: var(--bg-selected); color: var(--content-primary); }
+.side-link-active, .side-link-active:hover { background: var(--bg-quiet); color: var(--content-primary); }
 .side-identity { display: flex; align-items: center; gap: var(--space-4); padding-left: 14px; }
 .side-avatar {
   width: 20px; height: 20px; flex: none;
@@ -236,7 +236,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .btn-primary { background: var(--bg-primary); color: var(--content-inverse); }
 .btn-primary:hover { background: var(--bg-primary-hover); }
 .btn-primary:disabled { background: var(--bg-primary-disabled); cursor: default; }
-.btn-secondary { background: var(--bg-secondary); }
+.btn-secondary { background: var(--bg-quiet); }
 .btn-secondary:hover { background: var(--bg-secondary-hover); }
 .btn-ghost:hover { background: var(--bg-ghost-hover); }
 /* Solid destructive — lives only in confirmation dialogs. */
@@ -477,7 +477,7 @@ input, select, textarea { font: inherit; color: inherit; }
   padding: 0 var(--space-12);
   display: inline-flex; align-items: center;
   font: var(--text-label-md); color: var(--content-secondary);
-  background: var(--bg-faint);
+  background: var(--bg-quiet);
   border-radius: var(--radius-full);
   transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }

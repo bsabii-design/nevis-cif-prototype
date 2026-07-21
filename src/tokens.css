@@ -20,6 +20,7 @@
   --color-beige-0: rgba(247, 246, 240, 0);
 
   --color-black-a2:  rgba(20, 20, 19, 0.02);
+  --color-black-a3:  rgba(20, 20, 19, 0.03);
   --color-black-a4:  rgba(20, 20, 19, 0.04);
   --color-black-a6:  rgba(20, 20, 19, 0.06);
   --color-black-a48: rgba(20, 20, 19, 0.48);
@@ -50,6 +51,9 @@
   --bg-secondary-hover: var(--color-black-a6);
   --bg-ghost-hover:     var(--color-black-a4);
   --bg-selected:        var(--color-black-a4);
+  /* 3% resting fill for standalone controls that must read as shapes on
+     the page: sidebar active item, secondary CTA, tab chips at rest. */
+  --bg-quiet:           var(--color-black-a3);
   --bg-tint:            var(--color-black-a2);
   --bg-faint:           var(--color-black-a2);
   --bg-overlay:         var(--color-beige-80);
