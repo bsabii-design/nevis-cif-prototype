@@ -948,7 +948,7 @@ input, select, textarea { font: inherit; color: inherit; }
    title to show), collapse chevron in the row's corner. */
 .goal-editor-head {
   display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-12);
-  padding: var(--space-12) var(--space-12) 0;
+  padding: var(--space-12) 0 0;
 }
 .goal-editor-head .field { flex: 1; }
 .goal-collapse {
@@ -967,14 +967,14 @@ input, select, textarea { font: inherit; color: inherit; }
 .goal-section-title { font: var(--text-label-md); }
 .goal-rows { display: flex; flex-direction: column; }
 .goal-item + .goal-item { border-top: var(--border-w) solid var(--border-subtle); }
+/* Rows sit flush with the section title — no inset, no hover plate.
+   The full-width hairlines are the only chrome; hover speaks through
+   the chevron alone. */
 .goal-row {
   display: flex; align-items: center; gap: var(--space-16);
-  height: 44px; padding: 0 var(--space-12);
-  border-radius: var(--radius-8);
+  height: 48px;
   cursor: pointer;
-  transition: background-color var(--duration-fast) var(--ease);
 }
-.goal-row:hover { background: var(--bg-ghost-hover); }
 .goal-row:hover .goal-row-chevron { color: var(--content-primary); }
 .goal-row-title { flex: 1; min-width: 0; font: var(--text-body-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .goal-row-meta { font: var(--text-body-md); color: var(--content-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -984,7 +984,7 @@ input, select, textarea { font: inherit; color: inherit; }
    No surface card — hairlines alone hold the list together. */
 .goal-body {
   display: flex; flex-direction: column; gap: var(--space-12);
-  padding: var(--space-4) var(--space-12) var(--space-16);
+  padding: var(--space-4) 0 var(--space-20);
 }
 .goal-duo { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: var(--space-12); align-items: start; }
 .goal-note { font: var(--text-body-sm); color: var(--content-tertiary); }
