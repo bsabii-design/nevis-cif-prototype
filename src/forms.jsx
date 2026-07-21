@@ -642,9 +642,9 @@ const SUBTYPE_OPTIONS = [...CASH_BANK_TYPES, ...INVESTMENT_TYPES.filter((t) => t
 /* ---------------- Liability side panel (same shell as assets) ---------------- */
 
 const LIABILITY_EXAMPLES = {
-  mortgage: 'Home loan',
+  mortgage: 'Home, rental property',
   'personal-loan': 'Car, student, personal',
-  'business-loan': 'Business borrowing',
+  'business-loan': 'Loans for a business',
   'credit-line': 'HELOC, other credit lines',
   'credit-card': 'Outstanding balances',
   other: 'Anything else you owe',
