@@ -817,12 +817,13 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .combo-item:hover, .combo-item-active { background: var(--bg-secondary); }
 
-/* Radio pills (employment status) */
+/* Radio pills (employment status). Parameter chips are Regular — the
+   fill carries selection; Medium is reserved for navigation and anchors. */
 .radio-row { display: flex; flex-wrap: wrap; gap: var(--space-8); }
 .radio-pill {
   height: var(--control-h);
   display: inline-flex; align-items: center;
-  font: var(--text-label-md); color: var(--content-secondary);
+  font: var(--text-body-md); color: var(--content-secondary);
   padding: 0 var(--space-12);
   background: var(--bg-faint);
   border-radius: var(--radius-full);
@@ -1007,7 +1008,7 @@ input, select, textarea { font: inherit; color: inherit; }
   display: inline-flex; align-items: center; gap: var(--space-8);
   height: var(--control-h);
   padding: 0 var(--space-12);
-  font: var(--text-label-md); color: var(--content-secondary);
+  font: var(--text-body-md); color: var(--content-secondary);
   background: var(--bg-faint);
   border-radius: var(--radius-full);
   transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
