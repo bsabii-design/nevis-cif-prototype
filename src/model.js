@@ -228,39 +228,41 @@ export const computeSummary = (profile) => {
   const { assets, liabilities, liabilitiesExplicitlyNone: none } = profile
   const knownAssets = assets.filter((a) => a.value != null)
   const totalAssets = knownAssets.reduce((s, a) => s + usdOf(a.value, a.currency), 0)
-  const unknownAssets = assets.length - knownAssets.length
   const knownLiabs = liabilities.filter((l) => l.outstandingBalance != null)
   const totalLiabs = knownLiabs.reduce((s, l) => s + usdOf(l.outstandingBalance, l.currency), 0)
-  const unknownLiabs = liabilities.length - knownLiabs.length
+  const liabsAnswered = liabilities.length > 0 || none
 
-  /* Totals show the state of the data, never status words:
-     no data → '—' · truly zero → $0 · data → the sum. */
-  const assetsRow = { label: 'Total assets', value: knownAssets.length === 0 ? '—' : fmtUSD(totalAssets) }
-  const liabsUnanswered = liabilities.length === 0 && !none
-  const liabsRow = {
-    label: 'Total liabilities',
-    value: liabsUnanswered || unknownLiabs > 0 ? '—' : fmtUSD(totalLiabs),
-  }
-  const rows = [assetsRow, liabsRow]
-  const excludesLine = unknownAssets > 0
-    ? `Excludes ${unknownAssets} asset${unknownAssets > 1 ? 's' : ''} without a value`
-    : null
+  /* Partial-honest estimate: compute from the values we know and declare
+     what was left out. '—' only when the math truly cannot run: no assets,
+     no valued assets, or the liabilities question unanswered. $0 only when
+     the client explicitly said there are no debts. */
+  const nw = assets.length === 0 || knownAssets.length === 0 || !liabsAnswered
+    ? null
+    : totalAssets - totalLiabs
 
-  /* The line under the figure explains why there is no result — one reason
-     at a time, in the order the client will fix things. */
-  if (assets.length === 0) {
-    return { rows, nw: null, line: 'Add at least one asset to calculate your net worth.' }
+  return {
+    nw,
+    assets: {
+      count: assets.length,
+      known: knownAssets.length,
+      total: totalAssets,
+      excluded: assets.length - knownAssets.length,
+    },
+    liabs: {
+      answered: liabsAnswered,
+      none,
+      count: liabilities.length,
+      known: knownLiabs.length,
+      total: totalLiabs,
+      excluded: liabilities.length - knownLiabs.length,
+    },
+    /* legacy shape for older consumers */
+    rows: [
+      { label: 'Total assets', value: knownAssets.length === 0 ? '—' : fmtUSD(totalAssets) },
+      { label: 'Total liabilities', value: !liabsAnswered ? '—' : fmtUSD(totalLiabs) },
+    ],
+    line: null,
   }
-  if (knownAssets.length === 0) {
-    return { rows, nw: null, line: 'Add an asset value to calculate your net worth.' }
-  }
-  if (unknownLiabs > 0) {
-    return { rows, nw: null, line: `Add ${unknownLiabs} missing balance${unknownLiabs > 1 ? 's' : ''} to calculate your net worth.` }
-  }
-  if (liabsUnanswered) {
-    return { rows, nw: null, line: 'Add liabilities to calculate your net worth.' }
-  }
-  return { rows, nw: totalAssets - totalLiabs, line: excludesLine }
 }
 
 export const hasForeignValues = (profile) =>

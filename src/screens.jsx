@@ -434,6 +434,15 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
 
   const summary = computeSummary(profile)
   const shownNW = useCountUp(summary.nw)
+  /* Card link navigates; a brief highlight lands the eye on the actions. */
+  const [flashLiabs, setFlashLiabs] = useState(false)
+  const goLiabilities = () => {
+    onTab('liabilities')
+    setFlashLiabs(true)
+    setTimeout(() => setFlashLiabs(false), 1500)
+  }
+  const excludesTip = (n, noun, unit) =>
+    `Excludes ${n} ${n === 1 ? noun[0] : noun[1]} without ${n === 1 ? 'a ' + unit : unit + 's'}`
   const equation = summary.rows?.length === 2 && summary.rows.every((r) => /^\$/.test(r.value))
 
   /* Only categories that contain saved records appear on the page. */
@@ -455,26 +464,51 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
           profile (no assets, no liabilities) has nothing to summarize. */}
       {(assets.length > 0 || liabilities.length > 0) && (
         <div className="nw-summary">
-          <div className="nw-sum-main">
-            <span className="nw-sum-label">Estimated net worth</span>
-            <span className={'nw-sum-fig' + (summary.nw == null ? ' nw-sum-fig-empty' : '')}>
-              {summary.nw == null ? '—' : fmtUSD(shownNW)}
+          <span className="nw-sum-label nw-label-term">
+            Estimated net worth
+            <span className="nw-tip" role="tooltip">
+              Based on the values you've entered. A rough picture is enough for your first conversation.
             </span>
-            {summary.line && <span className="nw-sum-line">{summary.line}</span>}
-          </div>
-          {summary.rows && (
-            <div className="nw-sum-stats">
-              {summary.rows.map((r, i) => (
-                <Fragment key={r.label}>
-                  {i > 0 && equation && <span className="nw-sum-minus" aria-hidden="true">−</span>}
-                  <div className="nw-stat">
-                    <span className="nw-stat-label">{r.label}</span>
-                    <span className="nw-stat-val">{r.value}</span>
-                  </div>
-                </Fragment>
-              ))}
+          </span>
+          <span className={'nw-sum-fig' + (summary.nw == null ? ' nw-sum-fig-empty' : '')}>
+            {summary.nw == null ? '—' : fmtUSD(shownNW)}
+          </span>
+          <div className="nw-sum-stats">
+            <div className="nw-stat">
+              <span className={'nw-stat-label' + (summary.assets.excluded > 0 ? ' nw-label-term' : '')}>
+                Assets
+                {summary.assets.excluded > 0 && (
+                  <span className="nw-tip" role="tooltip">
+                    {excludesTip(summary.assets.excluded, ['asset', 'assets'], 'value')}
+                  </span>
+                )}
+              </span>
+              {summary.assets.count === 0 ? (
+                <span className="nw-stat-hint">Add at least one asset</span>
+              ) : summary.assets.known === 0 ? (
+                <span className="nw-stat-val nw-stat-val-empty">—</span>
+              ) : (
+                <span className="nw-stat-val">{fmtUSD(summary.assets.total)}</span>
+              )}
             </div>
-          )}
+            <div className="nw-stat">
+              <span className={'nw-stat-label' + (summary.liabs.excluded > 0 ? ' nw-label-term' : '')}>
+                Liabilities
+                {summary.liabs.excluded > 0 && (
+                  <span className="nw-tip" role="tooltip">
+                    {excludesTip(summary.liabs.excluded, ['liability', 'liabilities'], 'balance')}
+                  </span>
+                )}
+              </span>
+              {!summary.liabs.answered ? (
+                <button className="nw-slot-link" onClick={goLiabilities}>Add liabilities or confirm none.</button>
+              ) : summary.liabs.count > 0 && summary.liabs.known === 0 ? (
+                <span className="nw-stat-val nw-stat-val-empty">—</span>
+              ) : (
+                <span className="nw-stat-val">{fmtUSD(summary.liabs.total)}</span>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -547,7 +581,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
           {tab === 'liabilities' && (
             <>
               {liabilities.length === 0 && !none && (
-                <div className="nw-empty">
+                <div className={'nw-empty' + (flashLiabs ? ' flash-target' : '')}>
                   <h2 className="nw-empty-title">No liabilities added yet</h2>
                   <p className="page-copy">Add mortgages, loans, credit balances, or anything else you owe.</p>
                   <button className="btn btn-primary nw-empty-cta" onClick={() => onAddLiability(null)}>Add liabilities</button>

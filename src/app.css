@@ -129,25 +129,36 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Section has an answer (content or explicit deferral) — quiet state dot. */
 .side-dot { flex: none; width: 6px; height: 6px; border-radius: var(--radius-full); background: var(--content-tertiary); }
 
-/* Net worth summary (Figma 57-2562): compact white card, serif figure,
-   equation stats top-right. Shown only while the panel is closed. */
+/* Net worth summary (final, Figma 60-9234): typographic card — label with
+   tooltip, 40px serif figure, Assets/Liabilities as two quiet columns.
+   Excluded records surface as dotted-underline tooltips on the side labels;
+   an unanswered side carries a quiet link to where the answer lives. */
 .nw-copy { font: 400 13px/18.5px var(--font-sans); color: var(--content-secondary); max-width: 400px; }
 .nw-summary {
-  display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-24);
+  display: flex; flex-direction: column; align-items: flex-start;
   padding: var(--space-24);
   background: var(--bg-surface);
   border-radius: var(--radius-12);
 }
-.nw-sum-main { display: flex; flex-direction: column; gap: var(--space-2); }
-.nw-sum-label { font: var(--text-body-sm); color: var(--content-secondary); }
-.nw-sum-fig { font: 500 40px/44px var(--font-serif); font-variant-numeric: tabular-nums; }
-.nw-sum-fig-empty { color: var(--content-tertiary); }
-.nw-sum-line { font: var(--text-body-sm); color: var(--content-secondary); }
-.nw-sum-stats { display: flex; align-items: flex-start; gap: var(--space-16); }
-.nw-stat { display: flex; flex-direction: column; }
+.nw-sum-label { font: var(--text-body-sm); color: var(--content-tertiary); }
+.nw-sum-fig { margin-top: var(--space-2); font: 500 40px/44px var(--font-serif); font-variant-numeric: tabular-nums; }
+.nw-sum-fig-empty { color: var(--content-secondary); }
+.nw-sum-stats { display: flex; gap: var(--space-32); margin-top: var(--space-8); }
+.nw-stat { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
 .nw-stat-label { font: var(--text-body-sm); color: var(--content-tertiary); }
 .nw-stat-val { font: 400 13px/16px var(--font-sans); font-variant-numeric: tabular-nums; }
-.nw-sum-minus { font: var(--text-body-md); color: var(--content-tertiary); padding-top: 6px; }
+.nw-stat-val-empty { color: var(--content-secondary); }
+.nw-stat-hint { font: 400 13px/16px var(--font-sans); color: var(--content-secondary); }
+.nw-slot-link {
+  font: 400 13px/16px var(--font-sans); color: var(--content-secondary);
+  text-align: left;
+  transition: color var(--duration-fast) var(--ease);
+}
+.nw-slot-link:hover { color: var(--content-primary); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Landing highlight after the card link brings you to the liabilities tab. */
+@keyframes flash-pulse { from { background: var(--bg-selected); } to { background: transparent; } }
+.flash-target { animation: flash-pulse 1.4s var(--ease); border-radius: var(--radius-12); }
 
 /* Assets empty state + deferral note */
 .nw-empty { display: flex; flex-direction: column; gap: var(--space-8); align-items: flex-start; padding: var(--space-8) 0 var(--space-16); }
