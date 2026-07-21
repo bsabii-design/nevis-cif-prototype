@@ -464,26 +464,11 @@ input, select, textarea { font: inherit; color: inherit; }
    toolbar stick. When the card leaves the viewport, a compact net-worth
    figure fades into the toolbar so the counter never disappears. */
 
-.nw-header {
-  position: sticky; top: 57px; z-index: 4;
-  display: flex; flex-direction: column; gap: var(--space-16);
-  background: var(--bg-page);
-  padding: var(--space-2) 0 var(--space-4);
-}
+/* Static header per Figma 56-2310: divider + toolbar, no sticky leftovers. */
+.nw-header { display: flex; flex-direction: column; gap: var(--space-16); }
 .nw-divider { height: var(--border-w); background: var(--border-subtle); }
 .nw-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); }
 .nw-toolbar-right { display: flex; align-items: center; gap: var(--space-16); }
-/* Collapsed summary: the card's essence (label + serif figure) as a slim bar
-   that slides in where the card was, keeping the live counter at the top. */
-
-/* A soft fade below the toolbar so scrolling rows dissolve into it. */
-.nw-header::after {
-  content: '';
-  position: absolute; top: 100%; left: 0; right: 0;
-  height: var(--space-24);
-  background: linear-gradient(to bottom, var(--color-beige) 0%, var(--color-beige-80) 40%, var(--color-beige-0) 100%);
-  pointer-events: none;
-}
 
 /* Pill tabs (Figma 34:2579): active = white on hairline border, inactive = transparent */
 .nw-tabs { display: flex; gap: var(--space-4); }
