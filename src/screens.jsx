@@ -11,23 +11,45 @@ import { useCountUp } from './hooks.js'
 
 /* ---------------- Welcome (spec §7) ---------------- */
 
+/* Get started (Figma 60-18907): full-bleed wave video, one white card.
+   The artifact build ships only the poster frame — the video 404s there
+   and the background image stays. */
 export function Welcome({ onStart }) {
+  const poster = globalThis.__NEVIS_POSTER__ || '/nevis-waves.jpg'
   return (
-    <div className="welcome">
-      <h1 className="welcome-title">Welcome, Jonathan</h1>
-      <p className="page-copy">Sarah invited you to complete your financial profile before your meeting.</p>
-      <p className="page-copy">
-        This will help her understand your goals and financial situation, so you can spend
-        more of your meeting discussing strategy.
-      </p>
-      <p className="page-copy">You can complete this in parts and come back anytime. Rough estimates are fine.</p>
-      <button className="btn btn-primary welcome-cta" onClick={onStart}>Get started</button>
-      <div className="welcome-list">
-        <span className="welcome-list-title">What you can add</span>
-        <span>Personal details</span>
-        <span>Work and income</span>
-        <span>Goals</span>
-        <span>Assets and liabilities</span>
+    <div className="welcome-hero" style={{ backgroundImage: `url(${poster})` }}>
+      <video className="welcome-video" autoPlay muted loop playsInline poster={poster}>
+        <source src="/nevis-waves.mp4" type="video/mp4" />
+      </video>
+      <div className="welcome-card">
+        <span className="welcome-brand">Nevis</span>
+        <div className="welcome-intro">
+          <h1 className="welcome-title">Welcome, Jonathan</h1>
+          <p className="welcome-copy">
+            Sarah invited you to add information to your financial profile before your meeting.
+            This will help her understand your goals and financial situation, so you can spend
+            more of your meeting discussing strategy.
+          </p>
+        </div>
+        <div className="welcome-section">
+          <span className="welcome-sec-label">What you can add</span>
+          <div className="welcome-sec-body">
+            <span>Personal details</span>
+            <span>Work and income</span>
+            <span>Goals</span>
+            <span>What you own and owe</span>
+          </div>
+        </div>
+        <div className="welcome-section">
+          <span className="welcome-sec-label">Before you start</span>
+          <div className="welcome-sec-body">
+            <p>
+              You can do this in parts and come back anytime. Rough estimates are fine.
+              Sarah won&rsquo;t see anything until you share your profile.
+            </p>
+          </div>
+        </div>
+        <button className="btn btn-primary btn-lg welcome-cta" onClick={onStart}>Get started</button>
       </div>
     </div>
   )
