@@ -494,16 +494,14 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
               Liabilities<span className="nw-pill-count">{liabilities.length}</span>
             </button>
           </div>
-          {!panelOpen && (
-            <div className="nw-toolbar-right">
-              {tab === 'assets' && assets.length > 0 && (
-                <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
-              )}
-              {tab === 'liabilities' && liabilities.length > 0 && (
-                <button className="btn btn-primary" onClick={() => onAddLiability(null)}>Add liabilities</button>
-              )}
-            </div>
-          )}
+          <div className="nw-toolbar-right">
+            {tab === 'assets' && assets.length > 0 && (
+              <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add assets</button>
+            )}
+            {tab === 'liabilities' && liabilities.length > 0 && (
+              <button className="btn btn-primary" onClick={() => onAddLiability(null)}>Add liabilities</button>
+            )}
+          </div>
         </div>
       </div>
 
