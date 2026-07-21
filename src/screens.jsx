@@ -355,21 +355,28 @@ function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
         </div>
       )}
       <div className="goal-body">
-        <div className="goal-duo">
-          <Field label="When">
-            <RadioRow name="When" options={HORIZONS} value={goal.horizon || ''}
-              onChange={(v) => set('horizon', v || null)} />
-          </Field>
-          <Field label="Estimated amount">
+        {/* Settings grammar (Linear): label on the left, control on the
+            right — each detail is one quiet row. */}
+        <div className="goal-set-row">
+          <span className="goal-set-label">When</span>
+          <RadioRow name="When" options={HORIZONS} value={goal.horizon || ''}
+            onChange={(v) => set('horizon', v || null)} />
+        </div>
+        <div className="goal-set-row">
+          <span className="goal-set-label">Estimated amount</span>
+          <div className="goal-set-money">
             <MoneyInput amount={goal.targetAmount} currency={goal.currency}
               onAmount={(v) => set('targetAmount', v)} onCurrency={(c) => set('currency', c)} />
-          </Field>
+          </div>
         </div>
         {isPreset && (
-          <Field label="Details">
-            <TextInput value={goal.note || ''} onChange={(v) => set('note', v)}
-              placeholder={PRESET_DETAIL_EXAMPLES[goal.preset] || 'Anything that helps explain this goal'} />
-          </Field>
+          <div className="goal-set-row">
+            <span className="goal-set-label">Details</span>
+            <div className="goal-set-note">
+              <TextInput value={goal.note || ''} onChange={(v) => set('note', v)}
+                placeholder={PRESET_DETAIL_EXAMPLES[goal.preset] || 'Anything that helps explain this goal'} />
+            </div>
+          </div>
         )}
         <div className="editor-actions">
           <button className="btn btn-tertiary" onClick={onRemove}>Remove</button>

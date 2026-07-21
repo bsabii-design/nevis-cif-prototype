@@ -994,7 +994,12 @@ input, select, textarea { font: inherit; color: inherit; }
   display: flex; flex-direction: column; gap: var(--space-12);
   padding: var(--space-4) 0 var(--space-20);
 }
-.goal-duo { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: var(--space-12); align-items: start; }
+/* Settings rows: label left, control right (Linear grammar). */
+.goal-set-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); min-height: 40px; }
+.goal-set-label { font: var(--text-body-md); color: var(--content-secondary); flex: none; }
+.goal-set-row .radio-row { justify-content: flex-end; }
+.goal-set-money { width: 240px; }
+.goal-set-note { width: 320px; }
 .goal-note { font: var(--text-body-sm); color: var(--content-tertiary); }
 
 /* Goal picker: multi-select pills with a small checkbox; active = white,
