@@ -308,63 +308,72 @@ const CheckIcon = () => (
    One goal open at a time — the list stays compact (accordion, parent-owned). */
 function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
   const set = (k, v) => onChange({ ...goal, [k]: v })
-
-  if (!editing) {
-    const meta = [goal.horizon, goal.targetAmount != null ? fmtCompact(goal.targetAmount, goal.currency) : null]
-      .filter(Boolean).join(' · ')
-    return (
-      <div className="goal-row" onClick={onOpen} role="button" tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() } }}>
-        <span className="goal-row-title">{goal.title}</span>
-        <span className="goal-row-meta">{meta}</span>
-        <svg className="goal-row-chevron" width="12" height="12" viewBox="0 0 16 16" fill="none"
-          stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M6 4l4 4-4 4" />
-        </svg>
-      </div>
-    )
-  }
   /* The pill IS the goal's type: preset cards keep their name fixed — a
      different goal means a different pill, not a rename. Only "Other" goals
      are named freely. */
   const isPreset = !!goal.preset
+  const meta = [goal.horizon, goal.targetAmount != null ? fmtCompact(goal.targetAmount, goal.currency) : null]
+    .filter(Boolean).join(' · ')
+  const chevron = (
+    <svg className="goal-row-chevron" width="12" height="12" viewBox="0 0 16 16" fill="none"
+      stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {editing ? <path d="M4 10l4-4 4 4" /> : <path d="M4 6l4 4 4-4" />}
+    </svg>
+  )
+
+  if (!editing) {
+    return (
+      <div className="goal-item">
+        <div className="goal-row" onClick={onOpen} role="button" tabIndex={0} aria-expanded={false}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() } }}>
+          <span className="goal-row-title">{goal.title}</span>
+          <span className="goal-row-meta">{meta}</span>
+          {chevron}
+        </div>
+      </div>
+    )
+  }
   return (
-    <div className="goal-editor">
-      <div className="goal-editor-head">
-        {isPreset ? (
-          <h3 className="goal-editor-title">{goal.title}</h3>
-        ) : (
+    <div className="goal-item">
+      {/* The open head is the same row, chevron flipped — clicking it (or the
+          chevron) folds the goal back. Fields save as you type; there is no
+          Done because there is nothing to confirm. */}
+      {isPreset ? (
+        <div className="goal-row" onClick={onClose} role="button" tabIndex={0} aria-expanded={true}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClose() } }}>
+          <span className="goal-row-title">{goal.title}</span>
+          <span className="goal-row-meta">{meta}</span>
+          {chevron}
+        </div>
+      ) : (
+        <div className="goal-editor-head">
           <Field label="Goal" required>
             <TextInput value={goal.title} onChange={(v) => set('title', v)}
               placeholder="Describe your goal" />
           </Field>
-        )}
-        <button className="goal-collapse" aria-label="Done" onClick={onClose}>
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-            strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M4 10l4-4 4 4" />
-          </svg>
-        </button>
-      </div>
-      <div className="goal-duo">
-        <Field label="When">
-          <RadioRow name="When" options={HORIZONS} value={goal.horizon || ''}
-            onChange={(v) => set('horizon', v || null)} />
-        </Field>
-        <Field label="Estimated amount">
-          <MoneyInput amount={goal.targetAmount} currency={goal.currency}
-            onAmount={(v) => set('targetAmount', v)} onCurrency={(c) => set('currency', c)} />
-        </Field>
-      </div>
-      {isPreset && (
-        <Field label="Details">
-          <TextInput value={goal.note || ''} onChange={(v) => set('note', v)}
-            placeholder={PRESET_DETAIL_EXAMPLES[goal.preset] || 'Anything that helps explain this goal'} />
-        </Field>
+          <button className="goal-collapse" aria-label="Collapse" onClick={onClose}>{chevron}</button>
+        </div>
       )}
-      <div className="editor-actions">
-        <button className="btn btn-tertiary" onClick={onRemove}>Remove</button>
-        <button className="btn btn-secondary" onClick={onClose}>Done</button>
+      <div className="goal-body">
+        <div className="goal-duo">
+          <Field label="When">
+            <RadioRow name="When" options={HORIZONS} value={goal.horizon || ''}
+              onChange={(v) => set('horizon', v || null)} />
+          </Field>
+          <Field label="Estimated amount">
+            <MoneyInput amount={goal.targetAmount} currency={goal.currency}
+              onAmount={(v) => set('targetAmount', v)} onCurrency={(c) => set('currency', c)} />
+          </Field>
+        </div>
+        {isPreset && (
+          <Field label="Details">
+            <TextInput value={goal.note || ''} onChange={(v) => set('note', v)}
+              placeholder={PRESET_DETAIL_EXAMPLES[goal.preset] || 'Anything that helps explain this goal'} />
+          </Field>
+        )}
+        <div className="editor-actions">
+          <button className="btn btn-tertiary" onClick={onRemove}>Remove</button>
+        </div>
       </div>
     </div>
   )

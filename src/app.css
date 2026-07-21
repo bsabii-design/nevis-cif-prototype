@@ -944,9 +944,13 @@ input, select, textarea { font: inherit; color: inherit; }
 /* ---------------- Goals ---------------- */
 
 .goals-question { font: var(--text-heading-sm); }
-.goal-editor-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-12); }
+/* Open "Other" goal: the head is its editable name field (no fixed pill
+   title to show), collapse chevron in the row's corner. */
+.goal-editor-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-12);
+  padding: var(--space-12) var(--space-12) 0;
+}
 .goal-editor-head .field { flex: 1; }
-.goal-editor-title { font: var(--text-label-md); }
 .goal-collapse {
   flex: none; width: 24px; height: 24px;
   display: flex; align-items: center; justify-content: center;
@@ -956,11 +960,13 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .goal-collapse:hover { color: var(--content-primary); }
 
-/* Selected goals: compact accordion rows under the picker. The bubbles
-   choose; this list refines what was chosen. */
+/* Selected goals: settings-style accordion (Linear reference) — rows
+   separated by hairlines, expansion happens in place, one open at a time.
+   The bubbles choose; this list refines what was chosen. */
 .goal-section { display: flex; flex-direction: column; gap: var(--space-12); }
 .goal-section-title { font: var(--text-label-md); }
 .goal-rows { display: flex; flex-direction: column; }
+.goal-item + .goal-item { border-top: var(--border-w) solid var(--border-subtle); }
 .goal-row {
   display: flex; align-items: center; gap: var(--space-16);
   height: 44px; padding: 0 var(--space-12);
@@ -974,15 +980,11 @@ input, select, textarea { font: inherit; color: inherit; }
 .goal-row-meta { font: var(--text-body-md); color: var(--content-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .goal-row-chevron { flex: none; color: var(--content-tertiary); transition: color var(--duration-fast) var(--ease); }
 
-/* Inline editor: a calm surface card in place of the row */
-/* Editor: a quiet grey surface, no stroke — strokes belong to section
-   dividers only. White fields pop on the 4% fill. */
-.goal-editor {
+/* Open goal: fields sit inline under the head row, aligned to its padding.
+   No surface card — hairlines alone hold the list together. */
+.goal-body {
   display: flex; flex-direction: column; gap: var(--space-12);
-  padding: var(--space-16);
-  background: var(--bg-tint);
-  border-radius: var(--radius-12);
-  margin: var(--space-4) 0;
+  padding: var(--space-4) var(--space-12) var(--space-16);
 }
 .goal-duo { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: var(--space-12); align-items: start; }
 .goal-note { font: var(--text-body-sm); color: var(--content-tertiary); }
