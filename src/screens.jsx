@@ -451,9 +451,9 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
         </p>
       </div>
 
-      {/* Summary belongs to the reading state; while the panel is open the
-          page is a worklist and the card yields (Figma 56-2310 vs 57-2562). */}
-      {!panelOpen && (
+      {/* Summary is always there once anything exists — only a fully empty
+          profile (no assets, no liabilities) has nothing to summarize. */}
+      {(assets.length > 0 || liabilities.length > 0) && (
         <div className="nw-summary">
           <div className="nw-sum-main">
             <span className="nw-sum-label">Estimated net worth</span>
