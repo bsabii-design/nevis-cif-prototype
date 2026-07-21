@@ -238,7 +238,7 @@ export function Work({ profile, onChange, onNav }) {
     <div className="screen">
       <div className="narrow-col">
       <div className="title-block">
-        <h1 className="page-title">Occupation & income</h1>
+        <h1 className="page-title">Work & income</h1>
         <p className="page-copy">Add any relevant details about your work and income.</p>
       </div>
 

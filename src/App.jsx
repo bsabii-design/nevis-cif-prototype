@@ -28,7 +28,7 @@ function ShareDialog({ profile, onCancel, onConfirm }) {
   const rows = [
     { label: 'Personal', state: 'Complete' },
     {
-      label: 'Occupation & income',
+      label: 'Work & income',
       state: sectionState(profile).work ? 'Added' : 'Not filled in yet',
       muted: !sectionState(profile).work,
     },

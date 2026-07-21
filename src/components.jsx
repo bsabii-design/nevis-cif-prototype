@@ -10,7 +10,7 @@ import { useCountUp } from './hooks.js'
 
 export const NAV = [
   { key: 'personal', label: 'Personal' },
-  { key: 'work', label: 'Occupation & income' },
+  { key: 'work', label: 'Work & income' },
   { key: 'goals', label: 'Goals' },
   { key: 'networth', label: 'Net worth' },
 ]
