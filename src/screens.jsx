@@ -7,6 +7,7 @@ import {
 import { parseGoals } from './parse.js'
 import { CompanyInput, CountrySelect, DateInput, Field, MoneyInput, PhoneInput, RadioRow, SearchableSelect, TextInput } from './ui.jsx'
 import { AssetRow, LiabilityRow } from './components.jsx'
+import { useCountUp } from './hooks.js'
 
 /* ---------------- Welcome (spec §7) ---------------- */
 
@@ -431,6 +432,10 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
   onAnswerNone, panelOpen, panelTarget }) {
   const { assets, liabilities, liabilitiesExplicitlyNone: none } = profile
 
+  const summary = computeSummary(profile)
+  const shownNW = useCountUp(summary.nw)
+  const equation = summary.rows?.length === 2 && summary.rows.every((r) => /^\$/.test(r.value))
+
   /* Only categories that contain saved records appear on the page. */
   const assetGroups = ASSET_CATEGORIES.filter((c) => assets.some((a) => a.category === c.key))
   const liabGroups = LIABILITY_CATEGORIES.filter((c) => liabilities.some((l) => l.category === c.key))
@@ -440,11 +445,38 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
       <div className="narrow-col">
       <div className="title-block">
         <h1 className="page-title">Net worth</h1>
-        <p className="page-copy">
-          Add anything you own or owe to build a clearer financial picture.<br />
+        <p className="nw-copy">
+          Add anything you own or owe to build a clearer financial picture.
           You can update it anytime.
         </p>
       </div>
+
+      {/* Summary belongs to the reading state; while the panel is open the
+          page is a worklist and the card yields (Figma 56-2310 vs 57-2562). */}
+      {!panelOpen && (
+        <div className="nw-summary">
+          <div className="nw-sum-main">
+            <span className="nw-sum-label">Estimated net worth</span>
+            <span className={'nw-sum-fig' + (summary.nw == null ? ' nw-sum-fig-empty' : '')}>
+              {summary.nw == null ? '—' : fmtUSD(shownNW)}
+            </span>
+            {summary.line && <span className="nw-sum-line">{summary.line}</span>}
+          </div>
+          {summary.rows && (
+            <div className="nw-sum-stats">
+              {summary.rows.map((r, i) => (
+                <Fragment key={r.label}>
+                  {i > 0 && equation && <span className="nw-sum-minus" aria-hidden="true">−</span>}
+                  <div className="nw-stat">
+                    <span className="nw-stat-label">{r.label}</span>
+                    <span className="nw-stat-val">{r.value}</span>
+                  </div>
+                </Fragment>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="nw-header">
         <div className="nw-divider" />

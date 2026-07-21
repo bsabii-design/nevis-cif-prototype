@@ -129,6 +129,26 @@ input, select, textarea { font: inherit; color: inherit; }
 /* Section has an answer (content or explicit deferral) — quiet state dot. */
 .side-dot { flex: none; width: 6px; height: 6px; border-radius: var(--radius-full); background: var(--content-tertiary); }
 
+/* Net worth summary (Figma 57-2562): compact white card, serif figure,
+   equation stats top-right. Shown only while the panel is closed. */
+.nw-copy { font: 400 13px/18.5px var(--font-sans); color: var(--content-secondary); max-width: 400px; }
+.nw-summary {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-24);
+  padding: var(--space-24);
+  background: var(--bg-surface);
+  border-radius: var(--radius-12);
+}
+.nw-sum-main { display: flex; flex-direction: column; gap: var(--space-2); }
+.nw-sum-label { font: var(--text-body-sm); color: var(--content-secondary); }
+.nw-sum-fig { font: 500 40px/44px var(--font-serif); font-variant-numeric: tabular-nums; }
+.nw-sum-fig-empty { color: var(--content-tertiary); }
+.nw-sum-line { font: var(--text-body-sm); color: var(--content-secondary); }
+.nw-sum-stats { display: flex; align-items: flex-start; gap: var(--space-16); }
+.nw-stat { display: flex; flex-direction: column; }
+.nw-stat-label { font: var(--text-body-sm); color: var(--content-tertiary); }
+.nw-stat-val { font: 400 13px/16px var(--font-sans); font-variant-numeric: tabular-nums; }
+.nw-sum-minus { font: var(--text-body-md); color: var(--content-tertiary); padding-top: 6px; }
+
 /* Assets empty state + deferral note */
 .nw-empty { display: flex; flex-direction: column; gap: var(--space-8); align-items: flex-start; padding: var(--space-8) 0 var(--space-16); }
 .nw-empty-title { font: var(--text-heading-sm); }
