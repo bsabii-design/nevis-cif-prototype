@@ -20,9 +20,13 @@
   --color-beige-0: rgba(247, 246, 240, 0);
 
   --color-black-a2:  rgba(20, 20, 19, 0.02);
-  --color-black-a3:  rgba(20, 20, 19, 0.03);
-  --color-black-a4:  rgba(20, 20, 19, 0.04);
   --color-black-a6:  rgba(20, 20, 19, 0.06);
+  /* Fills darker than 2% are OPAQUE stone swatches, not ink alpha:
+     alpha over the beige page compounds its warm cast into muddy brown.
+     Stones neutralize the warmth as they darken (R=G, blue gap closes)
+     and render identically on beige and white surfaces. */
+  --color-stone-3:   #efefea;
+  --color-stone-4:   #ecece7;
   --color-black-a48: rgba(20, 20, 19, 0.48);
   --color-black-a64: rgba(20, 20, 19, 0.64);
   --color-black-a80: rgba(20, 20, 19, 0.80);
@@ -47,13 +51,13 @@
   --bg-primary:         var(--color-black);
   --bg-primary-hover:   var(--color-black-a80);
   --bg-primary-disabled:var(--color-black-a48);
-  --bg-secondary:       var(--color-black-a4);
+  --bg-secondary:       var(--color-stone-4);
   --bg-secondary-hover: var(--color-black-a6);
-  --bg-ghost-hover:     var(--color-black-a4);
-  --bg-selected:        var(--color-black-a4);
-  /* 3% resting fill for standalone controls that must read as shapes on
+  --bg-ghost-hover:     var(--color-stone-4);
+  --bg-selected:        var(--color-stone-4);
+  /* Resting fill for standalone controls that must read as shapes on
      the page: sidebar active item, secondary CTA, tab chips at rest. */
-  --bg-quiet:           var(--color-black-a3);
+  --bg-quiet:           var(--color-stone-3);
   --bg-tint:            var(--color-black-a2);
   --bg-faint:           var(--color-black-a2);
   --bg-overlay:         var(--color-beige-80);
