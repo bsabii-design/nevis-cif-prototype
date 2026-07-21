@@ -126,8 +126,6 @@ input, select, textarea { font: inherit; color: inherit; }
   border-radius: var(--radius-full);
 }
 .side-name { font: var(--text-label-md); }
-/* Section has an answer (content or explicit deferral) — quiet state dot. */
-.side-dot { flex: none; width: 6px; height: 6px; border-radius: var(--radius-full); background: var(--content-tertiary); }
 
 /* Net worth summary (final, Figma 60-9234): typographic card — label with
    tooltip, 40px serif figure, Assets/Liabilities as two quiet columns.

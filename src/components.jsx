@@ -69,9 +69,6 @@ export function Sidebar({ activeKey, onNav, clientName, sections }) {
             className={'side-link' + (s.key === activeKey ? ' side-link-active' : '')}
             onClick={() => onNav(s.key)}>
             {s.label}
-            {sections && !sections[s.key] && (
-              <span className="side-dot" title="Nothing here yet" aria-label="Nothing here yet" />
-            )}
           </button>
         ))}
       </div>
