@@ -323,7 +323,6 @@ input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------------- Cards ---------------- */
 
-.groups { display: flex; flex-direction: column; gap: 28px; }
 .group { display: flex; flex-direction: column; gap: var(--space-4); }
 /* Header band: name + subtotal on a muted strip, rows flat below (Linear-style). */
 .group-head {
