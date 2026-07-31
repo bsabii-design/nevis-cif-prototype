@@ -9,9 +9,9 @@
   /* ---- Color · primitives ----
      The whole product is FOUR colors: beige, white, ink, red.
      Everything else is ink at a fixed opacity step, one job per step:
-       2%  tint at rest (pills, bands)     48% tertiary text · disabled · quiet controls
-       4%  tint active (hover/selected)    64% secondary text
-       6%  stroke + pressed (sec. hover)   80% primary-button hover state
+       3%  calm default (chips, tabs, bands)      48% tertiary text · disabled · quiet controls
+       4%  emphasis (hover/selected + CTA rest)   64% secondary text
+       6%  stroke + pressed (sec. hover)          80% primary-button hover state
                                           100% primary text · focus · primary button */
   --color-black: #141413;
   --color-white: #ffffff;
@@ -20,6 +20,7 @@
   --color-beige-0: rgba(247, 246, 240, 0);
 
   --color-black-a2:  rgba(20, 20, 19, 0.02);
+  --color-black-a3:  rgba(20, 20, 19, 0.03);
   --color-black-a4:  rgba(20, 20, 19, 0.04);
   --color-black-a6:  rgba(20, 20, 19, 0.06);
   /* Fills darker than 2% are OPAQUE stone swatches, not ink alpha:
@@ -60,8 +61,10 @@
      the page: sidebar active item, secondary CTA. Stone-4 = the 4%
      bg/secondary step, neutralized so it stays clean on beige. */
   --bg-quiet:           var(--color-stone-4);
-  --bg-tint:            var(--color-black-a2);
-  --bg-faint:           var(--color-black-a2);
+  /* Calm default (Figma bg/tint 3%): chips, tabs, group bands, quiet surfaces.
+     CTA + hover/active stay one step up at 4% (--bg-quiet / --bg-ghost-hover). */
+  --bg-tint:            var(--color-black-a3);
+  --bg-faint:           var(--color-black-a3);
   --bg-overlay:         var(--color-beige-80);
 
   --border-default:  var(--color-black-a6);
