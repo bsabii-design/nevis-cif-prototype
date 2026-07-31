@@ -29,7 +29,7 @@ export function Welcome({ onStart }) {
             <p className="welcome-copy">
               Sarah invited you to add information to your financial profile before your meeting.
               This will help her understand your goals and financial situation, so you can spend
-              more of your meeting discussing strategy.
+              more time discussing strategy.
             </p>
           </div>
         </div>
@@ -69,25 +69,30 @@ const PlusIcon = () => (
    then City / State / ZIP as three equal columns. State is a searchable
    US-states select only for United States; elsewhere it relabels to
    "State / province / region" and accepts free text. */
-function AddressFields({ residence, onChange, errors = {}, onBlurField }) {
+function AddressFields({ residence, onChange, errors = {}, onBlurField, optional = false }) {
   const set = (k, v) => onChange({ ...residence, [k]: v })
   const isUS = (residence.country || '').trim() === 'United States'
+  const req = !optional
   return (
     <>
-      <Field label="Country" required error={errors.country}>
-        <CountrySelect value={residence.country} options={COUNTRY_NAMES}
-          placeholder="Start typing a country"
-          onChange={(v) => set('country', v)} onBlur={() => onBlurField?.('country')} />
-      </Field>
-      <Field label="Street address">
-        <TextInput value={residence.street} onChange={(v) => set('street', v)} />
-      </Field>
+      <div className="addr-top">
+        <Field label="Country" required={req} error={errors.country}>
+          <CountrySelect value={residence.country} options={COUNTRY_NAMES}
+            placeholder="Start typing a country"
+            onChange={(v) => set('country', v)} onBlur={() => onBlurField?.('country')} />
+        </Field>
+        <Field label="Street address" required={req} error={errors.street}>
+          <TextInput value={residence.street} onChange={(v) => set('street', v)}
+            onBlur={() => onBlurField?.('street')} />
+        </Field>
+      </div>
       <div className="addr-row">
-        <Field label="City">
-          <TextInput value={residence.city} onChange={(v) => set('city', v)} />
+        <Field label="City" required={req} error={errors.city}>
+          <TextInput value={residence.city} onChange={(v) => set('city', v)}
+            onBlur={() => onBlurField?.('city')} />
         </Field>
         {isUS ? (
-          <Field label="State" required error={errors.state}>
+          <Field label="State" required={req} error={errors.state}>
             <SearchableSelect value={residence.state} options={US_STATES}
               onChange={(v) => set('state', v)} onBlur={() => onBlurField?.('state')} />
           </Field>
@@ -96,8 +101,9 @@ function AddressFields({ residence, onChange, errors = {}, onBlurField }) {
             <TextInput value={residence.state} onChange={(v) => set('state', v)} />
           </Field>
         )}
-        <Field label="ZIP code">
-          <TextInput value={residence.zip} onChange={(v) => set('zip', v)} inputMode="numeric" />
+        <Field label="ZIP code" required={req} error={errors.zip}>
+          <TextInput value={residence.zip} onChange={(v) => set('zip', v)} inputMode="numeric"
+            onBlur={() => onBlurField?.('zip')} />
         </Field>
       </div>
     </>
@@ -145,7 +151,6 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
         <div className="form-section">
           <div className="form-section-head-block">
             <h2 className="form-section-title">Legal identity</h2>
-            <p className="form-section-copy">As you have it in your ID.</p>
           </div>
           <div className="field-pair">
             <Field label="First name" required error={err('firstName')}>
@@ -167,14 +172,13 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
         <div className="form-section">
           <div className="form-section-head-block">
             <h2 className="form-section-title">Contact</h2>
-            <p className="form-section-copy">How you can be reached.</p>
           </div>
           <div className="field-pair">
             <Field label="Email" required error={emailError()}>
               <TextInput value={p.email} type="email" onChange={(v) => set('email', v)} onBlur={() => markTouched('email')} />
             </Field>
-            <Field label="Phone">
-              <PhoneInput value={p.phone} onChange={(v) => set('phone', v)} />
+            <Field label="Phone" required error={err('phone')}>
+              <PhoneInput value={p.phone} onChange={(v) => set('phone', v)} onBlur={() => markTouched('phone')} />
             </Field>
           </div>
         </div>
@@ -183,19 +187,34 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
         <div className="form-section">
           <div className="form-section-head-block">
             <h2 className="form-section-title">Residential address</h2>
-            <p className="form-section-copy">Your primary home address.</p>
           </div>
           <AddressFields residence={p.primaryResidence}
-            errors={{ country: err('country'), state: err('state', 'Select a state.') }}
+            errors={{ country: err('country'), street: err('street'), city: err('city'), state: err('state', 'Select a state.'), zip: err('zip') }}
             onBlurField={(k) => markTouched(k)}
             onChange={(r) => set('primaryResidence', r)} />
+          {p.additionalResidences.map((r, i) => (
+            <div className="form-subblock" key={i}>
+              <div className="form-subblock-head">
+                <span className="form-subblock-title">Additional address</span>
+                <button className="link-danger"
+                  onClick={() => set('additionalResidences', p.additionalResidences.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </div>
+              <AddressFields residence={r} optional
+                onChange={(nr) => set('additionalResidences', p.additionalResidences.map((x, j) => j === i ? nr : x))} />
+            </div>
+          ))}
+          <button className="add-row"
+            onClick={() => set('additionalResidences', [...p.additionalResidences, { country: '', street: '', apartment: '', city: '', state: '', zip: '' }])}>
+            <PlusIcon /> Add another address
+          </button>
         </div>
 
         {/* ---- Citizenship ---- */}
         <div className="form-section">
           <div className="form-section-head-block">
             <h2 className="form-section-title">Citizenship</h2>
-            <p className="form-section-copy">For tax and residency context.</p>
           </div>
           <Field label="Country of citizenship" required error={err('citizenship')}>
             <CountrySelect value={p.citizenships[0] || ''} options={COUNTRY_NAMES}
@@ -243,21 +262,21 @@ export function Work({ profile, onChange, onNav }) {
       </div>
 
       <div className="focus-form">
-        <Field label="Employment status">
+        <Field label="Employment status" required>
           <RadioRow name="Employment status" options={EMPLOYMENT_STATUSES}
             value={st} onChange={(v) => set('employmentStatus', v)} />
         </Field>
 
         {st === 'Employed' && (
           <div className="field-pair">
-            <Field label="Job title"><TextInput value={w.jobTitle} onChange={(v) => set('jobTitle', v)} /></Field>
-            <Field label="Employer"><CompanyInput value={w.employer} onChange={(v) => set('employer', v)} /></Field>
+            <Field label="Job title" required><TextInput value={w.jobTitle} onChange={(v) => set('jobTitle', v)} /></Field>
+            <Field label="Employer" required><CompanyInput value={w.employer} onChange={(v) => set('employer', v)} /></Field>
           </div>
         )}
         {(st === 'Self-employed' || st === 'Business owner') && (
           <div className="field-pair">
-            <Field label="Occupation"><TextInput value={w.occupation} onChange={(v) => set('occupation', v)} /></Field>
-            <Field label="Business name"><CompanyInput value={w.businessName} onChange={(v) => set('businessName', v)} /></Field>
+            <Field label="Occupation" required><TextInput value={w.occupation} onChange={(v) => set('occupation', v)} /></Field>
+            <Field label="Business name" required><CompanyInput value={w.businessName} onChange={(v) => set('businessName', v)} /></Field>
           </div>
         )}
         {st === 'Retired' && (
@@ -274,7 +293,7 @@ export function Work({ profile, onChange, onNav }) {
 
         {st && st !== 'Retired' && st !== 'Not employed' && (
           <div className="field-half">
-            <Field label="Annual income">
+            <Field label="Annual income" required helper="A rough estimate is fine.">
               <MoneyInput amount={w.annualIncome} currency={w.currency}
                 onAmount={(v) => set('annualIncome', v)} onCurrency={(c) => set('currency', c)} />
             </Field>
@@ -297,16 +316,19 @@ const HORIZONS = ['Within 5 years', '5–10 years', '10+ years', 'Not sure yet']
 /* Lifecycle order: the personal big three, then liquidity & family
    events, then legacy — with Other closing the list. */
 const GOAL_PRESETS = [
-  'Retire early', 'Buy a home', "Children's education",
-  'Make a major purchase', 'Sell my business', 'Support my parents',
-  'Leave a legacy', 'Charitable giving',
+  'Retire early', 'Buy a home', 'Children’s education',
+  'Make a major purchase', 'Sell my business', 'Support parents',
+  'Leave a legacy', 'Give to charity',
 ]
 
 /* Goals saved under earlier label wording keep their pill lit. */
 const PRESET_ALIASES = {
-  "Kids' education": "Children's education",
+  "Kids' education": 'Children’s education',
+  "Children's education": 'Children’s education',
   'A big purchase': 'Make a major purchase',
-  'Care for my parents': 'Support my parents',
+  'Care for my parents': 'Support parents',
+  'Support my parents': 'Support parents',
+  'Charitable giving': 'Give to charity',
 }
 
 /* Optional Details placeholder per preset — an example teaches faster than
@@ -314,12 +336,12 @@ const PRESET_ALIASES = {
 const PRESET_DETAIL_EXAMPLES = {
   'Retire early': 'For example: Step back around 55',
   'Buy a home': 'For example: A second home near the coast',
-  "Children's education": 'For example: College for two kids',
+  'Children’s education': 'For example: College for two kids',
   'Make a major purchase': 'For example: A boat, a plane, an art piece',
   'Sell my business': 'For example: Full or partial exit in a few years',
-  'Support my parents': 'For example: Ongoing care and housing costs',
+  'Support parents': 'For example: Ongoing care and housing costs',
   'Leave a legacy': 'For example: Trusts set up for the family',
-  'Charitable giving': 'For example: Annual donations or setting up a foundation',
+  'Give to charity': 'For example: Annual donations or setting up a foundation',
 }
 
 const CheckIcon = () => (
@@ -391,6 +413,7 @@ function GoalRow({ goal, editing, onOpen, onClose, onChange, onRemove }) {
           <div className="goal-set-money">
             <MoneyInput amount={goal.targetAmount} currency={goal.currency}
               onAmount={(v) => set('targetAmount', v)} onCurrency={(c) => set('currency', c)} />
+            <span className="field-helper">A rough estimate is fine.</span>
           </div>
         </div>
         {isPreset && (
@@ -445,9 +468,9 @@ export function Goals({ profile, onChange }) {
     <div className="screen">
       <div className="narrow-col">
       <div className="title-block">
-        <h1 className="page-title">Your goals</h1>
+        <h1 className="page-title">Goals</h1>
         <p className="page-copy">
-          What would you like your wealth to help you achieve? Select all that apply — rough is fine.
+          What would you like to achieve? Select all that apply.
         </p>
       </div>
 
@@ -531,11 +554,15 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
     excludedParts.push(`${summary.assets.excluded} asset${summary.assets.excluded > 1 ? 's' : ''} without ${summary.assets.excluded === 1 ? 'a value' : 'values'}`)
   if (summary.liabs.excluded > 0)
     excludedParts.push(`${summary.liabs.excluded} ${summary.liabs.excluded === 1 ? 'liability' : 'liabilities'} without ${summary.liabs.excluded === 1 ? 'a balance' : 'balances'}`)
-  const excludedSummary = excludedParts.length ? `Estimate excludes ${excludedParts.join(' and ')}.` : null
+  const excludedSummary = excludedParts.length ? `Estimate excludes ${excludedParts.join(' and ')}` : null
   const equation = summary.rows?.length === 2 && summary.rows.every((r) => /^\$/.test(r.value))
 
   /* Only categories that contain saved records appear on the page. */
+  /* The table reads investments-first (per the Figma Full frame); the add
+     panel keeps its own cash-first order. */
+  const TABLE_ORDER = ['investment', 'retirement', 'realestate', 'cash', 'business', 'crypto', 'insurance', 'collectibles', 'other']
   const assetGroups = ASSET_CATEGORIES.filter((c) => assets.some((a) => a.category === c.key))
+    .sort((a, b) => TABLE_ORDER.indexOf(a.key) - TABLE_ORDER.indexOf(b.key))
   const liabGroups = LIABILITY_CATEGORIES.filter((c) => liabilities.some((l) => l.category === c.key))
 
   return (
@@ -614,7 +641,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
               <button className="btn btn-primary" onClick={() => onAddAsset(null)}>Add asset</button>
             )}
             {tab === 'liabilities' && liabilities.length > 0 && (
-              <button className="btn btn-primary" onClick={() => onAddLiability(null)}>Add liabilities</button>
+              <button className="btn btn-primary" onClick={() => onAddLiability(null)}>Add liability</button>
             )}
           </div>
         </div>
@@ -625,8 +652,8 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
             <>
               {assets.length === 0 && (
                 <div className="nw-empty">
-                  <h2 className="nw-empty-title">No assets added yet</h2>
-                  <p className="page-copy">Add accounts, property, investments, or anything else you own.</p>
+                  <h2 className="nw-empty-title">No assets yet</h2>
+                  <p className="page-copy">Start with an account, property, or investment.</p>
                   <button className="btn btn-primary nw-empty-cta" onClick={() => onAddAsset(null)}>Add asset</button>
                 </div>
               )}
@@ -663,11 +690,11 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
             <>
               {liabilities.length === 0 && !none && (
                 <div className={'nw-empty' + (flashLiabs ? ' flash-target' : '')}>
-                  <h2 className="nw-empty-title">No liabilities added yet</h2>
-                  <p className="page-copy">Add mortgages, loans, credit balances, or anything else you owe.</p>
-                  <button className="btn btn-primary nw-empty-cta" onClick={() => onAddLiability(null)}>Add liabilities</button>
+                  <h2 className="nw-empty-title">No liabilities yet</h2>
+                  <p className="page-copy">Include mortgages, loans, credit card balances, or other debt.</p>
+                  <button className="btn btn-primary nw-empty-cta" onClick={() => onAddLiability(null)}>Add liability</button>
                   <button className="link-quiet" onClick={onAnswerNone}>
-                    I don't have any liabilities
+                    I don’t have any liabilities
                   </button>
                 </div>
               )}

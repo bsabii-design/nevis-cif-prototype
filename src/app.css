@@ -117,15 +117,10 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .side-link:hover { color: var(--content-primary); background: var(--bg-ghost-hover); }
 .side-link-active, .side-link-active:hover { background: var(--bg-quiet); color: var(--content-primary); }
-.side-identity { display: flex; align-items: center; gap: var(--space-4); padding-left: 14px; }
-.side-avatar {
-  width: 20px; height: 20px; flex: none;
-  display: flex; align-items: center; justify-content: center;
-  font: var(--text-label-sm); color: var(--content-secondary);
-  background: var(--bg-secondary);
-  border-radius: var(--radius-full);
-}
-.side-name { font: var(--text-label-md); }
+/* Identity block per Figma: two quiet lines, no avatar. */
+.side-identity { display: flex; flex-direction: column; padding-left: 14px; }
+.side-context { font: var(--text-body-md); color: var(--content-secondary); }
+.side-name { font: var(--text-body-md); color: var(--content-primary); }
 
 /* Net worth summary (final, Figma 60-9234): typographic card — label with
    tooltip, 40px serif figure, Assets/Liabilities as two quiet columns.
@@ -864,6 +859,13 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .combo-item:hover, .combo-item-active { background: var(--bg-secondary); }
 
+/* Property picker (mortgage): asset name left, its value right and quiet;
+   "Add a property…" closes the list after a hairline. */
+.combo-item-split { justify-content: space-between; }
+.combo-item-value { font: var(--text-number-secondary); color: var(--content-secondary); }
+.combo-item-add { color: var(--content-secondary); }
+.combo-item-add:not(.combo-item-first) { border-top: var(--border-w) solid var(--border-default); border-radius: 0 0 var(--radius-4) var(--radius-4); margin-top: var(--space-4); padding-top: var(--space-8); }
+
 /* Radio pills (employment status). Parameter chips are Regular — the
    fill carries selection; Medium is reserved for navigation and anchors. */
 .radio-row { display: flex; flex-wrap: wrap; gap: var(--space-8); }
@@ -956,8 +958,13 @@ input, select, textarea { font: inherit; color: inherit; }
 .input-compact { max-width: 200px; }
 
 /* City · State · ZIP: three equal columns (Desktop-33); also sizes lone thirds (DOB). */
+.addr-top { display: grid; grid-template-columns: 1fr 2fr; gap: var(--space-8); }
 .addr-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-8); }
-@media (max-width: 720px) { .addr-row { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .addr-top, .addr-row { grid-template-columns: 1fr; } }
+/* Additional address block: quiet sub-title + Remove on one line */
+.form-subblock { display: flex; flex-direction: column; gap: var(--space-12); margin-top: var(--space-8); }
+.form-subblock-head { display: flex; align-items: center; justify-content: space-between; }
+.form-subblock-title { font: var(--text-body-md); color: var(--content-secondary); }
 
 /* "+ Add another citizenship": the same tertiary text action, just with an
    icon — one button level, 64%, darkens on hover. */
@@ -1044,7 +1051,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .goal-set-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); min-height: 40px; }
 .goal-set-label { font: var(--text-body-md); color: var(--content-secondary); flex: none; }
 .goal-set-row .radio-row { justify-content: flex-end; }
-.goal-set-money { width: 240px; }
+.goal-set-money { width: 240px; display: flex; flex-direction: column; gap: var(--space-4); }
 .goal-set-note { width: 320px; }
 .goal-note { font: var(--text-body-sm); color: var(--content-tertiary); }
 

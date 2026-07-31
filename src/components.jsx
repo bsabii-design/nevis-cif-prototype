@@ -73,7 +73,7 @@ export function Sidebar({ activeKey, onNav, clientName, sections }) {
         ))}
       </div>
       <div className="side-identity">
-        <span className="side-avatar" aria-hidden="true">{clientName[0]}</span>
+        <span className="side-context">Financial profile</span>
         <span className="side-name">{clientName}</span>
       </div>
     </nav>
@@ -158,8 +158,9 @@ export const assetRowText = (a) => {
       ? { primary: name, secondary: [t, a.address].filter(Boolean).join(' · ') || null }
       : { primary: t || catLabel, secondary: a.address || null }
   }
-  // The group band already says "Business interests" — echoing it in the row adds nothing.
-  if (a.category === 'business') return { primary: name || catLabel, secondary: null }
+  // The group band already says "Business interests" — the row carries the
+  // company and the stake ("Meridian Capital | 40% ownership").
+  if (a.category === 'business') return { primary: name || catLabel, secondary: t || null }
   if (a.category === 'insurance') {
     return name
       ? { primary: name, secondaryInst: inst, secondary: t || null }
@@ -219,25 +220,23 @@ export function AssetRow({ asset, onEdit, onRemove, active }) {
   )
 }
 
-/* Liability as the same flat row: "Category · [avatar] Lender", nickname/rate muted, balance right. */
+/* Liability in the same grammar as assets: type · [avatar] lender | name | balance
+   ("Mortgage · J.P. Morgan | Manhattan apartment | $3.6M"). Rate lives in the form. */
 export function LiabilityRow({ liability, onEdit, active }) {
   const cur = liability.currency ?? 'USD'
   const cat = liabilityCategory(liability.category)
-  /* Identity first: the property / purpose / card the debt is about. The
-     category label is a fallback only — the group band already names it. */
-  const identity = liability.name?.trim() || cat?.label || 'Liability'
-  const meta = liability.interestRate != null && liability.interestRate !== ''
-    ? `${liability.interestRate}% interest` : null
+  const type = liability.subtype?.trim() || cat?.label || 'Liability'
+  const name = liability.name?.trim() || null
   return (
     <div className={'arow' + (active ? ' arow-active' : '')} onClick={onEdit} role="button" tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit() }
       }}>
       <div className="arow-primary">
-        <span className={liability.lender ? 'arow-type' : undefined}>{identity}</span>
+        <span className={liability.lender ? 'arow-type' : undefined}>{type}</span>
         {liability.lender && <Inst name={liability.lender} />}
       </div>
-      {meta && <div className="arow-secondary">{meta}</div>}
+      {name && <div className="arow-secondary">{name}</div>}
       <div className="arow-value">
         {liability.outstandingBalance == null ? (
           <span className="value-missing-text" title="Balance not added" aria-label="Balance not added">—</span>

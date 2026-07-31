@@ -105,11 +105,11 @@ export const PROPERTY_TYPES = ['House', 'Apartment or condo', 'Commercial proper
 export const COLLECTIBLE_TYPES = ['Art', 'Watches', 'Jewelry', 'Wine', 'Collectible vehicle']
 
 export const LIABILITY_CATEGORIES = [
-  { key: 'mortgage', label: 'Mortgage', group: 'Mortgage', add: 'mortgage', formTitle: 'Add a mortgage' },
-  { key: 'personal-loan', label: 'Personal loan', group: 'Personal loans', add: 'personal loan', formTitle: 'Add a personal loan' },
-  { key: 'business-loan', label: 'Business loan', group: 'Business loans', add: 'business loan', formTitle: 'Add a business loan' },
-  { key: 'credit-line', label: 'Line of credit', group: 'Lines of credit', add: 'line of credit', formTitle: 'Add a line of credit' },
-  { key: 'credit-card', label: 'Credit card balance', group: 'Credit card balances', add: 'credit card balance', formTitle: 'Add a credit card balance' },
+  { key: 'mortgage', label: 'Mortgage', group: 'Mortgages', add: 'mortgage', formTitle: 'Add mortgage' },
+  { key: 'personal-loan', label: 'Personal loan', group: 'Personal loans', add: 'personal loan', formTitle: 'Add personal loan' },
+  { key: 'business-loan', label: 'Business loan', group: 'Business loans', add: 'business loan', formTitle: 'Add business loan' },
+  { key: 'credit-line', label: 'Line of credit', group: 'Credit lines', add: 'line of credit', formTitle: 'Add line of credit' },
+  { key: 'credit-card', label: 'Credit card balance', group: 'Credit card balances', add: 'credit card balance', formTitle: 'Add credit card balance' },
   { key: 'other', label: 'Other debt', group: 'Other debt', add: 'debt', formTitle: 'Add other debt' },
 ]
 export const liabilityCategory = (key) => LIABILITY_CATEGORIES.find((c) => c.key === key)
@@ -184,6 +184,7 @@ const LOGO_FILES = {
   'prudential': 'prudential', 'pacific life': 'pacificlife', 'nationwide': 'nationwide',
   'guardian life': 'guardian', 'lincoln financial': 'lincoln', 'transamerica': 'transamerica',
   'binance.us': 'binanceus', 'northern trust': 'northerntrust',
+  'citi private bank': 'citi', 'tesla': 'tesla',
 }
 
 /* Every institution gets an avatar, including free-text entries.
@@ -294,9 +295,13 @@ export const missingPersonalFields = (p) => {
     firstName: !p.personal.legalFirstName?.trim(),
     lastName: !p.personal.legalLastName?.trim(),
     email: !isValidEmail(p.personal.email),
+    phone: !p.personal.phone?.trim(),
     dateOfBirth: !isValidDate(p.personal.dateOfBirth),
     country: !r.country?.trim(),
+    street: !r.street?.trim(),
+    city: !r.city?.trim(),
     state: r.country?.trim() === 'United States' && !r.state?.trim(),
+    zip: !r.zip?.trim(),
     citizenship: !p.personal.citizenships.some((c) => c.trim()),
   }
 }
@@ -352,19 +357,40 @@ export const seedProfile = () => ({
     email: 'jonathan.reeves@example.com',
     phone: '(212) 555-0164',
   },
-  work: { employmentStatus: 'Business owner', jobTitle: '', occupation: 'Consulting', employer: '', businessName: 'Reeves Consulting Group', annualIncome: 450000, currency: 'USD' },
+  work: { employmentStatus: 'Employed', jobTitle: 'Chief Financial Officer', occupation: '', employer: 'Tesla', businessName: '', annualIncome: 1200000, currency: 'USD' },
+  /* Mirrors the Figma "Goals / With goals" frame 1:1. */
   goals: [
-    { id: uid(), title: 'Sell my business', targetYear: 2036, targetAmount: null, currency: 'USD' },
-    { id: uid(), title: 'Move closer to the coast', targetYear: 2036, targetAmount: null, currency: 'USD' },
+    { id: uid(), title: 'Retire early', preset: 'Retire early', horizon: '5–10 years', targetAmount: 8000000, currency: 'USD', note: '' },
+    { id: uid(), title: 'Buy a home', preset: 'Buy a home', horizon: 'Within 5 years', targetAmount: 3500000, currency: 'USD', note: 'A second home near the coast' },
+    { id: uid(), title: 'Children’s education', preset: 'Children’s education', horizon: '5–10 years', targetAmount: 2500000, currency: 'USD', note: '' },
   ],
+  /* Demo dataset mirrors the Figma "Net worth / Full" frame 1:1:
+     $156,970,000 = $167,820,000 valued assets − $10,850,000 liabilities,
+     with two records deliberately left unvalued (Growth Portfolio, art). */
   assets: [
-    { id: uid(), category: 'investment', subtype: 'Brokerage account', name: 'Fidelity Brokerage Account', institutionOrProvider: 'Fidelity', address: '', currency: 'USD', value: 1240500 },
-    { id: uid(), category: 'retirement', subtype: 'Traditional IRA', name: 'Traditional IRA', institutionOrProvider: 'Fidelity', address: '', currency: 'USD', value: 480200 },
-    { id: uid(), category: 'realestate', subtype: 'House', name: 'Austin house', institutionOrProvider: '', address: '', currency: 'USD', value: 1000000 },
-    { id: uid(), category: 'collectibles', subtype: 'Art', name: 'Art collection', institutionOrProvider: '', address: '', currency: 'USD', value: null },
+    { id: uid(), category: 'investment', subtype: 'Brokerage account', name: 'Family Portfolio', institutionOrProvider: 'Fidelity', address: '', currency: 'USD', value: 111200000 },
+    { id: uid(), category: 'investment', subtype: 'Managed account', name: 'Growth Portfolio', institutionOrProvider: 'Betterment', address: '', currency: 'USD', value: null },
+    { id: uid(), category: 'investment', subtype: 'Trust account', name: 'Family Trust', institutionOrProvider: 'Northern Trust', address: '', currency: 'USD', value: 1800000 },
+    { id: uid(), category: 'retirement', subtype: '457(b)', name: 'Executive Plan', institutionOrProvider: 'Empower', address: '', currency: 'USD', value: 480000 },
+    { id: uid(), category: 'retirement', subtype: '403(b)', name: 'Employer Plan', institutionOrProvider: 'Charles Schwab', address: '', currency: 'USD', value: 5000000 },
+    { id: uid(), category: 'retirement', subtype: 'Roth IRA', name: 'Roth IRA', institutionOrProvider: 'Fidelity', address: '', currency: 'USD', value: 320000 },
+    { id: uid(), category: 'realestate', subtype: 'House', name: 'Aspen residence', institutionOrProvider: '', address: '', currency: 'USD', value: 12500000 },
+    { id: uid(), category: 'realestate', subtype: 'Apartment', name: 'Manhattan apartment', institutionOrProvider: '', address: '', currency: 'USD', value: 8800000 },
+    { id: uid(), category: 'realestate', subtype: 'Land', name: 'Napa vineyard', institutionOrProvider: '', address: '', currency: 'USD', value: 1500000 },
+    { id: uid(), category: 'cash', subtype: 'Checking', name: 'Personal', institutionOrProvider: 'J.P. Morgan', address: '', currency: 'USD', value: 420000 },
+    { id: uid(), category: 'cash', subtype: 'Savings', name: 'Reserve', institutionOrProvider: 'Bank of America', address: '', currency: 'USD', value: 1800000 },
+    { id: uid(), category: 'cash', subtype: 'Money market', name: 'Cash Management', institutionOrProvider: 'Fidelity', address: '', currency: 'USD', value: 380000 },
+    { id: uid(), category: 'business', subtype: '40% ownership', name: 'Meridian Capital', institutionOrProvider: '', address: '', currency: 'USD', value: 18500000 },
+    { id: uid(), category: 'crypto', subtype: 'Bitcoin', name: '', institutionOrProvider: 'Coinbase', address: '', currency: 'USD', value: 1900000 },
+    { id: uid(), category: 'crypto', subtype: 'Ethereum', name: '', institutionOrProvider: 'Coinbase', address: '', currency: 'USD', value: 520000 },
+    { id: uid(), category: 'collectibles', subtype: 'Art', name: 'Contemporary art collection', institutionOrProvider: '', address: '', currency: 'USD', value: null },
+    { id: uid(), category: 'collectibles', subtype: 'Classic car', name: '1963 Ferrari 250 GT Lusso', institutionOrProvider: '', address: '', currency: 'USD', value: 2700000 },
   ],
   liabilities: [
-    { id: uid(), category: 'mortgage', name: '', lender: 'Chase', currency: 'USD', outstandingBalance: 520000, interestRate: 4.25 },
+    { id: uid(), category: 'mortgage', subtype: '', name: 'Manhattan apartment', lender: 'J.P. Morgan', currency: 'USD', outstandingBalance: 3600000, interestRate: 5.1 },
+    { id: uid(), category: 'mortgage', subtype: '', name: 'Aspen residence', lender: 'Bank of America', currency: 'USD', outstandingBalance: 5200000, interestRate: 4.7 },
+    { id: uid(), category: 'credit-line', subtype: 'Securities-backed line', name: 'Portfolio line', lender: 'Morgan Stanley', currency: 'USD', outstandingBalance: 1400000, interestRate: null },
+    { id: uid(), category: 'credit-line', subtype: 'Private bank credit line', name: 'Family liquidity', lender: 'Citi Private Bank', currency: 'USD', outstandingBalance: 650000, interestRate: null },
   ],
   liabilitiesExplicitlyNone: false,
 })

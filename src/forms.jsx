@@ -5,14 +5,14 @@ import {
   INSURANCE_PROVIDERS, INSURANCE_TYPES, INVESTMENT_FIRMS, INVESTMENT_TYPES, PROPERTY_TYPES,
   RETIREMENT_GROUPS, RETIREMENT_PLANS, RETIREMENT_PROVIDERS, RETIREMENT_TYPES,
   LIABILITY_CATEGORIES, assetCategory, liabilityCategory, uid, CRYPTO_ASSETS, CARD_ISSUERS,
-  fmtMoney, institutionAvatar,
+  fmtCompact, fmtMoney, institutionAvatar,
 } from './model.js'
-import { extractedAccounts, MOCK_STATEMENT_NAME, parseAccountsText } from './parse.js'
+import { extractedAccounts, extractedLiabilities, MOCK_STATEMENT_NAME, parseAccountsText, parseLiabilitiesText } from './parse.js'
 import { Dialog, Field, GroupedSelect, InstitutionCombobox, MoneyInput, Select, TextInput, SearchableSelect } from './ui.jsx'
 
-function MoneyField({ label, amount, currency, onAmount, onCurrency }) {
+function MoneyField({ label, amount, currency, onAmount, onCurrency, required, error }) {
   return (
-    <Field label={label} helper="A rough estimate is fine.">
+    <Field label={label} helper="A rough estimate is fine." required={required} error={error}>
       <MoneyInput
         amount={amount} currency={currency}
         onAmount={onAmount}
@@ -266,14 +266,18 @@ const UploadIcon = () => (
 const CATEGORY_EXAMPLES = {
   cash: 'Checking, savings, CDs',
   investment: 'Brokerage, managed, trust accounts',
-  retirement: '401(k), IRA, pension',
+  retirement: '401(k), IRA, pension accounts',
   realestate: 'Home, rental property, land',
-  business: 'Ownership stakes, partnerships',
+  business: 'Private businesses, LLCs, partnerships',
   insurance: 'Whole life, annuities',
-  crypto: 'Coins, wallets, exchange accounts',
-  collectibles: 'Art, watches, wine, vehicles',
+  crypto: 'Bitcoin, Ethereum, exchange accounts',
+  collectibles: 'Art, watches, wine, classic cars',
   other: 'Anything else of value',
 }
+
+/* The choice panel mirrors the Figma list exactly — insurance stays a
+   supported category for saved data but is not offered as a starting type. */
+const CHOICE_CATEGORIES = ASSET_CATEGORIES.filter((c) => c.key !== 'insurance')
 
 export function AssetPanel({ category: initialCategory, asset, onCommitAsset, onLiveChange, onCommitAccounts, onClose, onRemove, setGuard, onCategoryChange }) {
   const direct = !!(asset || initialCategory)
@@ -439,10 +443,13 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
           {!direct && stage !== 'choice' && (
             stage === 'review'
               ? <button className="panel-back" onClick={() => (editingAccount ? closeEdit(true) : backToChoice())}>← Back</button>
-              : <button className="panel-back" onClick={backToChoice}>Back to Add assets</button>
+              : <button className="panel-back" onClick={backToChoice}>Back</button>
           )}
           <h2 className="panel-title">{title}</h2>
           {stage === 'choice' && <p className="panel-sub">Choose an asset type to add.</p>}
+          {stage === 'form' && !asset && (
+            <p className="panel-sub">Enter the {category === 'cash' ? 'account' : cat.add} details below.</p>
+          )}
           {stage === 'review' && (
             <p className="panel-sub">
               {editingAccount ? 'Review this account before adding it.' : 'Review and edit anything before adding them.'}
@@ -456,7 +463,7 @@ export function AssetPanel({ category: initialCategory, asset, onCommitAsset, on
         {stage === 'choice' && (
           <>
             <div className="panel-choice">
-              {ASSET_CATEGORIES.map((c) => (
+              {CHOICE_CATEGORIES.map((c) => (
                 <button key={c.key} className="panel-choice-row" onClick={() => pickCategory(c.key)}>
                   <span className="panel-choice-main">
                     <span className="panel-choice-name">{c.single}</span>
@@ -654,12 +661,76 @@ const LIABILITY_EXAMPLES = {
    (her review: nobody writes "Mortgage 2" — mortgages relate to property,
    loans to purpose, cards to a nickname). */
 const LIABILITY_FIELDS = {
-  mortgage: { nameLabel: 'Property', namePlaceholder: 'Primary residence, lake house…', lenderLabel: 'Lender', lenderPlaceholder: 'Chase, Wells Fargo…', propertyPicker: true },
+  mortgage: { nameLabel: 'Property', namePlaceholder: 'Select a property', lenderLabel: 'Lender', lenderPlaceholder: 'Chase, Wells Fargo…', propertyPicker: true, requiredAll: true },
   'personal-loan': { nameLabel: 'Loan purpose', namePlaceholder: 'Car loan, student loan, medical…', lenderLabel: 'Lender', lenderPlaceholder: 'Chase, SoFi…' },
   'business-loan': { nameLabel: 'Loan name', namePlaceholder: 'Working capital, equipment loan…', lenderLabel: 'Lender', lenderPlaceholder: 'Chase, Wells Fargo…' },
   'credit-line': { nameLabel: 'Name', namePlaceholder: 'HELOC, credit line…', lenderLabel: 'Lender', lenderPlaceholder: 'Chase, Wells Fargo…' },
   'credit-card': { issuerFirst: true, lenderLabel: 'Card issuer', lenderPlaceholder: 'American Express, Chase…', lenderOptions: CARD_ISSUERS, nameLabel: 'Card nickname', namePlaceholder: 'Amex Platinum, Visa Sapphire…' },
   other: { nameLabel: 'Name', namePlaceholder: 'Describe the debt', lenderLabel: 'Lender', lenderPlaceholder: 'Chase, Wells Fargo…' },
+}
+
+/* Mortgage Property field: a mortgage always relates to something the client
+   owns, so the field offers their real-estate assets — and "Add a property…"
+   creates an unvalued one on the spot. The flow never dead-ends. */
+function PropertySelect({ value, onChange, options, onCreateProperty, placeholder }) {
+  const [open, setOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [draft, setDraft] = useState('')
+  const rootRef = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e) => { if (rootRef.current && !rootRef.current.contains(e.target)) { setOpen(false); setCreating(false) } }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+  const commitDraft = () => {
+    const name = draft.trim()
+    setCreating(false)
+    setDraft('')
+    setOpen(false)
+    if (!name) return
+    onCreateProperty?.(name)
+    onChange(name)
+  }
+  if (creating) {
+    return (
+      <input className="input" autoFocus value={draft} placeholder="Aspen house, lake cottage…"
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); commitDraft() }
+          if (e.key === 'Escape') { setCreating(false); setDraft('') }
+        }}
+        onBlur={commitDraft} />
+    )
+  }
+  return (
+    <div className="combo" ref={rootRef}>
+      <button type="button" className="input gsel-trigger"
+        aria-haspopup="listbox" aria-expanded={open}
+        onClick={() => setOpen(!open)}>
+        {value || <span className="gsel-placeholder">{placeholder}</span>}
+      </button>
+      {open && (
+        <ul className="combo-list" role="listbox">
+          {options.map((p) => (
+            <li key={p.name} role="option" aria-selected={p.name === value}
+              className={'combo-item combo-item-split' + (p.name === value ? ' combo-item-active' : '')}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => { onChange(p.name); setOpen(false) }}>
+              <span>{p.name}</span>
+              {p.value != null && <span className="combo-item-value">{fmtCompact(p.value, p.currency || 'USD')}</span>}
+            </li>
+          ))}
+          <li role="option" aria-selected={false}
+            className={'combo-item combo-item-add' + (options.length ? '' : ' combo-item-first')}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => { setCreating(true); setDraft('') }}>
+            Add a property…
+          </li>
+        </ul>
+      )}
+    </div>
+  )
 }
 
 /* Interest rate with the % living inside the field: shown as "4.25%" at rest,
@@ -686,21 +757,53 @@ const liabilityToForm = (l) => ({
 const liabilityFormEmpty = (f) =>
   !(f.name.trim() || f.lender.trim() || f.outstandingBalance != null || f.interestRate !== '')
 
-export function LiabilityPanel({ category: initialCategory, liability, onCommit, onLiveChange, onClose, onRemove, setGuard, onCategoryChange, propertyOptions = [] }) {
+export function LiabilityPanel({ category: initialCategory, liability, onCommit, onCommitLiabilities, onLiveChange, onClose, onRemove, setGuard, onCategoryChange, propertyOptions = [], onCreateProperty }) {
   const direct = !!(liability || initialCategory)
-  const [stage, setStage] = useState(direct ? 'form' : 'choice') // choice | form
+  const [stage, setStage] = useState(direct ? 'form' : 'choice') // choice | reading | review | form
   const [category, setCategory] = useState(liability?.category || initialCategory || null)
   useEffect(() => { onCategoryChange?.(category) }, [category, onCategoryChange])
   const [form, setForm] = useState(() => liabilityToForm(liability))
   const initialRef = useRef(JSON.stringify(liabilityToForm(liability)))
   const [confirmLeave, setConfirmLeave] = useState(null) // {run}
   const [attempted, setAttempted] = useState(false)
+  const [uploadText, setUploadText] = useState('')
+  const [records, setRecords] = useState([])
+  const [skipped, setSkipped] = useState([])
+  const [readingLabel, setReadingLabel] = useState('')
+  const fileRef = useRef(null)
+  const readTimer = useRef(null)
+  useEffect(() => () => clearTimeout(readTimer.current), [])
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+
+  /* AI path: same interaction as assets — read, then review before adding. */
+  const finishReading = (extracted) => {
+    readTimer.current = setTimeout(() => {
+      setRecords(extracted)
+      setSkipped([])
+      setStage('review')
+    }, 1400)
+  }
+  const startReading = () => {
+    setReadingLabel(`Reading ${MOCK_STATEMENT_NAME}`)
+    setStage('reading')
+    finishReading(extractedLiabilities())
+  }
+  const submitDescription = () => {
+    const t = uploadText.trim()
+    if (!t) return
+    const parsed = parseLiabilitiesText(t)
+    if (!parsed.length) return
+    setReadingLabel('Reading your description')
+    setStage('reading')
+    finishReading(parsed)
+  }
+  const toggleSkip = (id) => setSkipped((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
+  const activeRecords = records.filter((r) => !skipped.includes(r.id))
 
   const formDirty = liability
     ? false
     : !!(form.name || form.lender || form.outstandingBalance != null || form.interestRate !== '')
-  const dirty = stage === 'form' && formDirty
+  const dirty = (stage === 'form' && formDirty) || stage === 'review' || (stage === 'choice' && !!uploadText.trim())
 
   useEffect(() => {
     setGuard(dirty ? { kind: 'liability' } : null)
@@ -732,14 +835,27 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
   const requestClose = () => guarded(onClose)
   const backToChoice = () => guarded(() => {
     setStage('choice'); setCategory(null); setForm(liabilityToForm(null))
+    setRecords([]); setSkipped([])
   })
 
   const pickCategory = (key) => { setCategory(key); setStage('form') }
   const cat = category ? liabilityCategory(category) : null
-  const title = stage === 'choice' ? 'Add liabilities' : liability ? `Edit ${cat.label.toLowerCase()}` : cat.formTitle
+  const title =
+    stage === 'choice' ? 'Add liability' :
+    stage === 'reading' ? 'Add liability' :
+    stage === 'review' ? `We found ${records.length} liabilit${records.length === 1 ? 'y' : 'ies'}` :
+    liability ? `Edit ${cat.label.toLowerCase()}` : cat.formTitle
+
+  const cfgNow = category ? (LIABILITY_FIELDS[category] || LIABILITY_FIELDS.other) : null
+  const reqMissing = cfgNow?.requiredAll ? {
+    name: !form.name.trim(),
+    lender: !form.lender.trim(),
+    balance: form.outstandingBalance == null,
+    rate: form.interestRate === '',
+  } : null
 
   const commit = () => {
-    if (liabilityFormEmpty(form)) { setAttempted(true); return }
+    if (reqMissing ? Object.values(reqMissing).some(Boolean) : liabilityFormEmpty(form)) { setAttempted(true); return }
     onCommit(buildLiability())
   }
 
@@ -747,35 +863,131 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
     <aside className="shell-panel" aria-label={title}>
       <div className="panel-head">
         <div className="panel-head-titles">
-          {!direct && stage === 'form' && (
-            <button className="panel-back" onClick={backToChoice}>Back to Add liabilities</button>
+          {!direct && (stage === 'form' || stage === 'review') && (
+            <button className="panel-back" onClick={backToChoice}>Back</button>
           )}
           <h2 className="panel-title">{title}</h2>
+          {stage === 'choice' && <p className="panel-sub">Choose a liability type to add.</p>}
+          {stage === 'review' && <p className="panel-sub">Review and edit anything before adding them.</p>}
+          {stage === 'form' && !liability && (
+            <p className="panel-sub">Enter the {cat.add} details below.</p>
+          )}
         </div>
         <button className="menu-trigger" aria-label="Close" onClick={requestClose}>✕</button>
       </div>
 
       <div className="panel-body">
         {stage === 'choice' && (
-          <div className="panel-choice">
-            {LIABILITY_CATEGORIES.map((c) => (
-              <button key={c.key} className="panel-choice-row" onClick={() => pickCategory(c.key)}>
-                <span className="panel-choice-main">
-                  <span className="panel-choice-name">{c.label}</span>
-                  <span className="panel-choice-eg">{LIABILITY_EXAMPLES[c.key]}</span>
-                </span>
-                <ChevronRight />
-              </button>
-            ))}
+          <>
+            <div className="panel-choice">
+              {LIABILITY_CATEGORIES.map((c) => (
+                <button key={c.key} className="panel-choice-row" onClick={() => pickCategory(c.key)}>
+                  <span className="panel-choice-main">
+                    <span className="panel-choice-name">{c.label}</span>
+                    <span className="panel-choice-eg">{LIABILITY_EXAMPLES[c.key]}</span>
+                  </span>
+                  <ChevronRight />
+                </button>
+              ))}
+            </div>
+            <div className="ai-wrap">
+              <div className="ai-card"
+                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('is-drag') }}
+                onDragLeave={(e) => e.currentTarget.classList.remove('is-drag')}
+                onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('is-drag'); startReading() }}>
+                <div className="ai-card-head">
+                  <span className="ai-card-title">Use AI instead</span>
+                  <span className="ai-card-copy">
+                    Type what you know or attach one or more statements.
+                    We'll prepare the liabilities for your review.
+                  </span>
+                </div>
+                <div className="ai-composer">
+                  <textarea
+                    className="ai-input"
+                    rows={2}
+                    placeholder="Chase mortgage, around $620K remaining; Amex balance about $18K"
+                    value={uploadText}
+                    onChange={(e) => setUploadText(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitDescription() } }}
+                  />
+                  <div className="ai-composer-row">
+                    <button className="ai-attach" aria-label="Attach statements" onClick={() => fileRef.current?.click()}>
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M14 7.5 8.3 13.2a3.7 3.7 0 0 1-5.2-5.2L8.8 2.3a2.5 2.5 0 0 1 3.5 3.5L6.6 11.5a1.2 1.2 0 0 1-1.8-1.8L10 4.5" />
+                      </svg>
+                    </button>
+                    <button
+                      className={'ai-send' + (uploadText.trim() ? ' ai-send-on' : '')}
+                      aria-label="Create liabilities from your description"
+                      onClick={submitDescription}>
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" hidden onChange={startReading} />
+          </>
+        )}
+
+        {stage === 'reading' && (
+          <div className="reading">
+            <span className="spinner" aria-hidden="true" />
+            <span className="reading-text">{readingLabel || 'Reading'}</span>
+          </div>
+        )}
+
+        {stage === 'review' && (
+          <div className="xcards">
+            {records.map((r) => {
+              const off = skipped.includes(r.id)
+              const av = institutionAvatar(r.lender)
+              return (
+                <div key={r.id} className={'xcard' + (off ? ' xcard-off' : '')}>
+                  <div className="xcard-title">
+                    <span>{r.catLabel}</span>
+                    {r.lender && (
+                      <span className="xcard-inst">
+                        <span className="xcard-dot" aria-hidden="true">·</span>
+                        {av && (av.logo
+                          ? <img className="avatar avatar-sm avatar-logo" src={av.logo} alt="" aria-hidden="true" />
+                          : <span className="avatar avatar-sm" style={{ background: av.color }} aria-hidden="true">{av.letter}</span>)}
+                        {r.lender}
+                      </span>
+                    )}
+                  </div>
+                  {r.source && (
+                    <div className="xcard-src">
+                      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M8 1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4z" /><path d="M8 1v3h3" />
+                      </svg>
+                      <span className="xcard-src-name">{r.source}</span>
+                    </div>
+                  )}
+                  <div className="xcard-row">
+                    <span className="xcard-amount">{r.outstandingBalance == null ? '—' : fmtMoney(r.outstandingBalance, r.currency)}</span>
+                    <button className="xcard-skip" onClick={(e) => { e.stopPropagation(); toggleSkip(r.id) }}>
+                      {off ? 'Undo' : 'Skip'}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
 
         {stage === 'form' && (() => {
-          const cfg = LIABILITY_FIELDS[category] || LIABILITY_FIELDS.other
+          const cfg = cfgNow
+          const req = !!cfg.requiredAll
+          const err = (k) => (req && attempted && reqMissing[k]) || undefined
           const nameField = cfg.propertyPicker ? (
-            <Field label={cfg.nameLabel} key="name">
-              <SearchableSelect value={form.name} options={propertyOptions}
+            <Field label={cfg.nameLabel} key="name" required={req} error={err('name')}>
+              <PropertySelect value={form.name} options={propertyOptions}
                 placeholder={cfg.namePlaceholder}
+                onCreateProperty={onCreateProperty}
                 onChange={(v) => set('name', v)} />
             </Field>
           ) : (
@@ -784,7 +996,7 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
             </Field>
           )
           const lenderField = (
-            <Field label={cfg.lenderLabel} key="lender">
+            <Field label={cfg.lenderLabel} key="lender" required={req} error={err('lender')}>
               <InstitutionCombobox value={form.lender} onChange={(v) => set('lender', v)}
                 placeholder={cfg.lenderPlaceholder} options={cfg.lenderOptions} />
             </Field>
@@ -792,9 +1004,10 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
           return (
             <div className="focus-form">
               {cfg.issuerFirst ? [lenderField, nameField] : [nameField, lenderField]}
-              <MoneyField label="Outstanding balance" amount={form.outstandingBalance} currency={form.currency}
+              <MoneyField label="Outstanding balance" required={req} error={err('balance')}
+                amount={form.outstandingBalance} currency={form.currency}
                 onAmount={(v) => set('outstandingBalance', v)} onCurrency={(c) => set('currency', c)} />
-              <Field label="Interest rate">
+              <Field label="Interest rate" required={req} error={err('rate')}>
                 <RateInput value={form.interestRate} onChange={(v) => set('interestRate', v)} />
               </Field>
             </div>
@@ -802,20 +1015,28 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
         })()}
       </div>
 
-      {stage === 'form' && (
+      {(stage === 'form' || (stage === 'review' && records.length > 0)) && (
         <div className="panel-foot">
-          {!liability && attempted && liabilityFormEmpty(form) && (
+          {stage === 'form' && !liability && attempted && !reqMissing && liabilityFormEmpty(form) && (
             <span className="panel-foot-hint">Add at least one detail to create this liability.</span>
           )}
-          {liability && onRemove && (
+          {stage === 'form' && liability && onRemove && (
             <button className="btn btn-tertiary" onClick={onRemove}>Remove</button>
           )}
-          {liability ? (
+          {stage === 'form' && liability ? (
             <button className="btn btn-secondary" onClick={onClose}>Done</button>
+          ) : stage === 'review' ? (
+            <>
+              <button className="btn btn-tertiary" onClick={backToChoice}>Cancel</button>
+              <button className="btn btn-primary" disabled={activeRecords.length === 0}
+                onClick={() => activeRecords.length && onCommitLiabilities(activeRecords)}>
+                Add {activeRecords.length} liabilit{activeRecords.length === 1 ? 'y' : 'ies'}
+              </button>
+            </>
           ) : (
             <>
               <button className="btn btn-tertiary" onClick={direct ? requestClose : backToChoice}>Cancel</button>
-              <button className="btn btn-primary" onClick={commit}>Add liability</button>
+              <button className="btn btn-primary" onClick={commit}>{cat.formTitle}</button>
             </>
           )}
         </div>
@@ -823,9 +1044,9 @@ export function LiabilityPanel({ category: initialCategory, liability, onCommit,
 
       {confirmLeave && (
         <Dialog
-          title={liability ? 'Leave without saving your changes?' : 'Leave without adding this liability?'}
-          body={liability ? 'Your changes will be lost.' : 'Your entries will be lost.'}
-          cancelLabel="Keep editing"
+          title={stage === 'review' ? 'Leave without adding these liabilities?' : liability ? 'Leave without saving your changes?' : 'Leave without adding this liability?'}
+          body={stage === 'review' ? 'Your changes will be lost.' : liability ? 'Your changes will be lost.' : 'Your entries will be lost.'}
+          cancelLabel={stage === 'review' ? 'Keep reviewing' : 'Keep editing'}
           confirmLabel="Leave"
           danger
           onCancel={() => setConfirmLeave(null)}

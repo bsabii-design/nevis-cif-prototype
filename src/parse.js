@@ -81,8 +81,8 @@ export const parseGoals = (text) => {
 export const MOCK_STATEMENT_NAME = 'Fidelity_statement.pdf'
 
 export const extractedAccounts = () => [
-  { id: uid(), title: 'Fidelity Brokerage', institution: 'Fidelity', accountType: 'Brokerage account', category: 'investment', value: 1240500, currency: 'USD', source: 'Fidelity_Brokerage_Statement_May_2026.pdf' },
-  { id: uid(), title: 'Vanguard Traditional IRA', institution: 'Vanguard', accountType: 'Traditional IRA', category: 'retirement', value: 480200, currency: 'USD', source: 'Vanguard_Traditional_IRA_Q1_2026.pdf' },
+  { id: uid(), title: 'Fidelity Brokerage', institution: 'Fidelity', accountType: 'Brokerage account', category: 'investment', value: 1240500, currency: 'USD', source: 'Fidelity_Brokerage_Statement_March_2026' },
+  { id: uid(), title: 'Vanguard Traditional IRA', institution: 'Vanguard', accountType: 'Traditional IRA', category: 'retirement', value: 480200, currency: 'USD', source: 'Vanguard_Traditional_IRA_Q1_2026' },
 ]
 
 /* ---------------- Describe-your-accounts parsing (mock) ----------------
@@ -118,6 +118,56 @@ const extractAccountAmount = (clause) => {
   if (suf.startsWith('m')) n *= 1e6
   else if (suf) n *= 1e3
   return Math.round(n)
+}
+
+/* ---------------- Describe-your-debts parsing (mock) ----------------
+   Liabilities reuse the same interaction (spec: assets and liabilities share
+   the same model). "Chase mortgage, around $620K remaining; Amex balance
+   about $18K" -> extracted liabilities for the same review stage. */
+
+const LIABILITY_TYPE_PATTERNS = [
+  [/mortgage/i, 'mortgage', 'Mortgage'],
+  [/heloc|line of credit|credit line|securities[- ]backed/i, 'credit-line', 'Line of credit'],
+  [/student|car loan|auto loan|personal loan|medical/i, 'personal-loan', 'Personal loan'],
+  [/business loan|working capital/i, 'business-loan', 'Business loan'],
+  [/credit card|card balance|\bcard\b|\bbalance\b/i, 'credit-card', 'Credit card balance'],
+]
+
+const extractRate = (clause) => {
+  const m = clause.match(/(\d+(?:\.\d+)?)\s*%/)
+  return m ? parseFloat(m[1]) : null
+}
+
+export const extractedLiabilities = () => [
+  { id: uid(), category: 'mortgage', catLabel: 'Mortgage', lender: 'Chase', outstandingBalance: 620000, interestRate: null, currency: 'USD', source: 'Chase_Mortgage_Statement_June_2026' },
+  { id: uid(), category: 'credit-card', catLabel: 'Credit card balance', lender: 'American Express', outstandingBalance: 18000, interestRate: null, currency: 'USD', source: 'Amex_Statement_June_2026' },
+]
+
+export const parseLiabilitiesText = (text) => {
+  /* Records separate on ";", ". ", "and", or a comma followed by a capital —
+     "Chase mortgage, around $620K remaining" stays one record. */
+  const clauses = text.split(/;\s*|\.\s+|\s+and\s+|,\s*(?=[A-Z$])/).map((c) => c.trim()).filter(Boolean)
+  const records = []
+  for (const clause of clauses) {
+    const lower = clause.toLowerCase()
+    const lender = ALL_INSTITUTIONS.find((n) => lower.includes(n.toLowerCase()))
+      || INSTITUTION_ALIASES[Object.keys(INSTITUTION_ALIASES).find((a) => lower.includes(a))]
+      || ''
+    const hit = LIABILITY_TYPE_PATTERNS.find(([re]) => re.test(clause))
+    const balance = extractAccountAmount(clause.replace(/(\d+(?:\.\d+)?)\s*%/g, ' '))
+    if (!lender && !hit && balance == null) continue
+    records.push({
+      id: uid(),
+      category: hit ? hit[1] : 'other',
+      catLabel: hit ? hit[2] : 'Other debt',
+      lender,
+      outstandingBalance: balance,
+      interestRate: extractRate(clause),
+      currency: 'USD',
+      source: 'From your description',
+    })
+  }
+  return records
 }
 
 export const parseAccountsText = (text) => {

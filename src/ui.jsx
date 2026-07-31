@@ -315,7 +315,7 @@ export function DateInput({ value, onChange, className = '', onBlur }) {
 }
 
 /* US phone input with light (XXX) XXX-XXXX masking. */
-export function PhoneInput({ value, onChange }) {
+export function PhoneInput({ value, onChange, onBlur }) {
   const format = (raw) => {
     const d = raw.replace(/\D/g, '').slice(0, 10)
     if (d.length === 0) return ''
@@ -325,6 +325,7 @@ export function PhoneInput({ value, onChange }) {
   }
   return (
     <input className="input" value={value || ''} placeholder="(415) 555-0172" inputMode="tel"
+      onBlur={onBlur}
       onChange={(e) => onChange(format(e.target.value))} />
   )
 }

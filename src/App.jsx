@@ -26,10 +26,10 @@ function ShareDialog({ profile, onCancel, onConfirm }) {
   const assets = profile.assets.length
   const liabs = profile.liabilities.length
   const rows = [
-    { label: 'Personal', state: 'Complete' },
+    { label: 'Personal', state: 'Details added' },
     {
       label: 'Work & income',
-      state: sectionState(profile).work ? 'Added' : 'Not filled in yet',
+      state: sectionState(profile).work ? 'Details added' : 'Not filled in yet',
       muted: !sectionState(profile).work,
     },
     {
@@ -51,7 +51,7 @@ function ShareDialog({ profile, onCancel, onConfirm }) {
       <div className="dialog share-dialog" role="alertdialog" aria-modal="true" aria-label="Share with Sarah">
         <h3 className="dialog-title">Share with Sarah</h3>
         <p className="dialog-body">
-          Sarah will see your profile as it is now — and any updates you make later.
+          She will see your profile as it is now — and any updates you make later.
         </p>
         <div className="share-checklist">
           {rows.map((r) => (
@@ -62,7 +62,7 @@ function ShareDialog({ profile, onCancel, onConfirm }) {
           ))}
         </div>
         <div className="dialog-actions">
-          <button className="btn btn-secondary" onClick={onCancel}>Keep filling in</button>
+          <button className="btn btn-secondary" onClick={onCancel}>Continue editing</button>
           <button className="btn btn-primary" onClick={onConfirm}>Share</button>
         </div>
       </div>
@@ -364,11 +364,32 @@ export default function App() {
               category={assetPanel.category}
               propertyOptions={profile.assets
                 .filter((a) => a.category === 'realestate')
-                .map((a) => a.name || a.subtype)
-                .filter(Boolean)}
+                .map((a) => ({ name: a.name || a.subtype, value: a.value, currency: a.currency }))
+                .filter((p) => p.name)}
+              onCreateProperty={(name) => {
+                setProfile((p) => ({
+                  ...p,
+                  assets: [...p.assets, { id: uid(), category: 'realestate', subtype: '', name, institutionOrProvider: '', address: '', currency: 'USD', value: null }],
+                }))
+                touch()
+              }}
               onCategoryChange={setPanelCat}
               liability={assetPanel.id ? profile.liabilities.find((l) => l.id === assetPanel.id) : null}
               onCommit={commitLiability}
+              onCommitLiabilities={(records) => {
+                setProfile((p) => ({
+                  ...p,
+                  liabilitiesExplicitlyNone: false,
+                  liabilities: [...p.liabilities, ...records.map((r) => ({
+                    id: r.id, category: r.category, name: '', lender: r.lender,
+                    currency: r.currency, outstandingBalance: r.outstandingBalance ?? null,
+                    interestRate: r.interestRate ?? null,
+                  }))],
+                }))
+                touch()
+                guardRef.current = null
+                setAssetPanel(null)
+              }}
               onLiveChange={liveUpdateLiability}
               onRemove={assetPanel.id ? () => {
                 const item = profile.liabilities.find((l) => l.id === assetPanel.id)
