@@ -519,7 +519,7 @@ input, select, textarea { font: inherit; color: inherit; }
   padding: 0 var(--space-12);
   display: inline-flex; align-items: center;
   font: var(--text-label-md); color: var(--content-secondary);
-  background: var(--bg-quiet);
+  background: var(--bg-tint); /* Figma Tab rest = bg/tint 2%; hover steps to 4% */
   border-radius: var(--radius-full);
   transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
@@ -666,7 +666,7 @@ input, select, textarea { font: inherit; color: inherit; }
   transition: background-color var(--duration-fast) var(--ease);
 }
 .panel-choice-row + .panel-choice-row { border-top: var(--border-w) solid var(--border-subtle); }
-.panel-choice-row:hover { background: var(--bg-tint); }
+.panel-choice-row:hover { background: var(--bg-ghost-hover); }
 .panel-choice-row:hover .panel-choice-chevron { color: var(--content-primary); }
 .panel-choice-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .panel-choice-name { font: var(--text-label-md); }

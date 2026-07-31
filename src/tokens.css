@@ -20,6 +20,7 @@
   --color-beige-0: rgba(247, 246, 240, 0);
 
   --color-black-a2:  rgba(20, 20, 19, 0.02);
+  --color-black-a4:  rgba(20, 20, 19, 0.04);
   --color-black-a6:  rgba(20, 20, 19, 0.06);
   /* Fills darker than 2% are OPAQUE stone swatches, not ink alpha:
      alpha over the beige page compounds its warm cast into muddy brown.
@@ -53,11 +54,12 @@
   --bg-primary-disabled:var(--color-black-a48);
   --bg-secondary:       var(--color-stone-4);
   --bg-secondary-hover: var(--color-black-a6);
-  --bg-ghost-hover:     var(--color-black-a2); /* hover = the same quiet 2% as resting tints */
-  --bg-selected:        var(--color-black-a2); /* same quiet step as hover — selection reads by persistence, not weight */
+  --bg-ghost-hover:     var(--color-black-a4); /* Figma bg/tertiary-hovered: one step above the 2% resting tints */
+  --bg-selected:        var(--color-black-a4); /* Figma table-row selected = same 4% step as hover */
   /* Resting fill for standalone controls that must read as shapes on
-     the page: sidebar active item, secondary CTA, tab chips at rest. */
-  --bg-quiet:           var(--color-stone-3);
+     the page: sidebar active item, secondary CTA. Stone-4 = the 4%
+     bg/secondary step, neutralized so it stays clean on beige. */
+  --bg-quiet:           var(--color-stone-4);
   --bg-tint:            var(--color-black-a2);
   --bg-faint:           var(--color-black-a2);
   --bg-overlay:         var(--color-beige-80);
