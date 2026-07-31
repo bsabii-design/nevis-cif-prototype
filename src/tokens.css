@@ -10,9 +10,9 @@
      The whole product is FOUR colors: beige, white, ink, red.
      Everything else is ink at a fixed opacity step, one job per step:
        3%  calm default (chips, tabs, bands)      48% tertiary text · disabled · quiet controls
-       4%  emphasis (hover/selected + CTA rest)   64% secondary text
-       6%  stroke + pressed (sec. hover)          80% primary-button hover state
-                                          100% primary text · focus · primary button */
+       4%  hover everywhere + CTA rest            64% secondary text
+       5%  selected row/record                    80% primary-button hover state
+       6%  stroke + pressed (sec. hover)         100% primary text · focus · primary button */
   --color-black: #141413;
   --color-white: #ffffff;
   --color-beige: #f7f6f0;
@@ -22,6 +22,7 @@
   --color-black-a2:  rgba(20, 20, 19, 0.02);
   --color-black-a3:  rgba(20, 20, 19, 0.03);
   --color-black-a4:  rgba(20, 20, 19, 0.04);
+  --color-black-a5:  rgba(20, 20, 19, 0.05);
   --color-black-a6:  rgba(20, 20, 19, 0.06);
   /* Fills darker than 2% are OPAQUE stone swatches, not ink alpha:
      alpha over the beige page compounds its warm cast into muddy brown.
@@ -55,8 +56,8 @@
   --bg-primary-disabled:var(--color-black-a48);
   --bg-secondary:       var(--color-stone-4);
   --bg-secondary-hover: var(--color-black-a6);
-  --bg-ghost-hover:     var(--color-black-a4); /* Figma bg/tertiary-hovered: one step above the 2% resting tints */
-  --bg-selected:        var(--color-black-a4); /* Figma table-row selected = same 4% step as hover */
+  --bg-ghost-hover:     var(--color-black-a4); /* Figma bg/hovered: hover everywhere */
+  --bg-selected:        var(--color-black-a5); /* Figma bg/selected: the chosen row — one step above hover */
   /* Resting fill for standalone controls that must read as shapes on
      the page: sidebar active item, secondary CTA. Stone-4 = the 4%
      bg/secondary step, neutralized so it stays clean on beige. */
