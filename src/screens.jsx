@@ -524,8 +524,14 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
     setFlashLiabs(true)
     setTimeout(() => setFlashLiabs(false), 1500)
   }
-  const excludesTip = (n, noun, unit) =>
-    `Excludes ${n} ${n === 1 ? noun[0] : noun[1]} without ${n === 1 ? 'a ' + unit : unit + 's'}`
+  /* Excluded records collapse into one corner indicator + hover tooltip,
+     so the card never grows a line and stays a fixed height. */
+  const excludedParts = []
+  if (summary.assets.excluded > 0)
+    excludedParts.push(`${summary.assets.excluded} asset${summary.assets.excluded > 1 ? 's' : ''} without ${summary.assets.excluded === 1 ? 'a value' : 'values'}`)
+  if (summary.liabs.excluded > 0)
+    excludedParts.push(`${summary.liabs.excluded} ${summary.liabs.excluded === 1 ? 'liability' : 'liabilities'} without ${summary.liabs.excluded === 1 ? 'a balance' : 'balances'}`)
+  const excludedSummary = excludedParts.length ? `Estimate excludes ${excludedParts.join(' and ')}.` : null
   const equation = summary.rows?.length === 2 && summary.rows.every((r) => /^\$/.test(r.value))
 
   /* Only categories that contain saved records appear on the page. */
@@ -547,25 +553,24 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
           profile (no assets, no liabilities) has nothing to summarize. */}
       {(assets.length > 0 || liabilities.length > 0) && (
         <div className="nw-summary">
-          <span className="nw-sum-label nw-label-term">
-            Estimated net worth
-            <span className="nw-tip" role="tooltip">
-              Based on the values you've entered. A rough picture is enough for your first conversation.
-            </span>
-          </span>
+          {excludedSummary && (
+            <div className="nw-indicator" tabIndex={0} role="img" aria-label={excludedSummary}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle className="nw-neq-bg" cx="8" cy="8" r="8" />
+                <line x1="4.6" y1="6.9" x2="11.4" y2="6.9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                <line x1="4.6" y1="9.5" x2="11.4" y2="9.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                <line x1="10.2" y1="4.4" x2="5.8" y2="12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+              <span className="nw-indicator-tip" role="tooltip">{excludedSummary}</span>
+            </div>
+          )}
+          <span className="nw-sum-label">Estimated net worth</span>
           <span className={'nw-sum-fig' + (summary.nw == null ? ' nw-sum-fig-empty' : '')}>
             {summary.nw == null ? '—' : fmtUSD(shownNW)}
           </span>
           <div className="nw-sum-stats">
             <div className="nw-stat">
-              <span className={'nw-stat-label' + (summary.assets.excluded > 0 ? ' nw-label-term' : '')}>
-                Assets
-                {summary.assets.excluded > 0 && (
-                  <span className="nw-tip" role="tooltip">
-                    {excludesTip(summary.assets.excluded, ['asset', 'assets'], 'value')}
-                  </span>
-                )}
-              </span>
+              <span className="nw-stat-label">Assets</span>
               {summary.assets.count === 0 ? (
                 <span className="nw-stat-hint">Add at least one asset</span>
               ) : summary.assets.known === 0 ? (
@@ -575,14 +580,7 @@ export function NetWorth({ profile, tab, onTab, selectedCats, onToggleCat,
               )}
             </div>
             <div className="nw-stat">
-              <span className={'nw-stat-label' + (summary.liabs.excluded > 0 ? ' nw-label-term' : '')}>
-                Liabilities
-                {summary.liabs.excluded > 0 && (
-                  <span className="nw-tip" role="tooltip">
-                    {excludesTip(summary.liabs.excluded, ['liability', 'liabilities'], 'balance')}
-                  </span>
-                )}
-              </span>
+              <span className="nw-stat-label">Liabilities</span>
               {!summary.liabs.answered ? (
                 <button className="nw-slot-link" onClick={goLiabilities}>Add liabilities or confirm none.</button>
               ) : summary.liabs.count > 0 && summary.liabs.known === 0 ? (

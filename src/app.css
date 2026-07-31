@@ -133,17 +133,42 @@ input, select, textarea { font: inherit; color: inherit; }
    an unanswered side carries a quiet link to where the answer lives. */
 .nw-copy { font: 400 13px/18.5px var(--font-sans); color: var(--content-secondary); max-width: 400px; }
 .nw-summary {
+  position: relative;
   display: flex; flex-direction: column; align-items: flex-start;
-  padding: var(--space-24);
+  padding: var(--space-20);
   background: var(--bg-surface);
   border-radius: var(--radius-12);
 }
-.nw-sum-label { font: var(--text-body-sm); color: var(--content-tertiary); }
+/* Excluded-records indicator: one quiet info mark, top-right. It never
+   grows the card; the detail lives in a hover tooltip. Info, not a
+   warning — a gap is not an error. */
+.nw-indicator {
+  position: absolute; top: var(--space-20); right: var(--space-20);
+  display: flex; color: var(--content-primary);
+  cursor: default;
+}
+.nw-indicator:focus-visible { outline: none; }
+.nw-neq-bg { fill: var(--bg-secondary); }
+.nw-indicator-tip {
+  position: absolute; right: calc(100% + var(--space-8)); top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  padding: var(--space-8) var(--space-12);
+  font: var(--text-body-sm); color: var(--content-primary);
+  background: var(--bg-secondary); border-radius: var(--radius-8);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease);
+}
+.nw-indicator:hover .nw-indicator-tip,
+.nw-indicator:focus-visible .nw-indicator-tip { opacity: 1; }
+.nw-sum-label { font: var(--text-body-md); color: var(--content-tertiary); }
 .nw-sum-fig { margin-top: var(--space-2); font: 500 40px/44px var(--font-serif); font-variant-numeric: tabular-nums; }
 .nw-sum-fig-empty { color: var(--content-secondary); }
-.nw-sum-stats { display: flex; gap: var(--space-32); margin-top: var(--space-8); }
+/* Assets / Liabilities as two equal columns — Liabilities sits at the
+   card's mid-point rather than hugging Assets. */
+.nw-sum-stats { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); margin-top: var(--space-20); }
 .nw-stat { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
-.nw-stat-label { font: var(--text-body-sm); color: var(--content-tertiary); }
+.nw-stat-label { font: var(--text-body-md); color: var(--content-tertiary); }
 .nw-stat-val { font: var(--text-number-secondary); font-variant-numeric: tabular-nums; }
 .nw-stat-val-empty { color: var(--content-secondary); }
 .nw-stat-hint { font: 400 13px/16px var(--font-sans); color: var(--content-secondary); }
