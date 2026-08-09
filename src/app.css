@@ -797,6 +797,10 @@ input, select, textarea { font: inherit; color: inherit; }
 .money { display: grid; grid-template-columns: 76px 1fr; gap: var(--space-8); }
 .money-cur { padding-right: var(--space-24); }
 
+/* Phone: dial-code select + number, mirrors the money field's grammar. */
+.phone { display: grid; grid-template-columns: 96px 1fr; gap: var(--space-8); }
+.phone-code { padding-right: var(--space-24); }
+
 /* ---------------- Input lab (exploration branch) ---------------- */
 
 .lab { max-width: 720px; gap: var(--space-48); }

@@ -1,6 +1,6 @@
 /* Shared UI primitives. */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { CURRENCIES, INSTITUTIONS, countryFlag, institutionAvatar, parseAmount } from './model.js'
+import { CURRENCIES, INSTITUTIONS, PHONE_CODES, countryFlag, institutionAvatar, parseAmount } from './model.js'
 
 export function Field({ label, helper, required, error, children }) {
   return (
@@ -315,17 +315,36 @@ export function DateInput({ value, onChange, className = '', onBlur }) {
 }
 
 /* US phone input with light (XXX) XXX-XXXX masking. */
-export function PhoneInput({ value, onChange, onBlur }) {
-  const format = (raw) => {
-    const d = raw.replace(/\D/g, '').slice(0, 10)
+/* Dial code + number, same grammar as MoneyInput's currency segment.
+   NANP countries keep the (415) 555-0172 mask; elsewhere digits group in
+   threes — enough structure without pretending to know every format. */
+export function PhoneInput({ value, onChange, onBlur, country = 'United States', onCountry }) {
+  const isNanp = (c) => (PHONE_CODES.find((x) => x.country === c) || PHONE_CODES[0]).code === '1'
+  const nanp = isNanp(country)
+  const format = (raw, mask = nanp) => {
+    const d = raw.replace(/\D/g, '').slice(0, mask ? 10 : 15)
+    if (!mask) return d.replace(/(\d{3})(?=\d)/g, '$1 ').trim()
     if (d.length === 0) return ''
     if (d.length <= 3) return `(${d}`
     if (d.length <= 6) return `(${d.slice(0, 3)}) ${d.slice(3)}`
     return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`
   }
   return (
-    <input className="input" value={value || ''} placeholder="(415) 555-0172" inputMode="tel"
-      onBlur={onBlur}
-      onChange={(e) => onChange(format(e.target.value))} />
+    <div className="phone">
+      <select className="input select phone-code" value={country} aria-label="Country code"
+        onChange={(e) => {
+          const next = e.target.value
+          // one callback, one state write: country + the typed digits
+          // re-dressed for the new mask (two writes would race each other)
+          onCountry?.(next, value ? format(value, isNanp(next)) : value)
+        }}>
+        {PHONE_CODES.map((c) => (
+          <option key={c.country} value={c.country}>{countryFlag(c.country)} +{c.code}</option>
+        ))}
+      </select>
+      <input className="input" value={value || ''} placeholder={nanp ? '(415) 555-0172' : 'Phone number'} inputMode="tel"
+        onBlur={onBlur}
+        onChange={(e) => onChange(format(e.target.value))} />
+    </div>
   )
 }

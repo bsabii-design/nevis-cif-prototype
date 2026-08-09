@@ -147,6 +147,20 @@ export const countryFlag = (name) => {
   return String.fromCodePoint(...[...hit[1]].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65))
 }
 
+/* Dial codes for the phone field: US first (the audience), then the
+   countries an HNW client plausibly calls home. Value = country name so
+   +1 stays unambiguous between the US and Canada. */
+export const PHONE_CODES = [
+  ['United States', '1'], ['Canada', '1'], ['United Kingdom', '44'], ['Germany', '49'],
+  ['France', '33'], ['Spain', '34'], ['Italy', '39'], ['Netherlands', '31'],
+  ['Switzerland', '41'], ['Austria', '43'], ['Belgium', '32'], ['Ireland', '353'],
+  ['Sweden', '46'], ['Norway', '47'], ['Denmark', '45'], ['Portugal', '351'],
+  ['Poland', '48'], ['Greece', '30'], ['Israel', '972'], ['United Arab Emirates', '971'],
+  ['Singapore', '65'], ['Hong Kong', '852'], ['Japan', '81'], ['South Korea', '82'],
+  ['China', '86'], ['India', '91'], ['Australia', '61'], ['New Zealand', '64'],
+  ['Mexico', '52'], ['Brazil', '55'], ['South Africa', '27'], ['Turkey', '90'],
+].map(([country, code]) => ({ country, code }))
+
 export const US_STATES = [
   'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut',
   'Delaware', 'District of Columbia', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois',
@@ -356,6 +370,7 @@ export const blankProfile = () => ({
     citizenships: [''],
     email: 'jonathan.reeves@example.com',
     phone: '',
+    phoneCountry: 'United States',
   },
   work: { employmentStatus: '', jobTitle: '', occupation: '', employer: '', businessName: '', annualIncome: null, currency: 'USD' },
   goals: [],
@@ -376,6 +391,7 @@ export const seedProfile = () => ({
     citizenships: ['United States'],
     email: 'jonathan.reeves@example.com',
     phone: '(212) 555-0164',
+    phoneCountry: 'United States',
   },
   work: { employmentStatus: 'Employed', jobTitle: 'Chief Financial Officer', occupation: '', employer: 'Tesla', businessName: '', annualIncome: 1200000, currency: 'USD' },
   /* Mirrors the Figma "Goals / With goals" frame 1:1. */

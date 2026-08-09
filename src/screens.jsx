@@ -178,7 +178,9 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
               <TextInput value={p.email} type="email" onChange={(v) => set('email', v)} onBlur={() => markTouched('email')} />
             </Field>
             <Field label="Phone" required error={err('phone')}>
-              <PhoneInput value={p.phone} onChange={(v) => set('phone', v)} onBlur={() => markTouched('phone')} />
+              <PhoneInput value={p.phone} onChange={(v) => set('phone', v)} onBlur={() => markTouched('phone')}
+                country={p.phoneCountry || 'United States'}
+                onCountry={(c, v) => onChange({ ...profile, personal: { ...p, phoneCountry: c, phone: v ?? p.phone } })} />
             </Field>
           </div>
         </div>
