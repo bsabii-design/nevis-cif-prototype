@@ -117,6 +117,9 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .side-link:hover { color: var(--content-primary); background: var(--bg-ghost-hover); }
 .side-link-active, .side-link-active:hover { background: var(--bg-quiet); color: var(--content-primary); }
+/* Post-attempt marker: quiet ink, no red at rest; clears itself when the
+   section's required details are complete. */
+.side-attn { width: 5px; height: 5px; flex: none; border-radius: var(--radius-full); background: var(--content-primary); }
 /* Identity block per Figma: two quiet lines, no avatar. */
 .side-identity { display: flex; flex-direction: column; padding-left: 14px; }
 .side-context { font: var(--text-body-md); color: var(--content-secondary); }
@@ -292,6 +295,14 @@ input, select, textarea { font: inherit; color: inherit; }
 .share-check-label { font: var(--text-label-md); flex: none; }
 .share-check-state { font: var(--text-body-sm); color: var(--content-secondary); text-align: right; }
 .share-check-muted { color: var(--content-tertiary); }
+/* A gap in the mirror is a door, not a verdict: quiet dotted link straight
+   to the section that needs attention. */
+.share-check-link {
+  font: var(--text-body-sm); color: var(--content-secondary); text-align: right;
+  text-decoration: underline dotted; text-underline-offset: 3px; text-decoration-thickness: 1px;
+  transition: color var(--duration-fast) var(--ease);
+}
+.share-check-link:hover { color: var(--content-primary); }
 .link-danger { font: var(--text-body-sm); color: var(--content-secondary); }
 .link-danger:hover { color: var(--color-red-bright); }
 

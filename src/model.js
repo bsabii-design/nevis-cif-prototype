@@ -306,10 +306,30 @@ export const missingPersonalFields = (p) => {
   }
 }
 
+/* Work joins the gate: a star means exactly one thing — "needed before
+   Share". Required follows the chosen status; financial detail beyond
+   that never blocks. */
+export const missingWorkFields = (p) => {
+  const w = p.work
+  const st = w.employmentStatus
+  const self = st === 'Self-employed' || st === 'Business owner'
+  const working = st === 'Employed' || self
+  return {
+    employmentStatus: !st,
+    jobTitle: st === 'Employed' && !w.jobTitle?.trim(),
+    employer: st === 'Employed' && !w.employer?.trim(),
+    occupation: self && !w.occupation?.trim(),
+    businessName: self && !w.businessName?.trim(),
+    annualIncome: working && w.annualIncome == null,
+  }
+}
+
+export const missingCount = (fields) => Object.values(fields).filter(Boolean).length
+
 /* What each section "answers" — content or an explicit deferral counts.
    Used for the sidebar state dots and the share checklist. */
 export const sectionState = (p) => ({
-  personal: requiredComplete(p),
+  personal: missingCount(missingPersonalFields(p)) === 0,
   work: !!(p.work.employmentStatus || p.work.annualIncome != null || p.work.jobTitle || p.work.businessName || p.work.occupation),
   goals: p.goals.length > 0,
   networth:
@@ -318,7 +338,7 @@ export const sectionState = (p) => ({
 })
 
 export const requiredComplete = (p) =>
-  Object.values(missingPersonalFields(p)).every((m) => !m)
+  missingCount(missingPersonalFields(p)) === 0 && missingCount(missingWorkFields(p)) === 0
 
 /* ---------------- Profiles ---------------- */
 

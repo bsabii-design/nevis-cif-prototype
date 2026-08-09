@@ -60,7 +60,7 @@ export function TopBar({ saved, showNav = true, shared, onShare }) {
   )
 }
 
-export function Sidebar({ activeKey, onNav, clientName, sections }) {
+export function Sidebar({ activeKey, onNav, clientName, sections, attention = {} }) {
   return (
     <nav className="sidebar" aria-label="Sections">
       <div className="side-links">
@@ -69,6 +69,9 @@ export function Sidebar({ activeKey, onNav, clientName, sections }) {
             className={'side-link' + (s.key === activeKey ? ' side-link-active' : '')}
             onClick={() => onNav(s.key)}>
             {s.label}
+            {/* Quiet ink dot: appears only after a Share attempt found this
+                section missing required details, gone as soon as it's fixed. */}
+            {attention[s.key] && <span className="side-attn" aria-label="Required details missing" />}
           </button>
         ))}
       </div>

@@ -2,7 +2,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import {
   ASSET_CATEGORIES, EMPLOYMENT_STATUSES, LIABILITY_CATEGORIES, US_STATES, computeSummary,
-  COUNTRY_NAMES, fmtCompact, fmtMoney, fmtUSD, missingPersonalFields, requiredComplete, usdOf,
+  COUNTRY_NAMES, fmtCompact, fmtMoney, fmtUSD, missingPersonalFields, missingWorkFields, usdOf,
 } from './model.js'
 import { parseGoals } from './parse.js'
 import { CompanyInput, CountrySelect, DateInput, Field, MoneyInput, PhoneInput, RadioRow, SearchableSelect, TextInput } from './ui.jsx'
@@ -114,7 +114,7 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
   const p = profile.personal
   const set = (k, v) => onChange({ ...profile, personal: { ...p, [k]: v } })
   const missing = missingPersonalFields(profile)
-  const flag = shareAttempted && !requiredComplete(profile)
+  const flag = shareAttempted && Object.values(missing).some(Boolean)
   const [touched, setTouched] = useState({})
   const markTouched = (k) => setTouched((t) => ({ ...t, [k]: true }))
 
@@ -248,35 +248,46 @@ export function Personal({ profile, onChange, onNav, shareAttempted }) {
 
 /* ---------------- Work & income (spec §10) ---------------- */
 
-export function Work({ profile, onChange, onNav }) {
+export function Work({ profile, onChange, onNav, shareAttempted }) {
   const w = profile.work
   const set = (k, v) => onChange({ ...profile, work: { ...w, [k]: v } })
   const st = w.employmentStatus
+  const missing = missingWorkFields(profile)
+  const flag = shareAttempted && Object.values(missing).some(Boolean)
+  const err = (k) => (flag && missing[k] ? 'Required' : null)
+
+  useEffect(() => {
+    if (flag) {
+      setTimeout(() =>
+        document.querySelector('.field-missing')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60)
+    }
+  }, [flag])
 
   return (
     <div className="screen">
       <div className="narrow-col">
       <div className="title-block">
         <h1 className="page-title">Work & income</h1>
+        {flag && <p className="page-message">Add the required details below before sharing.</p>}
         <p className="page-copy">Add any relevant details about your work and income.</p>
       </div>
 
       <div className="focus-form">
-        <Field label="Employment status" required>
+        <Field label="Employment status" required error={err('employmentStatus')}>
           <RadioRow name="Employment status" options={EMPLOYMENT_STATUSES}
             value={st} onChange={(v) => set('employmentStatus', v)} />
         </Field>
 
         {st === 'Employed' && (
           <div className="field-pair">
-            <Field label="Job title" required><TextInput value={w.jobTitle} onChange={(v) => set('jobTitle', v)} /></Field>
-            <Field label="Employer" required><CompanyInput value={w.employer} onChange={(v) => set('employer', v)} /></Field>
+            <Field label="Job title" required error={err('jobTitle')}><TextInput value={w.jobTitle} onChange={(v) => set('jobTitle', v)} /></Field>
+            <Field label="Employer" required error={err('employer')}><CompanyInput value={w.employer} onChange={(v) => set('employer', v)} /></Field>
           </div>
         )}
         {(st === 'Self-employed' || st === 'Business owner') && (
           <div className="field-pair">
-            <Field label="Occupation" required><TextInput value={w.occupation} onChange={(v) => set('occupation', v)} /></Field>
-            <Field label="Business name" required><CompanyInput value={w.businessName} onChange={(v) => set('businessName', v)} /></Field>
+            <Field label="Occupation" required error={err('occupation')}><TextInput value={w.occupation} onChange={(v) => set('occupation', v)} /></Field>
+            <Field label="Business name" required error={err('businessName')}><CompanyInput value={w.businessName} onChange={(v) => set('businessName', v)} /></Field>
           </div>
         )}
         {st === 'Retired' && (
@@ -293,7 +304,7 @@ export function Work({ profile, onChange, onNav }) {
 
         {st && st !== 'Retired' && st !== 'Not employed' && (
           <div className="field-half">
-            <Field label="Annual income" required helper="A rough estimate is fine.">
+            <Field label="Annual income" required helper="A rough estimate is fine." error={err('annualIncome')}>
               <MoneyInput amount={w.annualIncome} currency={w.currency}
                 onAmount={(v) => set('annualIncome', v)} onCurrency={(c) => set('currency', c)} />
             </Field>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { assetTitle, blankProfile, loadState, requiredComplete, saveState, sectionState, seedProfile, uid } from './model.js'
+import { assetTitle, blankProfile, loadState, missingCount, missingPersonalFields, missingWorkFields, saveState, sectionState, seedProfile, uid } from './model.js'
 import { Dialog } from './ui.jsx'
 import { Sidebar, TopBar } from './components.jsx'
 import { AssetPanel, LiabilityPanel } from './forms.jsx'
@@ -19,24 +19,25 @@ const NAV_KEY_FOR_ROUTE = {
 
 const MAIN_SECTIONS = ['personal', 'work', 'goals', 'networth']
 
-/* Share moment = a mirror, not a gate: the person sees exactly what state
-   the profile is in before handing it over. Nothing here blocks sharing. */
-function ShareDialog({ profile, onCancel, onConfirm }) {
+/* Share moment = the one honest scene of validation: the mirror always
+   opens, names exactly what's missing, and links straight to it. Only
+   required identity/work details block; everything else is information.
+   The CTA is never disabled — pressing Share with gaps leads to the
+   first of them instead. */
+function ShareDialog({ profile, onCancel, onConfirm, onGoto }) {
   const goals = profile.goals.length
   const assets = profile.assets.length
   const liabs = profile.liabilities.length
+  const pMiss = missingCount(missingPersonalFields(profile))
+  const wMiss = missingCount(missingWorkFields(profile))
+  const req = (n, section) => ({ link: `${n} required detail${n > 1 ? 's' : ''} missing`, section })
   const rows = [
-    { label: 'Personal', state: 'Details added' },
-    {
-      label: 'Work & income',
-      state: sectionState(profile).work ? 'Details added' : 'Not filled in yet',
-      muted: !sectionState(profile).work,
-    },
-    {
-      label: 'Goals',
-      state: goals ? `${goals} goal${goals > 1 ? 's' : ''}` : 'Not filled in yet',
-      muted: !goals,
-    },
+    { label: 'Personal', ...(pMiss ? req(pMiss, 'personal') : { state: 'Details added' }) },
+    { label: 'Work & income', ...(wMiss ? req(wMiss, 'work') : { state: 'Details added' }) },
+    goals
+      ? { label: 'Goals', state: `${goals} goal${goals > 1 ? 's' : ''}` }
+      /* Asked for, never required: one tap of a chip is enough. */
+      : { label: 'Goals', link: 'No goals yet — even one helps Sarah prepare', section: 'goals' },
     {
       label: 'Net worth',
       state: [
@@ -46,6 +47,7 @@ function ShareDialog({ profile, onCancel, onConfirm }) {
       muted: !assets,
     },
   ]
+  const firstMissing = pMiss ? 'personal' : wMiss ? 'work' : null
   return (
     <div className="dialog-overlay" onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
       <div className="dialog share-dialog" role="alertdialog" aria-modal="true" aria-label="Share with Sarah">
@@ -57,13 +59,20 @@ function ShareDialog({ profile, onCancel, onConfirm }) {
           {rows.map((r) => (
             <div className="share-check-row" key={r.label}>
               <span className="share-check-label">{r.label}</span>
-              <span className={'share-check-state' + (r.muted ? ' share-check-muted' : '')}>{r.state}</span>
+              {r.link ? (
+                <button className="share-check-link" onClick={() => onGoto(r.section)}>{r.link}</button>
+              ) : (
+                <span className={'share-check-state' + (r.muted ? ' share-check-muted' : '')}>{r.state}</span>
+              )}
             </div>
           ))}
         </div>
         <div className="dialog-actions">
           <button className="btn btn-secondary" onClick={onCancel}>Continue editing</button>
-          <button className="btn btn-primary" onClick={onConfirm}>Share</button>
+          <button className="btn btn-primary"
+            onClick={() => (firstMissing ? onGoto(firstMissing) : onConfirm())}>
+            Share
+          </button>
         </div>
       </div>
     </div>
@@ -127,13 +136,15 @@ export default function App() {
 
   /* ---- share (spec update §4–6) ---- */
 
-  const requestShare = () => {
-    if (requiredComplete(profile)) {
-      setShareDialog(true)
-    } else {
-      setShareAttempted(true)
-      navigate({ name: 'personal' })
-    }
+  /* Share ALWAYS opens the mirror — validation lives there, not on the way. */
+  const requestShare = () => setShareDialog(true)
+
+  /* A jump from the mirror counts as an attempt: from here the missing
+     fields highlight in place and the sidebar marks unfinished sections. */
+  const gotoFromShare = (section) => {
+    setShareDialog(false)
+    setShareAttempted(true)
+    forceNavigate(section === 'networth' ? { name: 'networth', tab: 'assets' } : { name: section })
   }
 
   const confirmShare = () => {
@@ -327,7 +338,11 @@ export default function App() {
       <div className="app-body">
         <div className="shell">
           {r.name !== 'welcome' && (
-            <Sidebar activeKey={NAV_KEY_FOR_ROUTE[r.name]} onNav={goSection} clientName="Jonathan Reeves" sections={sectionState(profile)} />
+            <Sidebar activeKey={NAV_KEY_FOR_ROUTE[r.name]} onNav={goSection} clientName="Jonathan Reeves" sections={sectionState(profile)}
+              attention={{
+                personal: shareAttempted && missingCount(missingPersonalFields(profile)) > 0,
+                work: shareAttempted && missingCount(missingWorkFields(profile)) > 0,
+              }} />
           )}
           <main className={'page' + (r.name === 'welcome' ? ' page-centered' : '')}>
             {r.name === 'welcome' && (
@@ -336,7 +351,7 @@ export default function App() {
             {r.name === 'personal' && (
               <Personal profile={profile} onChange={updateProfile} onNav={goSection} shareAttempted={shareAttempted} />
             )}
-            {r.name === 'work' && <Work profile={profile} onChange={updateProfile} onNav={goSection} />}
+            {r.name === 'work' && <Work profile={profile} onChange={updateProfile} onNav={goSection} shareAttempted={shareAttempted} />}
             {r.name === 'goals' && <Goals profile={profile} onChange={updateProfile} onNav={goSection} />}
             {r.name === 'inputlab' && <InputLab />}
             {r.name === 'networth' && (
@@ -432,7 +447,7 @@ export default function App() {
       </footer>
 
       {shareDialog && (
-        <ShareDialog profile={profile} onCancel={() => setShareDialog(false)} onConfirm={confirmShare} />
+        <ShareDialog profile={profile} onCancel={() => setShareDialog(false)} onConfirm={confirmShare} onGoto={gotoFromShare} />
       )}
 
       {leaveDialog && (
