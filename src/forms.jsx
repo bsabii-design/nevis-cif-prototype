@@ -705,7 +705,7 @@ function PropertySelect({ value, onChange, options, onCreateProperty, placeholde
   }
   return (
     <div className="combo" ref={rootRef}>
-      <button type="button" className="input gsel-trigger"
+      <button type="button" className="input select gsel-trigger"
         aria-haspopup="listbox" aria-expanded={open}
         onClick={() => setOpen(!open)}>
         {value || <span className="gsel-placeholder">{placeholder}</span>}

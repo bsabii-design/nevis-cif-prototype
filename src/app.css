@@ -777,6 +777,9 @@ input, select, textarea { font: inherit; color: inherit; }
 .input:focus { outline: none; border-color: var(--border-selected); }
 .input::placeholder { color: var(--content-tertiary); }
 .select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--content-secondary) 50%), linear-gradient(135deg, var(--content-secondary) 50%, transparent 50%); background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+/* Searchable selects (state, country) are pick-from-list fields — they wear
+   the same chevron as native selects; text stays clear of it. */
+.combo-filter { padding-right: var(--space-24); }
 
 .field { display: flex; flex-direction: column; gap: var(--space-8); }
 .field-label { font: var(--text-body-md); color: var(--content-secondary); }

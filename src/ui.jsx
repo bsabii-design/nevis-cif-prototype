@@ -169,7 +169,10 @@ export function SearchableSelect({ value, onChange, options, placeholder, icon, 
   const [active, setActive] = useState(-1)
   const query = (value || '').trim().toLowerCase()
   const exact = options.some((n) => n.toLowerCase() === query)
-  const matches = (exact ? options : options.filter((n) => n.toLowerCase().includes(query)))
+  const filtered = options.filter((n) => n.toLowerCase().includes(query))
+  /* A chosen value or a non-matching one ("NY") opens the FULL list —
+     a select never answers a click with silence. */
+  const matches = (exact || filtered.length === 0 ? options : filtered)
     .slice()
     .sort((a, b) => {
       const ap = a.toLowerCase().startsWith(query) ? 0 : 1
@@ -184,7 +187,7 @@ export function SearchableSelect({ value, onChange, options, placeholder, icon, 
     <div className="combo">
       {inputIcon && <span className="combo-avatar combo-flag" aria-hidden="true">{inputIcon}</span>}
       <input
-        className={'input' + (inputIcon ? ' combo-input-avatar' : '')}
+        className={'input select combo-filter' + (inputIcon ? ' combo-input-avatar' : '')}
         role="combobox"
         aria-expanded={open && matches.length > 0}
         value={value || ''}
